@@ -1,0 +1,78 @@
+{% load i18n %}
+<div class="searchitem">
+    <table class="header_info" style="table-layout: fixed;">
+        <tr class="information-row table-row {{ object.advreport_class }}">
+            {% if advreport.multiple_actions %}
+            <td style="width: 32px;">
+                <input class="information-checkbox" type="checkbox" id="checkbox_{{ object.advreport_object_id }}" name="checkbox_{{ object.advreport_object_id }}"/>
+            </td>
+            {% endif %}
+
+            {% for column_value in object.advreport_column_values %}
+            <td {% if column_value.class %}class="{{ column_value.class }}"{% endif %}
+                    {% if column_value.style %}style="{{ column_value.style }}"{% endif %}>
+                {{ column_value.html }}
+            </td>
+            {% endfor %}
+
+            <td class="small" style="text-align: right;">
+                {% if object.advreport_actions or object.advreport_extra_information %}
+                <a href="#" class="show-options">{% trans "show options" %}</a>
+                <a href="#" class="hide-options" style="display: none;">{% trans "hide options" %}</a>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+    {% if object.advreport_actions or object.advreport_extra_information %}
+    <div class="content_container action-row {{ advreport.slug }}-action-row table-row remove" id="object_{{ object.advreport_object_id }}">
+        <div class="content_item">
+            {% if success %}
+                <span class="success remove">{{ success }}</span>
+            {% endif %}
+            {{ object.advreport_extra_information|safe }}
+            <div class="clear"></div>
+            {% for action in object.advreport_actions %}
+                {% if action.form and not action.form_via_ajax and not action.hidden %}
+                    {% include "advanced_reports/ajax_form.html" %}
+                {% endif %}
+            {% endfor %}
+            <div class="clear"></div>
+            <div class="links {{ advreport.slug }}-links lightest alignLeft {% if advreport.show_actions_only_on_hover %}invisible{% endif %}">
+                {% if advreport.action_list_type == 'buttons' %}
+                    
+                    <div class="buttons">
+                        <ul class="buttons">
+                        {% for action in object.advreport_actions %}
+                            {% if not action.form or action.form_via_ajax and not action.hidden and action.individual_display %}
+                                <li>
+                                    {% include "advanced_reports/inc_action_link.html" %}
+                                    {% if not forloop.last and advreport.show_action_separator %}
+                                        |
+                                    {% endif %}
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    
+                {% else %}
+                    
+                    {% for action in object.advreport_actions %}
+                        {% if not action.form or action.form_via_ajax and not action.hidden and action.individual_display %}
+                            {% include "advanced_reports/inc_action_link.html" %}
+                            {% if not forloop.last and advreport.show_action_separator %}
+                                |
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                        
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="remove table-row action-row empty-row">
+        <div class="remove content-item"></div>
+    </div>
+    {% endif %}
+</div>

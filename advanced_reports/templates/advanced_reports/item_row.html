@@ -1,0 +1,50 @@
+{% load i18n %}
+<tr class="{% cycle "" "alternate" %} information-row table-row {{ object.advreport_class }}">
+    {% if advreport.multiple_actions %}
+    <td>
+        <input class="information-checkbox" type="checkbox" id="checkbox_{{ object.advreport_object_id }}" name="checkbox_{{ object.advreport_object_id }}"/>
+    </td>
+    {% endif %}
+
+    {% for column_value in object.advreport_column_values %}
+    <td {% if column_value.class %}class="{{ column_value.class }}"{% endif %}
+            {% if column_value.style %}style="{{ column_value.style }}"{% endif %}>
+        {{ column_value.html }}
+    </td>
+    {% endfor %}
+
+    <td class="small" style="text-align: right">
+        {% if object.advreport_actions or object.advreport_extra_information %}
+        <a href="#" class="show-options">{% trans "show options" %}</a>
+        <a href="#" class="hide-options" style="display: none;">{% trans "hide options" %}</a>
+        {% endif %}
+    </td>
+</tr>
+
+{% if object.advreport_actions or object.advreport_extra_information %}
+<tr class="{% cycle "" "alternate" %} action-row {{ advreport.slug }}-action-row item-row table-row {{ object.advreport_class }}" style="display: none;" id="object_{{ object.advreport_object_id }}">
+    <td colspan="{% if advreport.multiple_actions %}{{ object.advreport_column_values|length|add:2 }}{% else %}{{ object.advreport_column_values|length|add:1 }}{% endif %}">
+
+        {% if success %}
+            <span class="success remove">{{ success }}</span>
+        {% endif %}
+        {% for action in object.advreport_actions %}
+            {% if not action.form or action.form_via_ajax and not action.hidden and action.individual_display %}
+                {% include "advanced_reports/inc_action_link.html" %}
+            <br/>
+            {% endif %}
+        {% endfor %}
+        <div class="clear"></div>
+        {{ object.advreport_extra_information|safe }}
+        {% for action in object.advreport_actions %}
+            {% if action.form and not action.form_via_ajax and not action.hidden %}
+                {% include "advanced_reports/ajax_form.html" %}
+            {% endif %}
+        {% endfor %}
+        <div class="clear"></div>
+
+    </td>
+</tr>
+{% else %}
+<tr class="empty-row action-row table-row remove {% cycle "" "alternate" %}"/>
+{% endif %}

@@ -1,0 +1,26 @@
+#notices {
+    z-index: 2001;
+}
+
+.notice {
+    z-index: 2002;
+    position: fixed;
+    font-weight: bold;
+    top: 0px;
+    left: 50%;
+    text-align: center;
+    padding: 5px 20px;
+    color: #008000;
+    background: #DFF2BF;
+    -moz-border-radius: 0.7em;
+    -webkit-border-radius: 0.7em;
+    border: 0;
+}
+.notice.error {
+    background: #ffe6e6;
+    color: #db0c0c;
+}
+.notice.warning {
+    background: #FEEFB3;
+    color: #554529;
+}

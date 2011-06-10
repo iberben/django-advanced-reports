@@ -1,0 +1,199 @@
+# Translations from City Live i18n database
+# Generated: 2011-03-29 11:06:23.288121
+#, fuzzy
+msgid ""
+msgstr ""
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: defaults.py:144
+msgid "Successfully executed \"%s\""
+msgstr "Uitvoeren van \"%s\" geslaagd"
+
+#: defaults.py:603
+msgid "You can search by %(fields)s"
+msgstr "Je kan zoeken op %(fields)s"
+
+#: defaults.py:792
+msgid "There are no %(items)s to display."
+msgstr "Er zijn geen %(items)s om weer te geven."
+
+#: views.py:41
+msgid "You did not select any action."
+msgstr "Je hebt geen enkele actie geselecteerd."
+
+#: views.py:45
+msgid "You did not select any %(object)s."
+msgstr "Je hebt geen %(object)s geselecteerd."
+
+#: views.py:54
+msgid "Successfully executed action on %(count)d %(objects)s"
+msgstr "Uitvoeren van actie op %(count)d %(objects)s geslaagd"
+
+#: views.py:58
+msgid "No selected %(object)s is applicable for this action."
+msgstr "Deze actie is op geen %(object)s van toepassing."
+
+#: views.py:192
+msgid "Unsupported request method."
+msgstr "Aanvraagsmethode niet ondersteund."
+
+#: templates/advanced_reports/inc_header.html:54
+#: templates/advanced_reports/inc_header.html:66
+#: templates/advanced_reports/inc_header.html:79
+msgid "Search"
+msgstr "Zoek"
+
+#: templates/advanced_reports/inc_header.html:56
+#: templates/advanced_reports/inc_header.html:69
+msgid "exact"
+msgstr "exact"
+
+#: templates/advanced_reports/inc_header.html:57
+#: templates/advanced_reports/inc_header.html:125
+msgid "Go"
+msgstr "Ga"
+
+#: templates/advanced_reports/inc_header.html:59
+#: templates/advanced_reports/inc_header.html:81
+msgid "show all"
+msgstr "toon alle"
+
+#: templates/advanced_reports/inc_header.html:72
+msgid "from"
+msgstr "van"
+
+#: templates/advanced_reports/inc_header.html:75
+msgid "until"
+msgstr "tot"
+
+#: templates/advanced_reports/inc_header.html:99
+msgid "Select"
+msgstr "Selecteren"
+
+#: templates/advanced_reports/inc_header.html:101
+msgid "all"
+msgstr "alle"
+
+#: templates/advanced_reports/inc_header.html:102
+msgid "none"
+msgstr "geen"
+
+#: templates/advanced_reports/inc_header.html:103
+msgid "toggle"
+msgstr "toggle"
+
+#: templates/advanced_reports/inc_header.html:107
+msgid "With selected"
+msgstr "Met geselecteerd"
+
+#: templates/advanced_reports/inc_header.html:114
+msgid "%(action_name)s: Are you sure you want to execute this on the selected %(items)s?"
+msgstr "%(action_name)s: Ben je zeker dat je dit wil uitvoeren op de geselecteerde %(items)s?"
+
+#: templates/advanced_reports/inc_header.html:138
+msgid "search result,search results"
+msgstr "zoekresultaat,zoekresultaten"
+
+#: templates/advanced_reports/inc_header.html:154
+msgid "ordered by"
+msgstr "gerangschikt op"
+
+#: templates/advanced_reports/inc_script.html:20
+msgid "Su"
+msgstr "Zo"
+
+#: templates/advanced_reports/inc_script.html:21
+msgid "Mo"
+msgstr "Ma"
+
+#: templates/advanced_reports/inc_script.html:22
+msgid "Tu"
+msgstr "Di"
+
+#: templates/advanced_reports/inc_script.html:23
+msgid "We"
+msgstr "Wo"
+
+#: templates/advanced_reports/inc_script.html:24
+msgid "Th"
+msgstr "Do"
+
+#: templates/advanced_reports/inc_script.html:25
+msgid "Fr"
+msgstr "Vr"
+
+#: templates/advanced_reports/inc_script.html:26
+msgid "Sa"
+msgstr "Za"
+
+#: templates/advanced_reports/inc_script.html:27
+msgid "January"
+msgstr "Januari"
+
+#: templates/advanced_reports/inc_script.html:28
+msgid "February"
+msgstr "Februari"
+
+#: templates/advanced_reports/inc_script.html:29
+msgid "March"
+msgstr "Maart"
+
+#: templates/advanced_reports/inc_script.html:30
+msgid "April"
+msgstr "April"
+
+#: templates/advanced_reports/inc_script.html:31
+msgid "May"
+msgstr "Mei"
+
+#: templates/advanced_reports/inc_script.html:32
+msgid "June"
+msgstr "Juni"
+
+#: templates/advanced_reports/inc_script.html:33
+msgid "July"
+msgstr "Juli"
+
+#: templates/advanced_reports/inc_script.html:34
+msgid "August"
+msgstr "Augustus"
+
+#: templates/advanced_reports/inc_script.html:35
+msgid "September"
+msgstr "September"
+
+#: templates/advanced_reports/inc_script.html:36
+msgid "October"
+msgstr "Oktober"
+
+#: templates/advanced_reports/inc_script.html:37
+msgid "November"
+msgstr "November"
+
+#: templates/advanced_reports/inc_script.html:38
+msgid "December"
+msgstr "December"
+
+#: templates/advanced_reports/inc_script.html:92
+#: templates/advanced_reports/inc_script.html:313
+#: templates/advanced_reports/inc_script.html:352
+msgid "Confirm"
+msgstr "Bevestigen"
+
+#: templates/advanced_reports/inc_script.html:308
+#: templates/advanced_reports/inc_script.html:346
+msgid "Alert"
+msgstr "Melding"
+
+#: templates/advanced_reports/item_row.html:18
+#: templates/advanced_reports/searchitems_item_row.html:20
+msgid "show options"
+msgstr "toon opties"
+
+#: templates/advanced_reports/item_row.html:19
+#: templates/advanced_reports/searchitems_item_row.html:21
+msgid "hide options"
+msgstr "verberg opties"
+

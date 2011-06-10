@@ -1,0 +1,23 @@
+<form id="form_{{ action.method }}_{{ object.advreport_object_id }}"
+        method="post"
+        action="{% if action.form_via_ajax %}{% url advanced_reports_form advreport.slug action.method object.advreport_object_id %}{% else %}{% url advanced_reports_action advreport.slug action.method object.advreport_object_id %}{% endif %}"
+        class="action-form {% if action.collapse_form %}collapse-form{% endif %}"
+        {% if action.confirm %}x:confirm="{{ action.confirm }}"{% endif %}
+        {% if action.next_on_success %}x:next="true"{% endif %}>
+    {% csrf_token %}
+    
+    {% if not action.form_via_ajax %}
+    <p {% if action.css_class %}class="{{ action.css_class }}"{% endif %}><strong>{{ action.verbose_name }}</strong></p>
+    {% endif %}
+    
+    {% ifequal action.method response_method %}
+        {% if response_form_template %}{{ response_form_template }}{% else %}<table>{{ response_form.as_table }}</table>{% endif %}
+    {% else %}
+        {% if action.form_template %}{{ action.form_template }}{% else %}<table>{{ action.form.as_table }}</table>{% endif %}
+    {% endifequal %}
+    <p>
+        <input type="hidden" name="object_id" value="{{ object.advreport_object_id }}" />
+        <input type="hidden" name="method" value="{{ action.method }}" />
+        <input class="action-submit button-small" type="submit" value="{{ action.submit }}" />
+    </p>
+</form>

@@ -1,0 +1,160 @@
+{% load i18n %}
+
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
+
+<form method="post" id="csrf_form">
+    {% csrf_token %}
+</form>
+
+{% if advreport.help_text or advreport.links|length > 0 %}
+<div class="container">
+    <div class="half left help-text">
+        <p>
+            {% if advreport.help_text %}
+                {{ advreport.help_text|safe }}
+            {% endif %}
+        </p>
+    </div>
+
+    <div class="half right alignRight">
+        <ul class="buttons">
+            {% for link in advreport.links %}
+                <li class="right">
+                    {% ifequal link.1 "." %}
+                        <a class="button top-link" href="{{ request.path }}?{{ request.META.QUERY_STRING }}">{{ link.0 }}</a>
+                    {% else %}
+                        {% ifequal link.1 "?csv" %}
+                            <a class="button top-link" href="{{ request.path }}?csv&amp;{{ request.META.QUERY_STRING }}">{{ link.0 }}</a>
+                        {% else %}
+                            <a class="button top-link" href="{{ link.1 }}">{{ link.0 }}</a>
+                        {% endifequal %}
+                    {% endifequal %}
+                    {% if link|length_is:3 %}
+                    <br/><span class="smaller lighter">{{ link.2 }}</span>
+                    {% endif %}
+                </li>
+            {% empty %}
+            <li></li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+{% if advreport.search_fields %}
+
+    <form method="get" action=".">
+
+        {% if request.GET.order %}<input type="hidden" name="order" value="{{ request.GET.order }}" />{% endif %}
+
+        {% if not advreport.date_range %}
+            <div class="bar">
+                <label for="search_field"><strong>{% trans "Search" %}:</strong></label>
+                <input type="text" id="search_field" name="q" value="{{ request.GET.q }}" title="{{ advreport.searchable_columns }}" />
+                <label><input type="checkbox" name="exact" {% if request.GET.exact %}checked="checked"{% endif %}/> {% trans "exact" %}</label>
+                <input type="submit" value="{% trans "Go" %}" />
+                {% if request.GET.q or request.GET.to %}
+                    <a href=".">{% trans "show all" %}</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="bar">
+                <table class="vTop">
+                    <tr>
+                        <th><label for="search_field"><strong>{% trans "Search" %}:</strong></label></th>
+                        <td>
+                            <input type="text" id="search_field" name="q" value="{{ request.GET.q }}" title="{{ advreport.searchable_columns }}"/>
+                            <label><input type="checkbox" name="exact" {% if request.GET.exact %}checked="checked"{% endif %}/> {% trans "exact" %}</label>
+                        </td>
+
+                        <th>{{ advreport.date_range_verbose_name }} {% trans "from" %}:</th>
+                        <td><input type="text" id="from_field" name="from" value="{{ request.GET.from }}" class="date_range" /></td>
+
+                        <th><label for="to_field">{{ advreport.date_range_verbose_name }}  {% trans "until" %}</label>:</th>
+                        <td><input type="text" id="to_field" name="to" value="{{ request.GET.to }}" class="date_range" /></td>
+
+                        <td>
+                            <input type="submit" value="{% trans "Search" %}" />
+                            {% if request.GET.q or request.GET.to %}
+                                <a href=".">{% trans "show all" %}</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        {% endif %}
+
+    </form>
+
+{% endif %}
+<div class="container bar">
+    <div class="half left">
+        {% if advreport.multiple_actions %}
+        <form method="post" action="." class="header-form no_disable multiple-action-form">
+            {% csrf_token %}
+            <table>
+                <tr>
+                    <th>{% trans "Select" %}:</th>
+                    <td>
+                        <a href="#" class="select-all">{% trans "all" %}</a> -
+                        <a href="#" class="select-none">{% trans "none" %}</a> -
+                        <a href="#" class="select-toggle">{% trans "toggle" %}</a>
+                    </td>
+                </tr>
+                <tr>
+                    <th>{% trans "With selected" %}:</th>
+                    <td>
+                        {% for object in paginated.object_list %}
+                        <input type="hidden" name="checkbox_{{ forloop.counter|stringformat:"09d" }}_{{ object.advreport_object_id }}" id="hidden_checkbox_{{ object.advreport_object_id }}" value="false" />
+                        {% endfor %}
+                        {% for action in advreport.item_actions %}
+                            {% if not action.form and action.confirm and not action.hidden and action.multiple_display %}
+                                <span style="display: none;" class="confirm_{{ action.method }}" x:confirm="{% blocktrans with action.verbose_name as action_name and advreport.verbose_name_plural as items %}{{ action_name }}: Are you sure you want to execute this on the selected {{ items }}?{% endblocktrans %}"></span>
+                            {% endif %}
+                        {% endfor %}
+                        <select id="select-method" name="method">
+                            <option value="" selected="selected">--</option>
+                            {% for action in advreport.item_actions %}
+                                {% if not action.form and not action.hidden and action.multiple_display %}
+                                    <option value="{{ action.method }}">{{ action.verbose_name }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <input type="submit" value="{% trans "Go" %}"/>
+                    </td>
+                </tr>
+            </table>
+        </form>
+        {% endif %}
+    </div>
+
+    <div class="half right alignRight">
+        <table>
+            <tr>
+                <td>
+                {% if request.GET.q %}
+                    {{ object_list|length|pluralize:_('search result,search results') }}
+                {% else %}
+                    {% if object_list|length_is:1 %}
+                        {{ advreport.verbose_name }}
+                    {% else %}
+                        {{ advreport.verbose_name_plural }}
+                    {% endif %}
+                {% endif %}
+                </td>
+            </tr>
+            <tr class="cnt">
+                <td>{{ object_list|length }}</td>
+            </tr>
+            <tr class="lighter smaller">
+                <td>
+                    {% if advreport.sortable_fields %}
+                        {% trans "ordered by" %} <strong>{{ ordered_by|lower }}</strong>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

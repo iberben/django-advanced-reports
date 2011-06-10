@@ -1,0 +1,39 @@
+{% load i18n pagination %}
+
+{% include "advanced_reports/inc_header.html" %}
+
+{% paginate paginated %}
+<table class="data">
+    {% if advreport.header_visible %}
+    <tr>
+        {% if advreport.multiple_actions %}<th><input type="checkbox" name="selector" id="selector"/></th>{% endif %}
+        {% for column_header in advreport.column_headers %}
+        <th{% if column_header.style %} style="{{ column_header.style }}"{% endif %}>
+            {% if column_header.sortable %}
+                {% ifequal column_header.name order_field %}
+                    <a class="underline" href="{{ request.path }}?q={{ request.GET.q }}&amp;from={{ request.GET.from }}&amp;to={{ request.GET.to }}{% if request.GET.exact %}&amp;exact=on{% endif %}&amp;order={% if ascending %}-{% endif %}{{ column_header.order_by }}">{{ column_header.verbose_name }}</a>
+                    {% if ascending %}
+                    <img src="{{ MEDIA_URL }}img/arrow-up.gif" alt=""/>
+                    {% else %}
+                    <img src="{{ MEDIA_URL }}img/arrow-down.gif" alt=""/>
+                    {% endif %}
+                {% else %}
+                    <a href="{{ request.path }}?q={{ request.GET.q }}{% if request.GET.exact %}&amp;exact=on{% endif %}&amp;order={{ column_header.order_by }}">{{ column_header.verbose_name }}</a>
+                {% endifequal %}
+            {% else %}
+                {{ column_header.verbose_name }}
+            {% endif %}
+        </th>
+        {% endfor %}
+        <th/>
+    </tr>
+    {% endif %}
+    {% for object in paginated.object_list %}
+        {% include "advanced_reports/item_row.html" %}
+    {% empty %}
+        <td colspan="{% if advreport.multiple_actions %}{{ advreport.column_headers|length|add:2 }}{% else %}{{ advreport.column_headers|length|add:1 }}{% endif %}" class="alignCenter italic lighter">
+            {{ advreport.get_empty_text }}
+        </td>
+    {% endfor %}
+</table>
+{% endpaginate %}
