@@ -4,7 +4,7 @@ import advanced_reports
 
 setup(
     name="django-advanced-reports",
-    version='',#advanced_reports.__version__,
+    version='0.1',#advanced_reports.__version__,
     url='https://github.com/citylive/django-advanced-reports',
     license='BSD',
     description="Advanced reports for Django",
