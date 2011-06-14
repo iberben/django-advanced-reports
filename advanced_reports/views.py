@@ -15,7 +15,7 @@ from django_ajax.pagination import paginate
 from advanced_reports import get_report_or_404
 from advanced_reports.defaults import ActionException
 
-import simplejson
+from django.utils import simplejson
 
 def _get_redirect(advreport, next=None):
     if next:
