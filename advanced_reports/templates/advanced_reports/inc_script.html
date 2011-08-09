@@ -1,10 +1,13 @@
 {% load i18n %}
 
 {% if advreport %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}advanced_reports/css/show-notice.css"/>
-<script language="javascript" type="text/javascript" src="{{ STATIC_URL }}advanced_reports/js/show-notice.js"></script>
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}advanced_reports/css/ui.datepicker.css"/>
-<script language="javascript" type="text/javascript" src="{{ STATIC_URL }}advanced_reports/js/ui.datepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="{% include "advanced_reports/static.inc" %}advanced_reports/css/show-notice.css"/>
+<script language="javascript" type="text/javascript" src="{% include "advanced_reports/static.inc" %}advanced_reports/js/show-notice.js"></script>
+<link rel="stylesheet" type="text/css" href="{% include "advanced_reports/static.inc" %}advanced_reports/css/ui.datepicker.css"/>
+<script language="javascript" type="text/javascript" src="{% include "advanced_reports/static.inc" %}advanced_reports/js/ui.datepicker.js"></script>
+<link rel="stylesheet" type="text/css" href="{% include "advanced_reports/static.inc" %}advanced_reports/css/jquery.mbox.css"/>
+<script language="javascript" type="text/javascript" src="{% include "advanced_reports/static.inc" %}advanced_reports/js/jquery.mbox.js"></script>
+
 
 <script type="text/javascript">
     // <![CDATA[
@@ -15,7 +18,7 @@
 
         $('.date_range').each(function() {
             var date_picker_options = {showOn: 'button',
-                                       buttonImage: '{{ STATIC_URL }}advanced_reports/img/calendar.png',
+                                       buttonImage: '{% include "advanced_reports/static.inc" %}advanced_reports/img/calendar.png',
                                        buttonImageOnly: true,
                                        dateFormat: 'yy-mm-dd',
                                        maxDate:'+0D',
