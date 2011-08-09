@@ -1,0 +1,3 @@
+0.1 Initial import of advanced_reports app as is
+0.2 Added pre-Django 1.3 support by allowing to override media includes
+
