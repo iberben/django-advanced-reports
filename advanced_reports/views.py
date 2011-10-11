@@ -121,7 +121,7 @@ def action(request, slug, method, object_id):
         object = advreport.get_item_for_id(object_id)
         advreport.enrich_object(object, request=request)
 
-        a = advreport.find_object_action(object, method)
+        a = advreport.find_action(method)
 
         if request.method == 'POST':
             if a.form is not None:
