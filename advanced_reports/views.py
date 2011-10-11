@@ -97,7 +97,7 @@ def list(request, slug):
         paginated = paginate(request, object_list, num_per_page=advreport.items_per_page, use_get_parameters=True)
         
         # Extra context?
-        context.update(advreport.extra_context())
+        context.update(advreport._extra_context(request))
         
         # Render
         context.update({'advreport': advreport,

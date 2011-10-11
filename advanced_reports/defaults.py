@@ -452,11 +452,24 @@ class AdvancedReport(object):
         Implement this if you don't use Django model instances.
         Returns the number of items in the report.
         '''
-        return self.queryset().count()
+        return self._queryset(request=None).count()
+    
+    def _extra_context(self, request=None):
+        context = {}
+        context.update(self.extra_context_request(request))
+        context.update(self.extra_context())
+        return context
     
     def extra_context(self):
         '''
-        Implement this to define some extra context for your template
+        (deprecated) Implement this to define some extra context for your template.
+        '''
+        return {}
+    
+    def extra_context_request(self, request=None):
+        '''
+        Implement this to define some extra context for your template,
+        based on the request.
         '''
         return {}
     
