@@ -363,7 +363,7 @@ class AdvancedReport(object):
         a lookup of the primary key of a model.
         '''
         try:
-            return self.queryset().get(pk=item_id)
+            return self._queryset(request=None).get(pk=item_id)
         except ObjectDoesNotExist, e:
             raise Http404(u'%s' % e)
 
@@ -548,13 +548,19 @@ class AdvancedReport(object):
                 return EnrichedQueryset(queryset, self)
         else:
             return EnrichedQueryset(fake_found, self)
-
-    def get_sorted_queryset(self, by_field):
+    
+    def _queryset(self, request):
+        if hasattr(self, 'queryset_request'):
+            return self.queryset_request(request)
+        else:
+            return self.queryset()
+    
+    def get_sorted_queryset(self, by_field, request=None):
         field_name = by_field.split('__')[0].split(',')[0]
         field_name = field_name[1:] if field_name[0] == '-' else field_name
         if self.get_model_field(field_name) is None:
-            return self.queryset()
-        return self.queryset().order_by(*by_field.split(','))
+            return self._queryset(request)
+        return self._queryset(request).order_by(*by_field.split(','))
 
     def get_enriched_items(self, queryset):
         return EnrichedQueryset(queryset, self)
@@ -671,9 +677,8 @@ class AdvancedReport(object):
 
         return mark_safe(html)
 
-    @property
-    def objects(self):
-        return EnrichedQueryset(self.queryset(), self)
+    def objects(self, request=None):
+        return EnrichedQueryset(self.queryset(request), self)
 
     def enrich_object(self, o, list=True, request=None):
         '''

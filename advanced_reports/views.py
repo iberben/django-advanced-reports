@@ -69,7 +69,7 @@ def list(request, slug):
             context.update({'order_field': order_field, 
                             'ascending': ascending, 
                             'order_by': order_by.strip('-')})
-            queryset = advreport.get_sorted_queryset(order_by)
+            queryset = advreport.get_sorted_queryset(order_by, request=request)
         else:
             queryset = advreport.queryset()
 
