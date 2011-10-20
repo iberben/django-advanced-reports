@@ -109,6 +109,10 @@ html, body
     color: #953434;
 }
 
+#mbox_table
+{
+    border-collapse: collapse;
+}
 
 #mbox_wrap #mbox_table td,
 #mbox_wrap #mbox_table th

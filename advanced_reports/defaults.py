@@ -564,7 +564,16 @@ class AdvancedReport(object):
     
     def _queryset(self, request):
         if hasattr(self, 'queryset_request'):
-            return self.queryset_request(request)
+            qs = self.queryset_request(request)
+            if request:
+                try:
+                    fieldnames = [f.name for f in self.models[0]._meta.fields]
+                    lookup = dict((k, v) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
+                    if lookup:
+                        qs = qs.filter(**lookup)
+                except:
+                    return self.models[0].objects.none()
+            return qs
         else:
             return self.queryset()
     
