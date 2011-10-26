@@ -1,0 +1,1 @@
+{% for rv in request.GET.items %}{% if not rv.0 in excluded_fields %}&amp;{{ rv.0 }}={{ rv.1 }}{% endif %}{% endfor %}

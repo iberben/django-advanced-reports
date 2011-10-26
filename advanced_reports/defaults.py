@@ -566,9 +566,17 @@ class AdvancedReport(object):
         if hasattr(self, 'queryset_request'):
             qs = self.queryset_request(request)
             if request:
+                def convert_value(v):
+                    if v == u'True':
+                        return True
+                    elif v == u'False':
+                        return False
+                    else:
+                        return v
+                
                 try:
                     fieldnames = [f.name for f in self.models[0]._meta.fields]
-                    lookup = dict((k, v) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
+                    lookup = dict((k, convert_value(v)) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
                     if lookup:
                         qs = qs.filter(**lookup)
                 except:

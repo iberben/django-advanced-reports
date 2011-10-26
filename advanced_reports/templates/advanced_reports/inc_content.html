@@ -11,14 +11,14 @@
         <th{% if column_header.style %} style="{{ column_header.style }}"{% endif %}>
             {% if column_header.sortable %}
                 {% ifequal column_header.name order_field %}
-                    <a class="underline" href="{{ request.path }}?q={{ request.GET.q }}&amp;from={{ request.GET.from }}&amp;to={{ request.GET.to }}{% if request.GET.exact %}&amp;exact=on{% endif %}&amp;order={% if ascending %}-{% endif %}{{ column_header.order_by }}">{{ column_header.verbose_name }}</a>
+                    <a class="underline" href="{{ request.path }}?order={% if ascending %}-{% endif %}{{ column_header.order_by }}{% with "order" as excluded_fields %}{% include "advanced_reports/inc_querystring.html" %}{% endwith %}">{{ column_header.verbose_name }}</a>
                     {% if ascending %}
                     <img src="{{ MEDIA_URL }}img/arrow-up.gif" alt=""/>
                     {% else %}
                     <img src="{{ MEDIA_URL }}img/arrow-down.gif" alt=""/>
                     {% endif %}
                 {% else %}
-                    <a href="{{ request.path }}?q={{ request.GET.q }}{% if request.GET.exact %}&amp;exact=on{% endif %}&amp;order={{ column_header.order_by }}">{{ column_header.verbose_name }}</a>
+                    <a href="{{ request.path }}?order={{ column_header.order_by }}{% with "order" as excluded_fields %}{% include "advanced_reports/inc_querystring.html" %}{% endwith %}">{{ column_header.verbose_name }}</a>
                 {% endifequal %}
             {% else %}
                 {{ column_header.verbose_name }}

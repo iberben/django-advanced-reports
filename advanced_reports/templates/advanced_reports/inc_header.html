@@ -45,9 +45,12 @@
 
 {% if advreport.search_fields %}
 
-    <form method="get" action=".">
-
-        {% if request.GET.order %}<input type="hidden" name="order" value="{{ request.GET.order }}" />{% endif %}
+    <form method="get" action=".">        
+        {% for rv in request.GET.items %}
+            {% if not rv.0 in "q|exact|from|to" %}
+                <input type="hidden" name="{{ rv.0 }}" value="{{ rv.1 }}" />
+            {% endif %}
+        {% endfor %}
 
         {% if not advreport.date_range %}
             <div class="bar">
