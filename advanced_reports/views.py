@@ -90,7 +90,7 @@ def list(request, slug):
             csv.write(header)
             csv.writelines(lines)
             response = HttpResponse(csv.getvalue(), 'text/csv')
-            response['Content-Disposition'] = 'attachment; filename=%s.csv' % advreport.slug
+            response['Content-Disposition'] = 'attachment; filename="%s.csv"' % advreport.slug
             return response
 
         # Paginate
