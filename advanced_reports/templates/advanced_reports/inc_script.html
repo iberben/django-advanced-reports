@@ -330,36 +330,66 @@
 
         function connect_link(link, action_row, data_row)
         {
-            if (link.attr('href').indexOf('_view') != -1)
-                return;
+            if (link.attr('href').indexOf('_view') != -1) {
+                if (!link.attr('x:ajax'))
+                    return;
+                
+                link.click(function(){
+                    var execute = function()
+                    {
+                        link.find('.loader').show();
+                        $.ajax({
+                            'type': 'GET',
+                            'url': link.attr('href'),
+                            'dataType': 'text',
+                            'success': function(x) {
+                                link.find('.loader').hide();
+                                $.mbox(link.text(), x, {
+                                    'width': '700px'
+                                });
+                            },
+                            'error': function(x) {
+                                link.find('.loader').hide();
+                                $.mbox_error('{% trans "Alert" %}', x.responseText);
+                            }
+                        });
+                    };
 
-            //link.css('background', 'yellow');
-            link.click(function(){
-                var execute = function()
-                {
-                    link.find('.loader').show();
-                    $.ajax({
-                        'type': 'POST',
-                        'url': link.attr('href').replace('/action/', '/ajax/'),
-                        'data': $('#csrf_form').serialize(),
-                        'dataType': 'text',
-                        'success': function(x) {
-                            link.find('.loader').hide();
-                            replace_rows(x, action_row, data_row, link.attr('x:next') == "true");
-                        },
-                        'error': function(x) {
-                            link.find('.loader').hide();
-                            $.mbox_error('{% trans "Alert" %}', x.responseText);
-                        }
-                    });
-                };
+                    if (link.attr('x:confirm'))
+                        $.mbox(('{% trans "Confirm" %}'), link.attr('x:confirm'), { type: DIALOG_YES_NO, callback_closed_yes: execute});
+                    else
+                        execute();
+                    return false;
+                });
+            }
+            else {
+                link.click(function(){
+                    var execute = function()
+                    {
+                        link.find('.loader').show();
+                        $.ajax({
+                            'type': 'POST',
+                            'url': link.attr('href').replace('/action/', '/ajax/'),
+                            'data': $('#csrf_form').serialize(),
+                            'dataType': 'text',
+                            'success': function(x) {
+                                link.find('.loader').hide();
+                                replace_rows(x, action_row, data_row, link.attr('x:next') == "true");
+                            },
+                            'error': function(x) {
+                                link.find('.loader').hide();
+                                $.mbox_error('{% trans "Alert" %}', x.responseText);
+                            }
+                        });
+                    };
 
-                if (link.attr('x:confirm'))
-                    $.mbox(('{% trans "Confirm" %}'), link.attr('x:confirm'), { type: DIALOG_YES_NO, callback_closed_yes: execute});
-                else
-                    execute();
-                return false;
-            });
+                    if (link.attr('x:confirm'))
+                        $.mbox(('{% trans "Confirm" %}'), link.attr('x:confirm'), { type: DIALOG_YES_NO, callback_closed_yes: execute});
+                    else
+                        execute();
+                    return false;
+                });
+            }
         }
 
         function connect_page()
