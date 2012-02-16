@@ -67,6 +67,11 @@ class action(object):
     '''
     Optional. If True, the form will be loaded via mbox.
     '''
+    
+    link_via_ajax = False
+    '''
+    Optional. If True, the link behind the action will be loaded via mbox.
+    '''
 
     submit = u'Submit'
     '''
