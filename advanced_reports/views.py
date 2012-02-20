@@ -112,6 +112,35 @@ def list(request, slug):
 
     return inner(request, slug)
 
+def detail(request, slug, id, response_in_html=True):
+    advreport = get_report_or_404(slug)
+
+    def inner(request, slug, id):
+        context = {}
+        advreport.single_mode = True
+        queryset = advreport.queryset().filter(pk=id)
+
+        # Filter
+        object_list = advreport.get_filtered_items(queryset, request.GET)
+        
+        # Extra context?
+        context.update(advreport._extra_context(request))
+        
+        # Render
+        context.update({
+            'advreport': advreport,
+            'object': object_list[0] if queryset else None,
+        })
+
+        render_func = render_to_response if response_in_html else render_to_string
+
+        return render_func(advreport.single_item_template, context, context_instance=RequestContext(request))
+
+    if advreport.decorate_views:
+        inner = advreport.get_decorator()(inner)
+
+    return inner(request, slug, id)
+
 def action(request, slug, method, object_id):
     advreport = get_report_or_404(slug)
 
