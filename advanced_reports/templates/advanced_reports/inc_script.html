@@ -157,8 +157,8 @@
                 hide_options.hide();
             }
 
-            show_options.click(function(){ expand_row(); return false; });
-            hide_options.click(function(){ collapse_row(); return false; });
+            show_options.unbind().click(function(){ expand_row(); return false; });
+            hide_options.unbind().click(function(){ collapse_row(); return false; });
 
             function handle_checkbox_click()
             {
@@ -168,7 +168,7 @@
                     $('#selector').attr('checked', false);
             }
 
-            data_row.click(function(e){
+            data_row.unbind().click(function(e){
                 if (action_row.is(':visible')) collapse_row(); else expand_row();
                 if (action_row.hasClass('empty-row'))
                 {
@@ -180,7 +180,7 @@
 
             data_row.find('a').each(function(){
                 var link = $(this);
-                link.click(function(e){ e.stopPropagation(); });
+                link.unbind().click(function(e){ e.stopPropagation(); });
             });
 
             action_row.find('.action-form').each(function(){
@@ -207,7 +207,7 @@
             action_row.find('.form-via-ajax').each(function(){
                 var link = $(this);
                 
-                link.click(function(){
+                link.unbind().click(function(){
                     var action_name = link.text();
                     var title = link.attr('x:confirm');
                     if (!title || title == "") {
@@ -334,7 +334,7 @@
                 if (!link.attr('x:ajax'))
                     return;
                 
-                link.click(function(){
+                link.unbind().click(function(){
                     var execute = function()
                     {
                         link.find('.loader').show();
@@ -363,7 +363,7 @@
                 });
             }
             else {
-                link.click(function(){
+                link.unbind().click(function(){
                     var execute = function()
                     {
                         link.find('.loader').show();
@@ -404,15 +404,17 @@
             recycle();
         }
 
-        connect_page();
-
         function handler(e, containers)
         {
             connect_page();
         }
 
+        $(document).unbind('paginatorPageReplaced', handler);
         $(document).bind('paginatorPageReplaced', handler);
+        $(document).unbind('tabLoaded', handler);
         $(document).bind('tabLoaded', handler);
+
+        connect_page();
     });
     // ]]>
 </script>

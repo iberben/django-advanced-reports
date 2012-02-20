@@ -6,7 +6,7 @@
 <table class="data">
     {% if advreport.header_visible %}
     <tr>
-        {% if advreport.multiple_actions %}<th><input type="checkbox" name="selector" id="selector"/></th>{% endif %}
+        {% if not advreport.single_mode and advreport.multiple_actions %}<th><input type="checkbox" name="selector" id="selector"/></th>{% endif %}
         {% for column_header in advreport.column_headers %}
         <th{% if column_header.style %} style="{{ column_header.style }}"{% endif %}>
             {% if column_header.sortable %}
@@ -31,7 +31,7 @@
     {% for object in paginated.object_list %}
         {% include "advanced_reports/item_row.html" %}
     {% empty %}
-        <td colspan="{% if advreport.multiple_actions %}{{ advreport.column_headers|length|add:2 }}{% else %}{{ advreport.column_headers|length|add:1 }}{% endif %}" class="alignCenter italic lighter">
+        <td colspan="{% if not advreport.single_mode and advreport.multiple_actions %}{{ advreport.column_headers|length|add:2 }}{% else %}{{ advreport.column_headers|length|add:1 }}{% endif %}" class="alignCenter italic lighter">
             {{ advreport.get_empty_text }}
         </td>
     {% endfor %}

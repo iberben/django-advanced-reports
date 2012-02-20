@@ -8,7 +8,7 @@
 {% if advreport.header_visible %}
     <table class="data" style="table-layout: fixed;">
         <tr>
-            {% if advreport.multiple_actions %}
+            {% if not advreport.single_mode and advreport.multiple_actions %}
             <th style="width: 32px;"><input type="checkbox" name="selector" id="selector"/></th>
             {% endif %}
             {% for column_header in advreport.column_headers %}
