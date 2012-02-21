@@ -1,6 +1,6 @@
 {% load i18n %}
 <tr class="{% cycle "" "alternate" %} information-row table-row {{ object.advreport_class }}">
-    {% if advreport.multiple_actions %}
+    {% if not advreport.single_model and advreport.multiple_actions %}
     <td>
         <input class="information-checkbox" type="checkbox" id="checkbox_{{ object.advreport_object_id }}" name="checkbox_{{ object.advreport_object_id }}"/>
     </td>
@@ -23,7 +23,7 @@
 
 {% if object.advreport_actions or object.advreport_extra_information %}
 <tr class="{% cycle "" "alternate" %} action-row {{ advreport.slug }}-action-row item-row table-row {{ object.advreport_class }}" style="display: none;" id="object_{{ object.advreport_object_id }}">
-    <td colspan="{% if advreport.multiple_actions %}{{ object.advreport_column_values|length|add:2 }}{% else %}{{ object.advreport_column_values|length|add:1 }}{% endif %}">
+    <td colspan="{% if not advreport.single_mode and advreport.multiple_actions %}{{ object.advreport_column_values|length|add:2 }}{% else %}{{ object.advreport_column_values|length|add:1 }}{% endif %}">
         {% block actions %}
             {% if success %}
                 <span class="success remove">{{ success }}</span>

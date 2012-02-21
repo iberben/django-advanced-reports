@@ -67,6 +67,11 @@ class action(object):
     '''
     Optional. If True, the form will be loaded via mbox.
     '''
+    
+    link_via_ajax = False
+    '''
+    Optional. If True, the link behind the action will be loaded via mbox.
+    '''
 
     submit = u'Submit'
     '''
@@ -249,6 +254,12 @@ class AdvancedReport(object):
     uses a custom view for items. Make sure to base it off the original and please keep the "action-row".
     '''
 
+    single_item_template = 'advanced_reports/inc_single_content.html'
+    '''
+    Optional. Override this to specify the single item template. Rendered when in single mode.
+    Make sure to base it off the original and please keep the "action-row". Use detail view for rendering.
+    '''
+
     decorate_views = False
     '''
     Required when using get_decorator. True indicates that Advanced Reports should use your implementation
@@ -306,6 +317,12 @@ class AdvancedReport(object):
     show_actions_only_on_hover = True
     '''
     Show the actions of an item only when the user hovers over the item
+    '''
+
+    single_mode = False
+    '''
+    Determines if the advanced report should display a single item. No group actions will
+    be displayed. To display a single item, please use advanced_reports.views.detail.
     '''
 
     def queryset(self):
