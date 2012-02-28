@@ -165,6 +165,11 @@ class AdvancedReport(object):
     Required. A unique url-friendly name for your Advanced Report
     '''
 
+    request = None
+    '''
+    Optional. The request
+    ''' 
+
     fields = None
     '''
     Required. The fields that are included in your Advanced Report as a tuple of strings.
@@ -360,6 +365,12 @@ class AdvancedReport(object):
         action and just leave this function alone.
         '''
         return True
+
+    def set_request(self, request):
+        ''' 
+        Set the request for this report.
+        ''' 
+        self.request = request
 
     '''
     The following two functions work both in tandem for naming and finding items.

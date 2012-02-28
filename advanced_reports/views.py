@@ -26,6 +26,7 @@ def _get_redirect(advreport, next=None):
 
 def list(request, slug):
     advreport = get_report_or_404(slug)
+    advreport.set_request(request)
 
     def inner(request, slug):
         context = {}
@@ -114,6 +115,7 @@ def list(request, slug):
 
 def detail(request, slug, id, response_in_html=True):
     advreport = get_report_or_404(slug)
+    advreport.set_request(request)
 
     def inner(request, slug, id):
         context = {}
@@ -143,6 +145,7 @@ def detail(request, slug, id, response_in_html=True):
 
 def action(request, slug, method, object_id):
     advreport = get_report_or_404(slug)
+    advreport.set_request(request)
 
     def inner(request, slug, method, object_id):
         next = request.GET.get('next', None)
@@ -177,6 +180,7 @@ def action(request, slug, method, object_id):
 
 def ajax(request, slug, method, object_id):
     advreport = get_report_or_404(slug)
+    advreport.set_request(request)
 
     def inner(request, slug, method, object_id):
         object = advreport.get_item_for_id(object_id)
@@ -227,6 +231,7 @@ def ajax(request, slug, method, object_id):
 
 def count(request, slug):
     advreport = get_report_or_404(slug)
+    advreport.set_request(request)
 
     def inner(request, slug):
         return HttpResponse(unicode(advreport.get_item_count()))
@@ -238,6 +243,7 @@ def count(request, slug):
 
 def ajax_form(request, slug, method, object_id):
     advreport = get_report_or_404(slug)
+    advreport.set_request(request)
 
     def inner(request, slug, method, object_id):
         object = advreport.get_item_for_id(object_id)
