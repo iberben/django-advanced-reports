@@ -28,4 +28,5 @@ def get_report_or_404(slug):
     if advreport is None:
         from django.http import Http404
         raise Http404('No AdvancedReport matches the given query.')
+    advreport.single_mode = False
     return advreport
