@@ -157,9 +157,6 @@
                 hide_options.hide();
             }
 
-            show_options.unbind().click(function(){ expand_row(); return false; });
-            hide_options.unbind().click(function(){ collapse_row(); return false; });
-
             function handle_checkbox_click()
             {
                 var hidden = $('#' + checkbox.attr('id').replace('checkbox_', 'hidden_checkbox_'));
@@ -182,6 +179,9 @@
                 var link = $(this);
                 link.unbind().click(function(e){ e.stopPropagation(); });
             });
+
+            show_options.unbind().click(function(){ expand_row(); return false; });
+            hide_options.unbind().click(function(){ collapse_row(); return false; });
 
             action_row.find('.action-form').each(function(){
                 var form = $(this);
