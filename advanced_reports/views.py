@@ -24,11 +24,13 @@ def _get_redirect(advreport, next=None):
         return redirect(reverse(advreport.urlname))
     return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}))
 
-def list(request, slug):
+def list(request, slug, ids=None, internal_mode=False, report_header_visible=True):
     advreport = get_report_or_404(slug)
     advreport.set_request(request)
+    advreport.internal_mode = internal_mode
+    advreport.report_header_visible = report_header_visible
 
-    def inner(request, slug):
+    def inner(request, slug, ids):
         context = {}
 
         # Handle POST
@@ -75,6 +77,8 @@ def list(request, slug):
             queryset = advreport.queryset()
 
         # Filter
+        if ids:
+            queryset = queryset.filter(pk__in=ids)
         object_list = advreport.get_filtered_items(queryset, request.GET)
 
         # CSV?
@@ -106,42 +110,13 @@ def list(request, slug):
                         'object_list': object_list,
                         'ordered_by': advreport.get_ordered_by(order_by)})
 
-        return render_to_response(advreport.template, context, context_instance=RequestContext(request))
+        func = render_to_string if advreport.internal_mode else render_to_response
+        return func(advreport.get_template(), context, context_instance=RequestContext(request))
 
     if advreport.decorate_views:
         inner = advreport.get_decorator()(inner)
 
-    return inner(request, slug)
-
-def detail(request, slug, id, response_in_html=True):
-    advreport = get_report_or_404(slug)
-    advreport.set_request(request)
-
-    def inner(request, slug, id):
-        context = {}
-        advreport.single_mode = True
-        queryset = advreport.queryset().filter(pk=id)
-
-        # Filter
-        object_list = advreport.get_filtered_items(queryset, request.GET)
-        
-        # Extra context?
-        context.update(advreport._extra_context(request))
-        
-        # Render
-        context.update({
-            'advreport': advreport,
-            'object': object_list[0] if queryset else None,
-        })
-
-        render_func = render_to_response if response_in_html else render_to_string
-
-        return render_func(advreport.single_item_template, context, context_instance=RequestContext(request))
-
-    if advreport.decorate_views:
-        inner = advreport.get_decorator()(inner)
-
-    return inner(request, slug, id)
+    return inner(request, slug, ids)
 
 def action(request, slug, method, object_id):
     advreport = get_report_or_404(slug)

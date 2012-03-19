@@ -2,7 +2,7 @@
 <div class="searchitem">
     <table class="header_info" style="table-layout: fixed;">
         <tr class="information-row table-row {{ object.advreport_class }}">
-            {% if not advreport.single_mode and advreport.multiple_actions %}
+            {% if advreport.multiple_actions %}
             <td style="width: 32px;">
                 <input class="information-checkbox" type="checkbox" id="checkbox_{{ object.advreport_object_id }}" name="checkbox_{{ object.advreport_object_id }}"/>
             </td>

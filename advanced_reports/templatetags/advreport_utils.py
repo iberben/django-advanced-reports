@@ -1,23 +1,29 @@
 from django import template
-from advanced_reports.views import detail
+from django.template.context import RequestContext
+from django.shortcuts import render_to_response
+
+from advanced_reports.views import list as advreport_list
+from advanced_reports import get_report_or_404
 
 register = template.Library()
-
+             
 @register.tag(name='advreport_detail')
 def advreport_detail(parser, token):
     try:
-        tag_name, advreport_slug, id = token.split_contents()
+        tag_name, advreport_slug, obj_list, internal_mode, report_header_visible = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError, "%s tag requires exactly 2 arguments" % token.contents.split()[0]
-    return AdvReportNode(advreport_slug, id)
+        raise template.TemplateSyntaxError, "%s tag requires exactly 4 argument" % token.contents.split()[0]
+    return AdvReportNode(advreport_slug, obj_list, internal_mode, report_header_visible)
 
 class AdvReportNode(template.Node):
-    def __init__(self, advreport_slug, id):
+    def __init__(self, advreport_slug, obj_list, internal_mode, report_header_visible):
         if isinstance(advreport_slug, str):
             self.advreport_slug = advreport_slug
         else:
             self.advreport_slug = template.Variable(advreport_slug)
-        self.id = template.Variable(id)
+        self.obj_list = template.Variable(obj_list)
+        self.internal_mode = internal_mode
+        self.report_header_visible = report_header_visible
         self.request = template.Variable('request')
     
     def render(self, context):
@@ -26,8 +32,26 @@ class AdvReportNode(template.Node):
                 slug = self.advreport_slug[1:-1]
             else:
                 slug = self.advreport_slug.resolve(context)
-            id = self.id.resolve(context)
+            obj_list = self.obj_list.resolve(context)
+            internal_mode = self.internal_mode.lower() == 'true'
+            report_header_visible = self.report_header_visible.lower() == 'true'
             request = self.request.resolve(context)
-            return detail(request, slug, id, False)
+            ids = []
+            if isinstance(obj_list, list):
+                ids = [o.pk for o in obj_list]
+            else:
+                ids = [obj_list.id,]
+            return advreport_list(request, slug, ids, internal_mode, report_header_visible)
         except Exception, e:
              return e
+
+@register.tag(name='advreport_script')
+def advreport_script(parser, token):
+    try:
+        tag_name, advreport_slug = token.split_contents()
+    except ValueError:
+        raise template.TemplateSyntaxError, "%s tag requires exactly 1 argument" % token.contents.split()[0]
+    request = template.Variable('request')
+    
+    advreport = get_report_or_404(advreport_slug)
+    return render_to_response('advanced_reports/inc_script', {'advreport':advreport}, context_instance=RequestContext(request))

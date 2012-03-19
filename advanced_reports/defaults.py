@@ -259,10 +259,10 @@ class AdvancedReport(object):
     uses a custom view for items. Make sure to base it off the original and please keep the "action-row".
     '''
 
-    single_item_template = 'advanced_reports/inc_single_content.html'
+    internal_template = ''
     '''
-    Optional. Override this to specify the single item template. Rendered when in single mode.
-    Make sure to base it off the original and please keep the "action-row". Use detail view for rendering.
+    Optional. Override this to specify the internal template. This is required when your normal template
+    uses a custom template for items. Make sure to base it off the original and please keep the "action-row".
     '''
 
     decorate_views = False
@@ -308,6 +308,11 @@ class AdvancedReport(object):
     '''
     Controls the visibility of the table header.
     '''
+
+    report_header_visible = True
+    '''
+    Controls the visibility of the report header
+    '''
     
     show_actions_separator = True
     '''
@@ -324,10 +329,10 @@ class AdvancedReport(object):
     Show the actions of an item only when the user hovers over the item
     '''
 
-    single_mode = False
+    internal_mode = False
     '''
-    Determines if the advanced report should display a single item. No group actions will
-    be displayed. To display a single item, please use advanced_reports.views.detail.
+    Determines if the advanced report should display a only single items. Used when you want to display
+    to report in an other template
     '''
 
     def queryset(self):
@@ -481,6 +486,18 @@ class AdvancedReport(object):
         Returns the number of items in the report.
         '''
         return self._queryset(request=None).count()
+
+    def get_template(self):
+        '''
+        Get the template that needs to be rendered
+        '''
+        if self.internal_mode:
+            if self.internal_template:
+                return self.internal_template
+            else:
+                return self.template.replace('.html', '_internal.html')
+        else:
+            return self.template
     
     def _extra_context(self, request=None):
         context = {}

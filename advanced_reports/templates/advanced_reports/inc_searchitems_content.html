@@ -1,14 +1,14 @@
 {% load i18n pagination %}
 
-{% if not hide_header %}
-{% include "advanced_reports/inc_header.html" %}
+{% if advreport.report_header_visible %}
+    {% include "advanced_reports/inc_header.html" %}
 {% endif %}
 
 {% paginate paginated %}
 {% if advreport.header_visible %}
     <table class="data" style="table-layout: fixed;">
         <tr>
-            {% if not advreport.single_mode and advreport.multiple_actions %}
+            {% if advreport.multiple_actions %}
             <th style="width: 32px;"><input type="checkbox" name="selector" id="selector"/></th>
             {% endif %}
             {% for column_header in advreport.column_headers %}
