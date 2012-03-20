@@ -1,6 +1,6 @@
 from django import template
 from django.template.context import RequestContext
-from django.shortcuts import render_to_response
+from django.template.loader import render_to_string
 
 from advanced_reports.views import list as advreport_list
 from advanced_reports import get_report_or_404
@@ -51,7 +51,25 @@ def advreport_script(parser, token):
         tag_name, advreport_slug = token.split_contents()
     except ValueError:
         raise template.TemplateSyntaxError, "%s tag requires exactly 1 argument" % token.contents.split()[0]
-    request = template.Variable('request')
-    
-    advreport = get_report_or_404(advreport_slug)
-    return render_to_response('advanced_reports/inc_script', {'advreport':advreport}, context_instance=RequestContext(request))
+    return AdvReportScriptNode(advreport_slug)
+
+class AdvReportScriptNode(template.Node):
+    def __init__(self, slug):
+        self.slug = slug[1:-1]
+        self.request = template.Variable('request')
+
+    def render(self, context):
+        advreport = get_report_or_404(self.slug)
+        request = self.request.resolve(context)
+        return render_to_string('advanced_reports/inc_script.html', {'advreport':advreport}, context_instance=RequestContext(request))
+
+@register.tag(name='advreport_css')
+def advreport_css(parser, token):
+    return AdvReportCSSNode()
+
+class AdvReportCSSNode(template.Node):
+    def __init__(self):
+        pass
+
+    def render(self, context):
+        return render_to_string('advanced_reports/inc_css.html')
