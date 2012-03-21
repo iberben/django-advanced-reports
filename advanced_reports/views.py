@@ -77,7 +77,7 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
             queryset = advreport.queryset()
 
         # Filter
-        if ids:
+        if ids is not None:
             queryset = queryset.filter(pk__in=ids)
         object_list = advreport.get_filtered_items(queryset, request.GET)
 
