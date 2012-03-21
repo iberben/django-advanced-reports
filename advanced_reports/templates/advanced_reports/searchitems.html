@@ -16,9 +16,5 @@
 {% endblock %}
 
 {% block content %}
-    {% if advreport.single_mode %}
-        {% include "advanced_reports/inc_single_searchitems_content.html" %}
-    {% else %}
-        {% include "advanced_reports/inc_searchitems_content.html" %}
-    {% endif %}
+    {% include "advanced_reports/inc_searchitems_content.html" %}
 {% endblock %}

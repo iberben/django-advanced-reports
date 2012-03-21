@@ -1,12 +1,14 @@
 {% load i18n pagination %}
 
-{% include "advanced_reports/inc_header.html" %}
+{% if advreport.report_header_visible %}
+    {% include "advanced_reports/inc_header.html" %}
+{% endif %}
 
 {% paginate paginated %}
 <table class="data">
     {% if advreport.header_visible %}
     <tr>
-        {% if not advreport.single_mode and advreport.multiple_actions %}<th><input type="checkbox" name="selector" id="selector"/></th>{% endif %}
+        {% if advreport.multiple_actions %}<th><input type="checkbox" name="selector" id="selector"/></th>{% endif %}
         {% for column_header in advreport.column_headers %}
         <th{% if column_header.style %} style="{{ column_header.style }}"{% endif %}>
             {% if column_header.sortable %}

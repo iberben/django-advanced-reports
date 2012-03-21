@@ -94,7 +94,7 @@
 {% endif %}
 <div class="container bar">
     <div class="half left">
-        {% if not advreport.single_mode and advreport.multiple_actions %}
+        {% if advreport.multiple_actions %}
         <form method="post" action="." class="header-form no_disable multiple-action-form">
             {% csrf_token %}
             <table>
