@@ -670,7 +670,7 @@ class AdvancedReport(object):
         count = 0
         self.enrich_list(objects)
         for object in objects:
-            self.enrich_object(object, list=False)
+            self.enrich_object(object, list=False, request=request)
             if self.find_object_action(object, method) is not None:
                 self.get_action_callable(method)(object)
                 count += 1
