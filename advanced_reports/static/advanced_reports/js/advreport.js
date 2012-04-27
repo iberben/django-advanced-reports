@@ -405,23 +405,24 @@ $(function(){
 
                 instance.handle_lazy($('.help-text'));
                 instance.recycle();
-            },
-
-            handler: function(e, containers) {
-                this.connect_page();
             }
         });
 
-    var reports = [];
-    $('.advreport').each(function(){
-        var advr = new advreport($(this));
-        advr.connect_page();
-        reports.push(advr);
-    });
+    var reports = {};
+    function register_advreports() {
+        $('.advreport').each(function(){
+            var slug = $(this).data('slug');
+            if (! (slug in reports)) {
+                var advr = new advreport($(this));
+                reports[slug] = advr;
+            }
+        });
+    }
 
     function connect_advreports() {
-        for (var advr in reports) {
-            adv.handler();
+        register_advreports();
+        for (var slug in reports) {
+            reports[slug].connect_page();
         }
     }
 
@@ -429,4 +430,5 @@ $(function(){
     $(document).bind('paginatorPageReplaced', connect_advreports);
     $(document).unbind('tabLoaded', connect_advreports);
     $(document).bind('tabLoaded', connect_advreports);
+    connect_advreports();
 });
