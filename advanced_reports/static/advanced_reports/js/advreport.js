@@ -334,7 +334,7 @@ $(function(){
 
             connect_link: function(link, action_row, data_row) {
                 var instance = this;
-                
+
                 if (link.attr('href').indexOf('_view') != -1) {
                     if (!link.data('ajax'))
                         return;
@@ -419,14 +419,14 @@ $(function(){
         reports.push(advr);
     });
 
-    function call_handler() {
+    function connect_advreports() {
         for (var advr in reports) {
             adv.handler();
         }
     }
 
-    $(document).unbind('paginatorPageReplaced', call_handler);
-    $(document).bind('paginatorPageReplaced', call_handler);
-    $(document).unbind('tabLoaded', call_handler);
-    $(document).bind('tabLoaded', call_handler);
+    $(document).unbind('paginatorPageReplaced', connect_advreports);
+    $(document).bind('paginatorPageReplaced', connect_advreports);
+    $(document).unbind('tabLoaded', connect_advreports);
+    $(document).bind('tabLoaded', connect_advreports);
 });
