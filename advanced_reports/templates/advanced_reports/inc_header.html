@@ -114,7 +114,7 @@
                         {% endfor %}
                         {% for action in advreport.item_actions %}
                             {% if not action.form and action.confirm and not action.hidden and action.multiple_display %}
-                                <span style="display: none;" class="confirm_{{ action.method }}" x:confirm="{% blocktrans with action.verbose_name as action_name and advreport.verbose_name_plural as items %}{{ action_name }}: Are you sure you want to execute this on the selected {{ items }}?{% endblocktrans %}"></span>
+                                <span style="display: none;" class="confirm_{{ action.method }}" data-confirm="{% blocktrans with action.verbose_name as action_name and advreport.verbose_name_plural as items %}{{ action_name }}: Are you sure you want to execute this on the selected {{ items }}?{% endblocktrans %}"></span>
                             {% endif %}
                         {% endfor %}
                         <select id="select-method" name="method">

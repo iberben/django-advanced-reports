@@ -5,16 +5,6 @@
 {% block page_title %}{{ advreport.title }} - {{ block.super }}{% endblock %}
 {% block title %}{{ advreport.title }}{% endblock %}
 
-{% block extra_head %}
-    {{ block.super }}
-    {% include "advanced_reports/inc_css.html" %}
-{% endblock %}
-
-{% block extra_footer %}
-    {{ block.super }}
-    {% include "advanced_reports/inc_script.html" %}
-{% endblock %}
-
 {% block content %}
     {% include "advanced_reports/inc_searchitems_content.html" %}
 {% endblock %}
