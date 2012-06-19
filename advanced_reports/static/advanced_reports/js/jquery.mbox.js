@@ -230,11 +230,13 @@
                             container.find('input[type=submit]').hide();
                             var content = data;
                             
-                            if (optional_settings['response_type'] == RESPONSE_JSON) {
+                            if (optional_settings['response_type'] == RESPONSE_JSON && data[0] == '{') {
                                 json = JSON.parse(data);
                                 if (json.status == 'SUCCESS') {
                                     close = true;
                                     content = json.content;
+                                } else {
+                                    data = json.content;
                                 }
                             } else {
                                 if (data == 'OK') {
@@ -248,6 +250,7 @@
                                 $.mbox.close();
                             } else {
                                 container.html(data);
+                                container.find('input[type=submit]').hide();
                                 $.mbox.reposition_box();
                             }
                         }
