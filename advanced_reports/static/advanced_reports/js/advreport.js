@@ -410,6 +410,7 @@ $(function(){
 
     var reports = {};
     function register_advreports() {
+        reports = {};
         $('.advreport').each(function(){
             var slug = $(this).data('slug');
             if (! (slug in reports)) {
