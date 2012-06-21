@@ -42,11 +42,13 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
 
             if not method:
                 messages.warning(request, _(u'You did not select any action.'))
-                return _get_redirect(advreport)
+                if not advreport.internal_mode:
+                    return _get_redirect(advreport)
 
             if len(selected_object_ids) == 0:
                 messages.warning(request, _(u'You did not select any %(object)s.') % {'object': advreport.verbose_name})
-                return _get_redirect(advreport)
+                if not advreport.internal_mode:
+                    return _get_redirect(advreport)
 
             try:
                 response, count = advreport.handle_multiple_actions(method, selected_object_ids, request)
@@ -59,7 +61,8 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
                                                        'objects': advreport.verbose_name_plural if count != 1 else advreport.verbose_name})
                 else:
                     messages.error(request, _(u'No selected %(object)s is applicable for this action.') % {'object': advreport.verbose_name})
-                return _get_redirect(advreport)
+                if not advreport.internal_mode:
+                    return _get_redirect(advreport)
             except ActionException, e:
                 context.update({'error': e.msg})
 
@@ -77,7 +80,7 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
             queryset = advreport.queryset()
 
         # Filter
-        if ids:
+        if ids is not None:
             queryset = queryset.filter(pk__in=ids)
         object_list = advreport.get_filtered_items(queryset, request.GET)
 

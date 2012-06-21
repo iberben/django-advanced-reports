@@ -45,23 +45,17 @@ class AdvReportNode(template.Node):
         except Exception, e:
              return e
 
-@register.tag(name='advreport_script')
-def advreport_script(parser, token):
-    try:
-        tag_name, advreport_slug = token.split_contents()
-    except ValueError:
-        raise template.TemplateSyntaxError, "%s tag requires exactly 1 argument" % token.contents.split()[0]
-    return AdvReportScriptNode(advreport_slug)
+@register.tag(name='advreport_js')
+def advreport_js(parser, token):
+    return AdvReportJSNode()
 
-class AdvReportScriptNode(template.Node):
-    def __init__(self, slug):
-        self.slug = slug[1:-1]
+class AdvReportJSNode(template.Node):
+    def __init__(self):
         self.request = template.Variable('request')
 
     def render(self, context):
-        advreport = get_report_or_404(self.slug)
         request = self.request.resolve(context)
-        return render_to_string('advanced_reports/inc_script.html', {'advreport':advreport}, context_instance=RequestContext(request))
+        return render_to_string('advanced_reports/inc_js.html', {}, context_instance=RequestContext(request))
 
 @register.tag(name='advreport_css')
 def advreport_css(parser, token):
@@ -69,7 +63,8 @@ def advreport_css(parser, token):
 
 class AdvReportCSSNode(template.Node):
     def __init__(self):
-        pass
+        self.request = template.Variable('request')
 
     def render(self, context):
-        return render_to_string('advanced_reports/inc_css.html')
+        request = self.request.resolve(context)
+        return render_to_string('advanced_reports/inc_css.html', {}, context_instance=RequestContext(request))

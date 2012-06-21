@@ -2,8 +2,8 @@
         method="post"
         action="{% if action.form_via_ajax %}{% url advanced_reports_form advreport.slug action.method object.advreport_object_id %}{% else %}{% url advanced_reports_action advreport.slug action.method object.advreport_object_id %}{% endif %}"
         class="action-form {% if action.collapse_form %}collapse-form{% endif %}"
-        {% if action.confirm %}x:confirm="{{ action.confirm }}"{% endif %}
-        {% if action.next_on_success %}x:next="true"{% endif %}>
+        {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}
+        {% if action.next_on_success %}data-next="true"{% endif %}>
     {% csrf_token %}
     
     {% if not action.form_via_ajax %}

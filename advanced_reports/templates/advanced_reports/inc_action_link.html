@@ -1,8 +1,8 @@
 {% load i18n %}
 <a class="action-link {% if action.form_via_ajax %}form-via-ajax{% endif %} {% if action.css_class %}{{ action.css_class }}{% endif %}"
-    {% if action.confirm %}x:confirm="{{ action.confirm }}"{% endif %}
-    {% if action.next_on_success %}x:next="true"{% endif %}
-    {% if action.link_via_ajax %}x:ajax="true"{% endif %}
-    {% if action.submit %}x:submit="{{ action.submit }}"{% endif %}
+    {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}
+    {% if action.next_on_success %}data-next="true"{% endif %}
+    {% if action.link_via_ajax %}data-ajax="true"{% endif %}
+    {% if action.submit %}data-submit="{{ action.submit }}"{% endif %}
     href="{% if action.form_via_ajax %}{% url advanced_reports_form advreport.slug action.method object.advreport_object_id %}{% else %}{% url advanced_reports_action advreport.slug action.method object.advreport_object_id %}{% endif %}"
-    >{{ action.verbose_name }}<img class="loader" src="{{ MEDIA_URL }}/img/loader.gif" alt=""/></a>
+    >{{ action.verbose_name }}<img class="loader" src="{{ STATIC_URL }}common/img/loader.gif" alt=""/></a>
