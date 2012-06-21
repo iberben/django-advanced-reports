@@ -611,7 +611,9 @@ class AdvancedReport(object):
         if hasattr(self, 'queryset_request'):
             qs = self.queryset_request(request)
             if request:
-                def convert_value(v):
+                def convert_value(k, v):
+                    if k[-4:] == '__in':
+                        return v.split(',')
                     if v == u'True':
                         return True
                     elif v == u'False':
@@ -621,7 +623,7 @@ class AdvancedReport(object):
                 
                 try:
                     fieldnames = [f.name for f in self.models[0]._meta.fields]
-                    lookup = dict((k, convert_value(v)) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
+                    lookup = dict((k, convert_value(k, v)) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
                     if lookup:
                         qs = qs.filter(**lookup)
                 except:
@@ -670,7 +672,7 @@ class AdvancedReport(object):
         count = 0
         self.enrich_list(objects)
         for object in objects:
-            self.enrich_object(object, list=False)
+            self.enrich_object(object, list=False, request=request)
             if self.find_object_action(object, method) is not None:
                 self.get_action_callable(method)(object)
                 count += 1
@@ -753,7 +755,7 @@ class AdvancedReport(object):
         return mark_safe(html)
 
     def objects(self, request=None):
-        return EnrichedQueryset(self.queryset(request), self)
+        return EnrichedQueryset(self._queryset(request), self)
 
     def enrich_object(self, o, list=True, request=None):
         '''
@@ -905,7 +907,7 @@ class EnrichedQueryset(object):
         return self.queryset.__iter__()
 
     def __len__(self):
-        return len(self.queryset)
+        return self.queryset.count()
 
     def _enrich_list(self, l):
         # We run enrich_list on all items in one pass.
