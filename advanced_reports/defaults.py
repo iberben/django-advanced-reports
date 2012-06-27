@@ -450,7 +450,7 @@ class AdvancedReport(object):
         Example:
 
         def get_extra_information(self, item):
-            return u'<div class="lazy" x:method="credit_view"></div>'
+            return u'<div class="lazy" data-method="credit_view"></div>'
 
         item_actions = (
             action(method='credit_view', verbose_name=u'', group='mygroup', hidden=True),
