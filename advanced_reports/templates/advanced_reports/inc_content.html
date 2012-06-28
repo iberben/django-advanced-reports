@@ -38,9 +38,11 @@
     {% for object in paginated.object_list %}
         {% include "advanced_reports/item_row.html" %}
     {% empty %}
+    <tr>
         <td colspan="{% if not advreport.single_mode and advreport.multiple_actions %}{{ advreport.column_headers|length|add:2 }}{% else %}{{ advreport.column_headers|length|add:1 }}{% endif %}" class="alignCenter italic lighter">
             {{ advreport.get_empty_text }}
         </td>
+    </tr>
     {% endfor %}
 </table>
 {% endpaginate %}
