@@ -156,7 +156,7 @@
 
             // Loading image
             loading_image = $('<div class="mbox_loading" />').append(
-                    $('<img alt="" src="/static/common/img/modybox/loading.gif" />'));
+                    $('<img alt="" src="/static/advanced_reports/img/modybox/loader.gif" />'));
 
             // Overlay opacity
             mbox_overlay.css('opacity', overlay_opacity);
@@ -229,8 +229,9 @@
                             mbox_footer.find('input').removeAttr("disabled");
                             container.find('input[type=submit]').hide();
                             var content = data;
+                            var looks_like_json = $.inArray($.trim(data)[0], ['{', '[', '"']) != -1;
                             
-                            if (optional_settings['response_type'] == RESPONSE_JSON && data[0] == '{') {
+                            if (optional_settings['response_type'] == RESPONSE_JSON && looks_like_json) {
                                 json = JSON.parse(data);
                                 if (json.status == 'SUCCESS') {
                                     close = true;

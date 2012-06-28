@@ -18,7 +18,7 @@ $(function(){
                 var adv_report = this.adv_report;
                 adv_report.find('.date_range').each(function() {
                     var date_picker_options = {showOn: 'button',
-                                               buttonImage: '{{ STATIC_URL }}advanced_reports/img/calendar.png',
+                                               buttonImage: JS_STATIC_URL + 'advanced_reports/img/calendar.png',
                                                buttonImageOnly: true,
                                                dateFormat: 'yy-mm-dd',
                                                maxDate:'+0D',
@@ -102,9 +102,11 @@ $(function(){
             },
 
             handle_lazy: function(container) {
+                var adv_url = this.adv_url;
+                
                 container.find('.lazy').each(function(){
                     var lazy_div = $(this);
-                    lazy_div.html('<img class="loader" src="{{ STATIC_URL }}common/img/loader.gif" alt=""/>');
+                    lazy_div.html('<img class="loader" src="' + JS_STATIC_URL + 'advanced_reports/img/modybox/loading.gif" alt=""/>');
                     lazy_div.find('.loader').show();
                     var object_id = '0';
                     if (container.attr('id'))
