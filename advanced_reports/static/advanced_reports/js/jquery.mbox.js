@@ -156,7 +156,7 @@
 
             // Loading image
             loading_image = $('<div class="mbox_loading" />').append(
-                    $('<img alt="" src="' + JS_STATIC_URL + 'advanced_reports/img/modybox/loader.gif" />'));
+                    $('<img alt="" src="' + JS_STATIC_URL + 'advanced_reports/img/modybox/loading.gif" />'));
 
             // Overlay opacity
             mbox_overlay.css('opacity', overlay_opacity);
