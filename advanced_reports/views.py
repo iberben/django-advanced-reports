@@ -71,9 +71,9 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
         order_by = request.GET.get('order', default_order_by)
         if order_by:
             order_field = order_by.split('__')[0].split(',')[0].strip('-')
-            ascending = order_by[:1] != '-'         
-            context.update({'order_field': order_field, 
-                            'ascending': ascending, 
+            ascending = order_by[:1] != '-'
+            context.update({'order_field': order_field,
+                            'ascending': ascending,
                             'order_by': order_by.strip('-')})
             queryset = advreport.get_sorted_queryset(order_by, request=request)
         else:
@@ -103,10 +103,10 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
 
         # Paginate
         paginated = paginate(request, object_list, num_per_page=advreport.items_per_page, use_get_parameters=True)
-        
+
         # Extra context?
         context.update(advreport._extra_context(request))
-        
+
         # Render
         context.update({'advreport': advreport,
                         'paginated': paginated,
