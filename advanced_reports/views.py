@@ -241,7 +241,7 @@ def ajax_form(request, slug, method, object_id):
                 object = advreport.get_item_for_id(object_id)
                 advreport.enrich_object(object, request=request)
                 context.update({'success': a.get_success_message(), 'object':object, 'action': a})
-                response = render_to_string(advreport.item_template, context)
+                response = render_to_string(advreport.item_template, context, context_instance=RequestContext(request))
                 return HttpResponse(simplejson.dumps({
                     'status': 'SUCCESS',
                     'content': response
