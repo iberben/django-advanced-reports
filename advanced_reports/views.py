@@ -227,6 +227,9 @@ def ajax_form(request, slug, method, object_id):
         object = advreport.get_item_for_id(object_id)
         advreport.enrich_object(object, request=request)
         a = advreport.find_object_action(object, method)
+        if a is None:
+            # No appropriate action found (maybe it was filtered out?)
+            raise Http404
 
         context = {'advreport':advreport}
 
