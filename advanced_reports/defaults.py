@@ -89,6 +89,11 @@ class action(object):
     to display your form.
     '''
 
+    form_instance = None
+    '''
+    Optional. If set, this instance will be used to pass to a ModelForm.
+    '''
+
     next_on_success = False
     '''
     Optional. If True, when an action was executed successfully, the current row will be collapsed and the next row will
@@ -131,7 +136,9 @@ class action(object):
         new_action = action(**self.attrs_dict)
         if self.form is not None:
             if issubclass(self.form, forms.ModelForm):
-                new_action.form = self.form(data=data, prefix=prefix, instance=instance)
+                cls_instance = self.get_form_instance(instance)
+                cls_instance = cls_instance if cls_instance else instance
+                new_action.form = self.form(data=data, prefix=prefix, instance=cls_instance)
             else:
                 new_action.form = self.form(data=data, prefix=prefix)
 
@@ -147,6 +154,11 @@ class action(object):
 
     def get_success_message(self):
         return self.success or _(u'Successfully executed "%s"') % self.verbose_name
+
+    def get_form_instance(self, instance=None):
+        if self.form_instance:
+            return self.form_instance(instance) if callable(self.form_instance) else form_instance
+        return instance
 
 class ActionException:
     def __init__(self, msg=None, form=None):
