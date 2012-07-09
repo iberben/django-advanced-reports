@@ -136,7 +136,6 @@ def action(request, slug, method, object_id):
         if request.method == 'POST':
             if a.form is not None:
                 if issubclass(a.form, forms.ModelForm):
-                    print '>>> ', type(a.form)
                     form = a.form(request.POST, instance=a.get_form_instance(object), prefix=object_id)
                 else:
                     form = a.form(request.POST, prefix=object_id)
@@ -173,7 +172,6 @@ def ajax(request, slug, method, object_id):
         try:
             if request.method == 'POST' and a.form is not None:
                 if issubclass(a.form, forms.ModelForm):
-                    print '>>> ', type(a.form)
                     form = a.form(request.POST, instance=a.get_form_instance(object), prefix=object_id)
                 else:
                     form = a.form(request.POST, prefix=object_id)
@@ -234,7 +232,6 @@ def ajax_form(request, slug, method, object_id):
 
         if request.method == 'POST' and a.form is not None:
             if issubclass(a.form, forms.ModelForm):
-                print '>>> ', type(a.form)
                 form = a.form(request.POST, instance=a.get_form_instance(object), prefix=object_id)
             else:
                 form = a.form(request.POST, prefix=object_id)
