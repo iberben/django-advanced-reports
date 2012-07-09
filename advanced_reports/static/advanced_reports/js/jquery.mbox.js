@@ -156,7 +156,7 @@
 
             // Loading image
             loading_image = $('<div class="mbox_loading" />').append(
-                    $('<img alt="" src="/static/advanced_reports/img/modybox/loader.gif" />'));
+                    $('<img alt="" src="' + JS_STATIC_URL + 'advanced_reports/img/modybox/loading.gif" />'));
 
             // Overlay opacity
             mbox_overlay.css('opacity', overlay_opacity);
@@ -202,7 +202,7 @@
 
     $.mbox_ajax_form = function(title, url, save_caption, optional_settings) {
         // Container in which the AJAX view is placed
-        var container = $('<div />').html('<img alt="" src="/static/common/img/modybox/loading.gif" />' + _('Loading...'));
+        var container = $('<div />').html('<img alt="" src="' + JS_STATIC_URL + 'advanced_reports/img/modybox/loading.gif" />' + _('Loading...'));
 
         // Create mbox
         var settings = { // These settings cannot be overridden in optional_settings
