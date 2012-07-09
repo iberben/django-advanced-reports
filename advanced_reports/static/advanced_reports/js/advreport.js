@@ -137,6 +137,16 @@ $(function(){
                 var checkbox        = data_row.find('.information-checkbox');
                 var instance        = this;
 
+                var id = checkbox.attr('id').replace('checkbox_', '');
+                var hidden = $('#hidden_checkbox_' + id);
+                if (hidden.length <= 0) {
+                    $('#advreport_' + instance.adv_slug + ' form.multiple-action-form select').before(
+                        $('<input type="hidden" />').attr('name', 'checkbox_0000_' + id)
+                                    .attr('id', 'hidden_checkbox_' + id)
+                                    .attr('value', false)
+                    );
+                }
+
                 if (initialHide && $('.action-row').length > 1)
                     collapse_row();
                 else
@@ -210,6 +220,7 @@ $(function(){
                     handle_checkbox_click();
                     e.stopPropagation();
                 });
+                handle_checkbox_click();
                 
                 action_row.find('.form-via-ajax').each(function(){
                     var link = $(this);
@@ -415,6 +426,7 @@ $(function(){
         reports = {};
         $('.advreport').each(function(){
             var slug = $(this).data('slug');
+            $(this).find('form.multiple-action-form input[name^="checkbox_"]:hidden').remove();
             if (! (slug in reports)) {
                 var advr = new advreport($(this));
                 reports[slug] = advr;
