@@ -137,14 +137,16 @@ $(function(){
                 var checkbox        = data_row.find('.information-checkbox');
                 var instance        = this;
 
-                var id = checkbox.attr('id').replace('checkbox_', '');
-                var hidden = $('#hidden_checkbox_' + id);
-                if (hidden.length <= 0) {
-                    $('#advreport_' + instance.adv_slug + ' form.multiple-action-form select').before(
-                        $('<input type="hidden" />').attr('name', 'checkbox_0000_' + id)
-                                    .attr('id', 'hidden_checkbox_' + id)
-                                    .attr('value', false)
-                    );
+                if (checkbox && checkbox.attr('id')) {
+                    var id = checkbox.attr('id').replace('checkbox_', '');
+                    var hidden = $('#hidden_checkbox_' + id);
+                    if (hidden.length <= 0) {
+                        $('#advreport_' + instance.adv_slug + ' form.multiple-action-form select').before(
+                            $('<input type="hidden" />').attr('name', 'checkbox_0000_' + id)
+                                        .attr('id', 'hidden_checkbox_' + id)
+                                        .attr('value', false)
+                        );
+                    }
                 }
 
                 if (initialHide && $('.action-row').length > 1)
@@ -220,7 +222,9 @@ $(function(){
                     handle_checkbox_click();
                     e.stopPropagation();
                 });
-                handle_checkbox_click();
+                if (checkbox && checkbox.attr('id')){
+                    handle_checkbox_click();
+                }
                 
                 action_row.find('.form-via-ajax').each(function(){
                     var link = $(this);
