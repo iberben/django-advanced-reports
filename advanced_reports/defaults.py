@@ -138,9 +138,7 @@ class action(object):
         new_action = action(**self.attrs_dict)
         if self.form is not None:
             if issubclass(self.form, forms.ModelForm):
-                cls_instance = self.get_form_instance(instance)
-                cls_instance = cls_instance if cls_instance else instance
-                new_action.form = self.form(data=data, prefix=prefix, instance=cls_instance)
+                new_action.form = self.form(data=data, prefix=prefix, instance=instance)
             else:
                 new_action.form = self.form(data=data, prefix=prefix)
 
@@ -157,9 +155,12 @@ class action(object):
     def get_success_message(self):
         return self.success or _(u'Successfully executed "%s"') % self.verbose_name
 
-    def get_form_instance(self, *args, **kwargs):
+    def get_form_instance(self, instance, *args, **kwargs):
+        if 'param' in kwargs and not kwargs['param']:
+            kwargs.pop('param')
+        
         if self.form_instance:
-            return self.form_instance(*args, **kwargs) if callable(self.form_instance) else form_instance
+            return self.form_instance(instance, *args, **kwargs) if callable(self.form_instance) else form_instance
         return instance
 
 class ActionException:
