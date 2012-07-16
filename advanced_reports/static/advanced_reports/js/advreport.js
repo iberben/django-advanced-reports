@@ -422,7 +422,6 @@ $(function(){
                 var instance = this;
                 this.adv_report.find('.action-row').each(function(){
                     instance.connect_row($(this), true);
-                    console.log($(this));
                 });
 
                 instance.handle_lazy($('.help-text'));
