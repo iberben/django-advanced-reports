@@ -62,12 +62,12 @@ class action(object):
     Optional. Give this a form class and your action will be displayed as a form. If your form is a subclass of ModelForm,
     the instance is automatically filled in for you. This way, it's easy to make some data editable in your report.
     '''
-    
+
     form_via_ajax = False
     '''
     Optional. If True, the form will be loaded via mbox.
     '''
-    
+
     link_via_ajax = False
     '''
     Optional. If True, the link behind the action will be loaded via mbox.
@@ -92,6 +92,8 @@ class action(object):
     form_instance = None
     '''
     Optional. If set, this instance will be used to pass to a ModelForm.
+    You can also supply a callable. The kwargs are: "instance" and optionally "param".
+    "param" will be supplied by the view "ajax_form".
     '''
 
     next_on_success = False
@@ -155,9 +157,9 @@ class action(object):
     def get_success_message(self):
         return self.success or _(u'Successfully executed "%s"') % self.verbose_name
 
-    def get_form_instance(self, instance=None):
+    def get_form_instance(self, *args, **kwargs):
         if self.form_instance:
-            return self.form_instance(instance) if callable(self.form_instance) else form_instance
+            return self.form_instance(*args, **kwargs) if callable(self.form_instance) else form_instance
         return instance
 
 class ActionException:
@@ -180,7 +182,7 @@ class AdvancedReport(object):
     request = None
     '''
     Optional. The request
-    ''' 
+    '''
 
     fields = None
     '''
@@ -325,17 +327,17 @@ class AdvancedReport(object):
     '''
     Controls the visibility of the report header
     '''
-    
+
     show_actions_separator = True
     '''
     Shows the separator between actions.
     '''
-    
+
     action_list_type = ActionType.LINKS
     '''
     Show the actions as LINKS or BUTTONS.
     '''
-    
+
     show_actions_only_on_hover = True
     '''
     Show the actions of an item only when the user hovers over the item
@@ -384,9 +386,9 @@ class AdvancedReport(object):
         return True
 
     def set_request(self, request):
-        ''' 
+        '''
         Set the request for this report.
-        ''' 
+        '''
         self.request = request
 
     '''
@@ -510,26 +512,26 @@ class AdvancedReport(object):
                 return self.template.replace('.html', '_internal.html')
         else:
             return self.template
-    
+
     def _extra_context(self, request=None):
         context = {}
         context.update(self.extra_context_request(request))
         context.update(self.extra_context())
         return context
-    
+
     def extra_context(self):
         '''
         (deprecated) Implement this to define some extra context for your template.
         '''
         return {}
-    
+
     def extra_context_request(self, request=None):
         '''
         Implement this to define some extra context for your template,
         based on the request.
         '''
         return {}
-    
+
     def get_filtered_items(self, queryset, params):
         filter_query = None
         date_range_query = None
@@ -618,7 +620,7 @@ class AdvancedReport(object):
                 return EnrichedQueryset(queryset, self)
         else:
             return EnrichedQueryset(fake_found, self)
-    
+
     def _queryset(self, request):
         if hasattr(self, 'queryset_request'):
             qs = self.queryset_request(request)
@@ -632,7 +634,7 @@ class AdvancedReport(object):
                         return False
                     else:
                         return v
-                
+
                 try:
                     fieldnames = [f.name for f in self.models[0]._meta.fields]
                     lookup = dict((k, convert_value(k, v)) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
@@ -643,7 +645,7 @@ class AdvancedReport(object):
             return qs
         else:
             return self.queryset()
-    
+
     def get_sorted_queryset(self, by_field, request=None):
         field_name = by_field.split('__')[0].split(',')[0]
         field_name = field_name[1:] if field_name[0] == '-' else field_name

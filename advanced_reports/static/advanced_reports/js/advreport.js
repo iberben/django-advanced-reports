@@ -103,7 +103,7 @@ $(function(){
 
             handle_lazy: function(container) {
                 var adv_url = this.adv_url;
-                
+                var advreport = this;
                 container.find('.lazy').each(function(){
                     var lazy_div = $(this);
                     lazy_div.html('<img class="loader" src="' + JS_STATIC_URL + 'advanced_reports/img/modybox/loading.gif" alt=""/>');
@@ -111,6 +111,8 @@ $(function(){
                     var object_id = '0';
                     if (container.attr('id'))
                         object_id = container.attr('id').split('_')[1];
+                    
+                    console.log(this);
                     
                     var url = adv_url + 'action/' + lazy_div.data('method') + '/' + object_id + '/';
                     $.ajax({
@@ -121,6 +123,7 @@ $(function(){
                             lazy_div.find('.loader').hide();
                             //lazy_div.removeClass('lazy');
                             lazy_div.html(x);
+                            advreport.connect_row(container, false, true);
                         },
                         'error': function(x) {
                             lazy_div.find('.loader').hide();
@@ -130,7 +133,7 @@ $(function(){
                 });
             },
 
-            connect_row: function(action_row, initialHide) {
+            connect_row: function(action_row, initialHide, noLazy) {
                 var data_row        = action_row.prev();
                 var show_options    = data_row.find('.show-options');
                 var hide_options    = data_row.find('.hide-options');
@@ -163,7 +166,8 @@ $(function(){
                     show_options.hide();
                     hide_options.show();
                     action_row.find('input[type=text]').eq(0).focus();
-                    instance.handle_lazy(action_row);
+                    if (!noLazy)
+                        instance.handle_lazy(action_row);
                 }
 
                 function collapse_row()
@@ -418,6 +422,7 @@ $(function(){
                 var instance = this;
                 this.adv_report.find('.action-row').each(function(){
                     instance.connect_row($(this), true);
+                    console.log($(this));
                 });
 
                 instance.handle_lazy($('.help-text'));

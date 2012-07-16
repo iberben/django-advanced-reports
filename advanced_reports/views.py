@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_entities, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
+from django.db import transaction
 
 from django_ajax.pagination import paginate
 
@@ -24,6 +25,7 @@ def _get_redirect(advreport, next=None):
         return redirect(reverse(advreport.urlname))
     return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}))
 
+@transaction.autocommit
 def list(request, slug, ids=None, internal_mode=False, report_header_visible=True):
     advreport = get_report_or_404(slug)
     advreport.set_request(request)
@@ -156,6 +158,8 @@ def action(request, slug, method, object_id):
 
     return inner(request, slug, method, object_id)
 
+
+@transaction.autocommit
 def ajax(request, slug, method, object_id):
     advreport = get_report_or_404(slug)
     advreport.set_request(request)
@@ -207,6 +211,8 @@ def ajax(request, slug, method, object_id):
 
     return inner(request, slug, method, object_id)
 
+
+@transaction.autocommit
 def count(request, slug):
     advreport = get_report_or_404(slug)
     advreport.set_request(request)
@@ -219,7 +225,9 @@ def count(request, slug):
 
     return inner(request, slug)
 
-def ajax_form(request, slug, method, object_id):
+
+@transaction.autocommit
+def ajax_form(request, slug, method, object_id, param=None):
     advreport = get_report_or_404(slug)
     advreport.set_request(request)
 
@@ -235,7 +243,7 @@ def ajax_form(request, slug, method, object_id):
 
         if request.method == 'POST' and a.form is not None:
             if issubclass(a.form, forms.ModelForm):
-                form = a.form(request.POST, instance=a.get_form_instance(object), prefix=object_id)
+                form = a.form(request.POST, instance=a.get_form_instance(object, param=param), prefix=object_id)
             else:
                 form = a.form(request.POST, prefix=object_id)
 
@@ -258,7 +266,7 @@ def ajax_form(request, slug, method, object_id):
             return render_to_response('advanced_reports/ajax_form.html', context, context_instance=RequestContext(request))
 
         elif a.form:
-            a = a.copy_with_instanced_form(prefix=object_id, instance=advreport.get_item_for_id(object_id))
+            a = a.copy_with_instanced_form(prefix=object_id, instance=a.get_form_instance(advreport.get_item_for_id(object_id), param=param))
             context = {'object': object, 'advreport': advreport, 'success': a.get_success_message(), 'action': a}
             return render_to_response(
                 'advanced_reports/ajax_form.html',
