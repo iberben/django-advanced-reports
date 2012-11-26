@@ -252,7 +252,7 @@ $(function(){
                                 'width': '600px',
                                 'response_type': RESPONSE_JSON,
                                 'callback_ajax_posted_success': function(mbox_element, data){
-                                    instance.replace_rows(data, action_row, data_row, link.data('next') == "true");
+                                    instance.replace_rows(data, action_row, data_row, link.data('next') == true);
                                     return true;
                                 }
                             }
@@ -334,7 +334,7 @@ $(function(){
                             'dataType': 'text',
                             'data': form.serialize(),
                             'success': function(x) {
-                                instance.replace_rows(x, action_row, data_row, form.data('next') == "true");
+                                instance.replace_rows(x, action_row, data_row, form.data('next') == true);
                             },
                             'error': function(x) { $.mbox_error(_("Alert"), x.responseText); }
                         });
@@ -400,7 +400,7 @@ $(function(){
                                 'dataType': 'text',
                                 'success': function(x) {
                                     link.find('.loader').hide();
-                                    instance.replace_rows(x, action_row, data_row, link.data('next') == "true");
+                                    instance.replace_rows(x, action_row, data_row, link.data('next') == true);
                                 },
                                 'error': function(x) {
                                     link.find('.loader').hide();
