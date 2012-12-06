@@ -613,7 +613,7 @@
     }
 
     function getViewport () {
-        return [$(window).width(), $(window).height(), $(document).scrollLeft(), $(document).scrollTop()];
+        return [$(window).innerWidth(), $(window).innerHeight(), $(document).scrollLeft(), $(document).scrollTop()];
     };
 
     // Position box
@@ -622,8 +622,8 @@
 
         mbox_wrap.css({
 
-        'left' : ((mbox_wrap.width() + 40) > pos[0] ? pos[2] : pos[2] + Math.round((pos[0] - mbox_wrap.width() - 40) / 2)),
-        'top'  : ((mbox_wrap.height() + 50) > pos[1] ? pos[3] : (pos[3] + Math.round((pos[1] - mbox_wrap.height() - 50) / 2)))
+        'left' : ((mbox_wrap.innerWidth() + 40) > pos[0] ? pos[2] : pos[2] + Math.round((pos[0] - mbox_wrap.innerWidth() - 40) / 2)),
+        'top'  : ((mbox_wrap.innerHeight() + 50) > pos[1] ? pos[3] : (pos[3] + Math.round((pos[1] - mbox_wrap.innerHeight() - 50) / 2)))
 
         });
     };
@@ -633,7 +633,7 @@
         var pos = getViewport();
 
         // content width
-        var width = mbox_body.width() + 20;
+        var width = mbox_body.innerWidth() + 20;
 
         // Minimum width
         if (settings == undefined) {
@@ -659,7 +659,7 @@
 
         // Make sure the modybox is not heiger than the window
         mbox_content.css('height', "");
-        height = mbox_body.height();
+        height = mbox_body.innerHeight();
         if (height > pos[1])
         {
             height = pos[1] * 0.80;
