@@ -32,6 +32,14 @@
  */
 
 (function($) {
+    // Prevent multiple executions of this library
+    if (typeof $.mbox == 'function')
+    {
+        console.log('Warning: not using the jquery.mbox version from Advanced Reports.')
+        return;
+    }
+    
+    
     // Are we using IE?
     var isIE = ($.browser.msie && parseInt($.browser.version.substr(0,1)) < 8);
 
