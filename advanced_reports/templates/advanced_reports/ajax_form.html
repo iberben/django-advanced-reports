@@ -18,6 +18,8 @@
     <p>
         <input type="hidden" name="object_id" value="{{ object.advreport_object_id }}" />
         <input type="hidden" name="method" value="{{ action.method }}" />
+        {% if action.show_submit %}
         <input class="action-submit button-small" type="submit" value="{{ action.submit }}" />
+        {% endif %}
     </p>
 </form>

@@ -78,6 +78,11 @@ class action(object):
     Required when using form. This is the value of your submit button when using forms.
     '''
 
+    show_submit = True
+    '''
+    Optional. If True, the submit button will be shown.
+    '''
+
     collapse_form = False
     '''
     Optional. If True, the form gets an "inline" css class, useful when you have some forms that must be very compact.

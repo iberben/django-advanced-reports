@@ -112,8 +112,6 @@ $(function(){
                     if (container.attr('id'))
                         object_id = container.attr('id').split('_')[1];
                     
-                    console.log(this);
-                    
                     var url = adv_url + 'action/' + lazy_div.data('method') + '/' + object_id + '/';
                     $.ajax({
                         'type': 'GET',
@@ -267,8 +265,7 @@ $(function(){
                 var counter = 0;
                 this.adv_report.find('.table-row').each(function(){
                     $(this).removeClass('alternate');
-                    if ((counter % 4) >= 2)
-                    {
+                    if ((counter % 4) >= 2) {
                         $(this).addClass('alternate');
                     }
 
@@ -349,8 +346,9 @@ $(function(){
                 }
 
                 var submit_button = form.find('.action-submit');
-                submit_button.click(submit_form);
-                form.find('input[type=text]').last().keypress(function(e) { if (e.which == 13) { submit_form(); return false; } } );
+                submit_button.off('click');
+                submit_button.on('click', submit_form);
+                //form.find('input[type=text]').last().keypress(function(e) { if (e.which == 13) { submit_form(); return false; } } );
             },
 
             connect_link: function(link, action_row, data_row) {
