@@ -27,19 +27,17 @@
 
     5. Process a form in the mbox with an AJAX view
 
-            $.mbox_ajax_form('title', 'form.html', 'Save record');
+            $.mbox_ajax_form('title', 'form.html', 'Save record', optional_settings);
+            
+            * When the answer contains OK, the ajax form will be closed. (and
+            * callback_ajax_posted_success is fired.) 
+            
+            * When the answer cpmtaoms form.redirect-form, that form will be
+            * automatically submitted and the mbox is closed.
 
  */
 
 (function($) {
-    // Prevent multiple executions of this library
-    if (typeof $.mbox == 'function')
-    {
-        console.log('Warning: not using the jquery.mbox version from Advanced Reports.')
-        return;
-    }
-    
-    
     // Are we using IE?
     var isIE = ($.browser.msie && parseInt($.browser.version.substr(0,1)) < 8);
 
@@ -78,6 +76,8 @@
     var mbox_title = undefined;
     var mbox_content = undefined;
     var mbox_footer = undefined;
+    var mbox_loader_overlay = undefined;
+    var mbox_loader = undefined;
 
     var loading_image = undefined;
 
@@ -89,6 +89,7 @@
 
             $(''
                 + '<div id="mbox_overlay" style="display:none;"></div>'
+                + '<div id="mbox_loader" style="display:none;"><div><img alt="" src="'+STATIC_URL+'ajax-utilities/img/loader.gif" /> ' + _('Loading...') + '</div></div>'
                 + '<div id="mbox_wrap" style="display:none;">'
                 + '<div id="mbox" style="display:none;">'
                 +    '<table id="mbox_table">'
@@ -126,6 +127,8 @@
             mbox_title = $('#mbox_wrap .mbox_title');
             mbox_content = $('#mbox_wrap .mbox_content');
             mbox_footer = $('#mbox_wrap .mbox_footer');
+            mbox_loader_overlay = $('<div id="mbox_loader_overlay"></div>');
+            mbox_loader = $('#mbox_loader');
 
             function make_draggable(handle, container)
             {
@@ -164,7 +167,7 @@
 
             // Loading image
             loading_image = $('<div class="mbox_loading" />').append(
-                    $('<img alt="" src="' + JS_STATIC_URL + 'advanced_reports/img/modybox/loading.gif" />'));
+                    $('<img alt="" src="'+STATIC_URL+'ajax-utilities/img/loader.gif" />'));
 
             // Overlay opacity
             mbox_overlay.css('opacity', overlay_opacity);
@@ -202,6 +205,7 @@
     /* ====[ mbox utilities ]==== */
 
     $.mbox_error = function(title, content) {
+        $.mbox.hide_loader();
         return $.mbox(title, content, {
                 'type': DIALOG_OK,
                 'warning_level': DIALOG_ERROR
@@ -210,7 +214,52 @@
 
     $.mbox_ajax_form = function(title, url, save_caption, optional_settings) {
         // Container in which the AJAX view is placed
-        var container = $('<div />').html('<img alt="" src="' + JS_STATIC_URL + 'advanced_reports/img/modybox/loading.gif" />' + _('Loading...'));
+        var container = $('<div />').html('<img alt="" src="'+STATIC_URL+'ajax-utilities/img/loader.gif" />' + _('Loading...'));
+        
+        // Process received data after doing ajax post
+        function handle_ajax_answer(data)
+        {
+            // Close dialog when the answer was OK.
+            var close = false;
+            var content = undefined;
+            var looks_like_json = $.inArray($.trim(data)[0], ['{', '[', '"']) != -1;
+
+            if (optional_settings['response_type'] == RESPONSE_JSON && looks_like_json) {
+                json = JSON.parse(data);
+                if (json.status == 'SUCCESS') {
+                    close = true;
+                    content = json.content;
+                }
+                data = json.content;
+            } else if (data == 'OK' || $(data).text() == 'OK')
+                close = true;
+
+            // When closing: callback & close mbox
+            if (close) {
+                if (optional_settings["callback_ajax_posted_success"] != undefined)
+                    optional_settings["callback_ajax_posted_success"]($.mbox.element, content);
+                $.mbox.close();
+
+            // otherwise, replace HTML with received HTML.
+            } else {
+                container.html(data);
+                $.mbox.reposition_box();
+            }
+
+            container.removeClass('mbox_loading');
+            container.find('input[type=submit]').hide();
+
+            // When a redirect form has been received, auto submit.
+            container.find('form.redirect-form').each(function() {
+                    $(this).submit();
+                });
+
+            // ajax_loaded callback.
+            if (! close && optional_settings["callback_ajax_loaded"] != undefined)
+                optional_settings["callback_ajax_loaded"]($.mbox.element, container);
+
+            return close;
+        }
 
         // Create mbox
         var settings = { // These settings cannot be overridden in optional_settings
@@ -220,57 +269,58 @@
             'callback_yes': function() {
                 var close = false;
                 mbox_footer.find('input').attr("disabled", "disabled");
-                
-                $.ajax({
-                    'url': url,
-                    //'dataType': 'html',
-                    'type': 'POST',
-                    'data': container.find('form').serialize(),
-                    'success': function(data) {
-                        close = false;
-                        if (optional_settings["callback_ajax_submit_success"] != undefined)
-                            close = optional_settings["callback_ajax_submit_success"]($.mbox.element, data);
-                        
-                        if (close) {
-                            $.mbox.close();
-                        } else {
-                            mbox_footer.find('input').removeAttr("disabled");
-                            container.find('input[type=submit]').hide();
-                            var content = data;
-                            var looks_like_json = $.inArray($.trim(data)[0], ['{', '[', '"']) != -1;
-                            
-                            if (optional_settings['response_type'] == RESPONSE_JSON && looks_like_json) {
-                                json = JSON.parse(data);
-                                if (json.status == 'SUCCESS') {
-                                    close = true;
-                                    content = json.content;
-                                } else {
-                                    data = json.content;
-                                }
-                            } else {
-                                if (data == 'OK') {
-                                    close = true;
-                                }
-                            }
+                var form = container.find('form');
+
+                // When the container contains a form with multipart/form-data,
+                // use an i-frame as target for the form. This is required for
+                // file uploads.
+                if (form.attr('enctype') == 'multipart/form-data')
+                {
+                    // Create iframe
+                    var iframe = $('<iframe id="mbox_iframe" name="mbox_iframe" style="display:none;" />');
+                    container.append(iframe);
+
+                    // Set target for form to iframe
+                    form.attr('target', 'mbox_iframe');
+                    form.attr('action', url);
+
+                    // Handle form callback
+                    iframe.load(function(){
+                        mbox_footer.find('input').removeAttr("disabled");
+                        close = handle_ajax_answer(iframe.contents().find('body').html());
+                    });
+
+                    // Submit form
+                    form.submit();
+                }
+                // ... otherwise, do an AJAX post without refreshing the page.
+                else
+                {
+                    $.ajax({
+                        'url': url,
+                        'dataType': 'html',
+                        'type': 'POST',
+                        'data': form.serialize(),
+                        'success': function(data) {
+                            close = false;
+                            if (optional_settings["callback_ajax_submit_success"] != undefined)
+                                close = optional_settings["callback_ajax_submit_success"]($.mbox.element, data);
                             
                             if (close) {
-                                if (optional_settings["callback_ajax_posted_success"] != undefined)
-                                    optional_settings["callback_ajax_posted_success"]($.mbox.element, content);
                                 $.mbox.close();
                             } else {
-                                container.html(data);
-                                container.find('input[type=submit]').hide();
-                                $.mbox.reposition_box();
+                                mbox_footer.find('input').removeAttr("disabled");
+                                close = handle_ajax_answer(data);
                             }
+                        },
+                        'error': function(jqXHR, textStatus, errorThrown) {
+                            mbox_footer.find('input').removeAttr("disabled");
+                            $('#mbox_wrap').removeClass("mbox_error").addClass("mbox_error");
+                            container.html(_("Woops! Something went wrong. Please try again later."));
+                            $.mbox.reposition_box();
                         }
-                    },
-                    'error': function() {
-                        mbox_footer.find('input').removeAttr("disabled");
-                        $('#mbox_wrap').removeClass("mbox_error").addClass("mbox_error");
-                        container.html(_("Woops! Something went wrong. Please try again later."));
-                        $.mbox.reposition_box();
-                    }
-                });
+                    });
+                }
                 return close;
             }
         };
@@ -283,7 +333,7 @@
             'url': url,
             'dataType': 'html',
             'success': function(data){
-                close = false;
+                var close = false;
                 if (optional_settings != undefined && optional_settings["callback_ajax_before_loaded"] != undefined)
                     close = optional_settings["callback_ajax_before_loaded"]($.mbox.element, data);
                 
@@ -318,7 +368,7 @@
         $.mbox.load(settings);
         $.mbox.show(title, settings);
         $.mbox.show_content(content);
-        fix_box();
+        fix_box(settings);
     };
 
     $.extend($.mbox, {
@@ -355,6 +405,7 @@
 
                 // add loading image
                 mbox_content.append(loading_image);
+                mbox_loader_overlay.append(loading_image);
 
                 mbox_overlay.bind('click', function() {$.mbox.close(settings)});
                 $('.mbox_loading').bind('click', function() {$.mbox.close(settings)});
@@ -416,6 +467,7 @@
                 // Replace existing content by new one
                 mbox_content.empty();
                 mbox_content.append(content);
+                $.mbox.hide_loader();
 
                 // Resize
                 scroll();
@@ -454,6 +506,28 @@
                 settings.callback_closed($.mbox.element);
 
             return false;
+        },
+
+        'show_loader': function(settings){
+            if (mbox_loader_overlay) {
+                mbox_loader_overlay.fadeTo(0,0);
+                mbox_content.append(mbox_loader_overlay);
+                mbox_loader_overlay.fadeTo(200,0.8);
+            }
+            mbox_overlay.show();
+            mbox_loader.show();
+        },
+
+        'hide_loader': function(settings){
+            if (mbox_loader_overlay) {
+                mbox_loader_overlay.fadeTo(200,0);
+                mbox_content.find('#mbox_loader_overlay').remove();
+            }
+            mbox_loader.hide();
+        },
+
+        'is_visible': function(){
+            return mbox_wrap && mbox_wrap.is(":visible");
         },
 
         // Allow usage of $.mbox.scroll(); by external code.
@@ -621,7 +695,7 @@
     }
 
     function getViewport () {
-        return [$(window).innerWidth(), $(window).innerHeight(), $(document).scrollLeft(), $(document).scrollTop()];
+        return [$(window).width(), $(window).height(), $(document).scrollLeft(), $(document).scrollTop()];
     };
 
     // Position box
@@ -638,45 +712,47 @@
 
     // Resize box
     function fix_box(settings) {
-        var pos = getViewport();
+        if ($.mbox.is_visible()) {
+            var pos = getViewport();
 
-        // content width
-        var width = mbox_body.innerWidth() + 20;
+            // content width
+            var width = mbox_body.innerWidth() + 20;
 
-        // Minimum width
-        if (settings == undefined) {
-            if (width < 500) {
-                width = 500;
+            // Minimum width
+            if (settings == undefined) {
+                if (width < 500) {
+                    width = 500;
+                }
             }
-        }
-        else {
-            if (settings.width) {
-                width = settings.width;
+            else {
+                if (settings.width)
+                    width = settings.width;
             }
-        }
 
-        // Width should not be more than the window's width
-        if (width > pos[0])
-            width = pos[0] * 0.80;
+            // Width should not be more than the window's width
+            if (width > pos[0])
+                width = pos[0] * 0.80;
 
-        mbox_wrap.css('width', width+'px');
-        mbox_table.css('width', '100%');
+            mbox_wrap.css('width', width);
+            mbox_table.css('width', '100%');
 
-        //if (typeof skip_height == undefined || !skip_height)
-        //    mbox_content.css('height', '300px');
+            //if (typeof skip_height == undefined || !skip_height)
+            //    mbox_content.css('height', '300px');
 
-        // Make sure the modybox is not heiger than the window
-        mbox_content.css('height', "");
-        height = mbox_body.innerHeight();
-        if (height > pos[1])
-        {
-            height = pos[1] * 0.80;
-            if (height > 40) {
-                height -= 40;
+            // Make sure the modybox is not heiger than the window
+            mbox_content.css('height', "");
+            height = mbox_body.height();
+            if (height > pos[1])
+            {
+                height = pos[1] * 0.80;
+                if (height > 40) {
+                    height -= 40;
+                }
+                mbox_content.css('height', height + "px");
             }
-            mbox_content.css('height', height + "px");
-        }
 
-        scroll();
+            scroll();
+        }
     }
 }) (jQuery);
+
