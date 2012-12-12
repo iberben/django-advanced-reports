@@ -3,7 +3,13 @@
     var JS_STATIC_URL = "{{ STATIC_URL }}";
 </script>
 
-<script type="text/javascript" src="{{ STATIC_URL }}advanced_reports/js/jquery.mbox.js"></script>
+<script type="text/javascript">
+	// Avoid that the mbox javascript will be loaded twice, otherwise it will break the popups
+	if(!$.mbox){
+		//http://stackoverflow.com/questions/236073/why-split-the-script-tag-when-writing-it-with-document-write
+		document.write('<'+'script type="text/javascript" src="{{ STATIC_URL }}advanced_reports/js/jquery.mbox.js"></'+'script>');
+	}
+</script>
 <script type="text/javascript" src="{{ STATIC_URL }}advanced_reports/js/show-notice.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}advanced_reports/js/ui.datepicker.js"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}advanced_reports/js/advreport.js"></script>
