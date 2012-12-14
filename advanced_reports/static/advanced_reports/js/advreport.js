@@ -163,7 +163,7 @@ $(function(){
                         action_row.show();
                     show_options.hide();
                     hide_options.show();
-                    action_row.find('input[type=text]').eq(0).focus();
+                    action_row.find('input:text').eq(0).focus();
                     if (!noLazy)
                         instance.handle_lazy(action_row);
                 }
@@ -305,7 +305,7 @@ $(function(){
                         next_action_row.show();
                         next_data_row.find('.show-options').hide();
                         next_data_row.find('.hide-options').show();
-                        next_action_row.find('input[type=text]').eq(0).focus();
+                        next_action_row.find('input:text').eq(0).focus();
                         instance.handle_lazy(next_action_row);
                         new_action_row.hide();
                         new_data_row.find('.show-options').show();
@@ -345,9 +345,9 @@ $(function(){
                     return false;
                 }
 
-                var submit_button = form.find('.action-submit');
-                submit_button.off('click');
-                submit_button.on('click', submit_form);
+                // var submit_button = form.find('.action-submit');
+                form.off('submit');
+                form.on('submit', submit_form);
                 //form.find('input[type=text]').last().keypress(function(e) { if (e.which == 13) { submit_form(); return false; } } );
             },
 
