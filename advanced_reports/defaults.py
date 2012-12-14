@@ -687,7 +687,7 @@ class AdvancedReport(object):
         if handler:
             if len(objects) == 0:
                 return None, 0
-            return handler(objects), -1
+            return handler(objects), len(objects)
 
         count = 0
         self.enrich_list(objects)
