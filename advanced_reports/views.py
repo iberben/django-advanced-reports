@@ -169,7 +169,7 @@ def ajax(request, slug, method, object_id):
         advreport.enrich_object(object, request=request)
         a = advreport.find_object_action(object, method)
         if a is None:
-            return HttpResponse(_(u'Unsupported action method.'), status=404)
+            return HttpResponse(_(u'Unsupported action method "%s".' % method), status=404)
 
         context = {'advreport': advreport}
 
