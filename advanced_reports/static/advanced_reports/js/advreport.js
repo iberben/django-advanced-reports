@@ -163,7 +163,12 @@ $(function(){
                         action_row.show();
                     show_options.hide();
                     hide_options.show();
-                    action_row.find('input:text').eq(0).focus();
+                    
+                    // gore code voor IE te fixen
+                    setTimeout(function(){
+                        action_row.find('input:text').eq(0).focus();
+                    }, 100);
+
                     if (!noLazy)
                         instance.handle_lazy(action_row);
                 }
@@ -305,7 +310,9 @@ $(function(){
                         next_action_row.show();
                         next_data_row.find('.show-options').hide();
                         next_data_row.find('.hide-options').show();
-                        next_action_row.find('input:text').eq(0).focus();
+                        setTimeout(function(){
+                            next_action_row.find('input:text').eq(0).focus();
+                        }, 100);
                         instance.handle_lazy(next_action_row);
                         new_action_row.hide();
                         new_data_row.find('.show-options').show();
