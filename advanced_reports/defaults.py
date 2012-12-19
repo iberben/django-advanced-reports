@@ -927,7 +927,8 @@ class EnrichedQueryset(object):
         return self.queryset.__iter__()
 
     def __len__(self):
-        return self.queryset.count()
+        return self.advreport.get_item_count()
+        #return self.queryset.count()
 
     def _enrich_list(self, l):
         # We run enrich_list on all items in one pass.
