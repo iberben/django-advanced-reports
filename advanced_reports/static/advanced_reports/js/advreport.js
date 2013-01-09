@@ -161,6 +161,7 @@ $(function(){
                         action_row.slideDown('fast');
                     else
                         action_row.show();
+
                     show_options.hide();
                     hide_options.show();
                     
@@ -279,26 +280,42 @@ $(function(){
             },
 
             replace_rows: function(data, action_row, data_row, next_on_success) {
-                var instance = this;
-                var probe = $(data);
-                var new_rows;
-                if (probe.get(0).tagName == 'TR')
-                    new_rows = $('<table>' + data + '</table>');
-                else
-                    new_rows = $('<div>' + data + '</div>');
+                var instance = this,
+                    probe = $(data),
+                    new_rows,
+                    is_table_layout = false,
+                    next_data_row,
+                    next_action_row;
 
-                var new_action_row = new_rows.find('.action-row');
-                var new_data_row = new_action_row.prev();
-                new_data_row.insertBefore(data_row);
-                new_action_row.insertBefore(data_row);
+                if (probe.get(0).tagName == 'TR') {
+                    new_rows = $('<table>' + data + '</table>');
+                    is_table_layout = true;
+                } else {
+                    new_rows = $('<div>' + data + '</div>');
+                }
+
+                var new_action_row = new_rows.find('.action-row'),
+                    new_data_row = new_action_row.prev(),
+                    selector = $('body').find('#' + new_action_row.eq(0).attr('id'));
+
+                if (is_table_layout) {
+                    next_data_row = selector.next().find('.information-row');
+                    next_action_row = selector.next().find('.action-row');
+                } else {
+                    next_data_row = selector.parent().next().find('.information-row');
+                    next_action_row = selector.parent().next().find('.action-row');
+                }
+
+                new_data_row = new_data_row.insertBefore(data_row);
+                new_action_row = new_action_row.insertBefore(data_row);
                 data_row.remove();
                 action_row.remove();
                 instance.connect_row(new_action_row, false);
 
-                var next_data_row = new_action_row.next();
-                var next_action_row = new_action_row.next().next();
+                // var next_data_row = new_action_row.next(),
+                //     next_action_row = new_action_row.next().next();
 
-                this.recycle();
+                instance.recycle();
 
                 $(document).trigger('newElements', new_action_row);
 
