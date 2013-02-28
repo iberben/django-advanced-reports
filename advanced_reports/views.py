@@ -18,12 +18,15 @@ from advanced_reports.defaults import ActionException
 
 from django.utils import simplejson
 
-def _get_redirect(advreport, next=None):
+def _get_redirect(advreport, next=None, querystring=None):
     if next:
         return redirect(next)
     if advreport.urlname:
         return redirect(reverse(advreport.urlname))
-    return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}))
+    suffix = u''
+    if querystring:
+        suffix = u'?%s' % querystring
+    return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}) + suffix)
 
 @transaction.autocommit
 def list(request, slug, ids=None, internal_mode=False, report_header_visible=True):
