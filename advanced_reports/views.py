@@ -64,27 +64,13 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
                 else:
                     messages.error(request, _(u'No selected %(object)s is applicable for this action.') % {'object': advreport.verbose_name})
                 if not advreport.internal_mode:
-                    return _get_redirect(advreport)
+                    return _get_redirect(advreport, querystring=request.META['QUERY_STRING'])
             except ActionException, e:
                 context.update({'error': e.msg})
 
-        # Sort
-        default_order_by = ''.join(advreport.sortable_fields[:1])
-        order_by = request.GET.get('order', default_order_by)
-        if order_by:
-            order_field = order_by.split('__')[0].split(',')[0].strip('-')
-            ascending = order_by[:1] != '-'
-            context.update({'order_field': order_field,
-                            'ascending': ascending,
-                            'order_by': order_by.strip('-')})
-            queryset = advreport.get_sorted_queryset(order_by, request=request)
-        else:
-            queryset = advreport.queryset()
 
-        # Filter
-        if ids is not None:
-            queryset = queryset.filter(pk__in=ids)
-        object_list = advreport.get_filtered_items(queryset, request.GET)
+        object_list, extra_context = advreport.get_object_list(request, ids=ids)
+        context.update(extra_context)
 
         # CSV?
         if 'csv' in request.GET:
@@ -112,8 +98,7 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
         # Render
         context.update({'advreport': advreport,
                         'paginated': paginated,
-                        'object_list': object_list,
-                        'ordered_by': advreport.get_ordered_by(order_by)})
+                        'object_list': object_list})
 
         func = render_to_string if advreport.internal_mode else render_to_response
         return func(advreport.get_template(), context, context_instance=RequestContext(request))
