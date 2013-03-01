@@ -142,13 +142,16 @@ class action(object):
     def copy_with_instanced_form(self, prefix, instance=None, data=None):
         new_action = action(**self.attrs_dict)
         if self.form is not None:
+            new_action.form = self.form
             if issubclass(self.form, forms.ModelForm):
                 new_action.form = self.form(data=data, prefix=prefix, instance=instance)
             else:
                 new_action.form = self.form(data=data, prefix=prefix)
 
+            #if self.form_template:
+            new_action.form_template = self.form_template # mark_safe(render_to_string(self.form_template, {'form': new_action.form}))
             if self.form_template:
-                new_action.form_template = mark_safe(render_to_string(self.form_template, {'form': new_action.form}))
+                new_action.response_form_template = mark_safe(render_to_string(self.form_template, {'form': new_action.form}))
 
         if instance:
             if new_action.confirm: new_action.confirm = new_action.confirm % Resolver({'item': instance})
@@ -433,7 +436,7 @@ class AdvancedReport(object):
         The implementation of the FOO action method.
         '''
 
-    def FOO_view(self, item):
+    def FOO_view(self, item, form=None):
         '''
         The implementation of the FOO action method that can return a HttpResponse
         '''
@@ -927,6 +930,8 @@ class EnrichedQueryset(object):
         return self.queryset.__iter__()
 
     def __len__(self):
+        if type(self.queryset) in (list, tuple):
+            return len(self.queryset)
         return self.queryset.count()
 
     def _enrich_list(self, l):

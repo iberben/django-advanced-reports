@@ -198,6 +198,10 @@ def ajax(request, slug, method, object_id):
                 object = advreport.get_item_for_id(object_id)
                 advreport.enrich_object(object, request=request)
                 context = {'object': object, 'advreport': advreport, 'success': a.get_success_message()}
+                context.update({'response_method': method, 'response_form': a.form})
+                if a.form_template:
+                    context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': a.form}))})
+                
                 return render_to_response(advreport.item_template, context, context_instance=RequestContext(request))
 
         except ActionException, e:
@@ -248,12 +252,12 @@ def ajax_form(request, slug, method, object_id, param=None):
                 form = a.form(request.POST, prefix=object_id)
 
             if form.is_valid():
-                advreport.get_action_callable(a.method)(object, form)
+                r = advreport.get_action_callable(a.method)(object, form)
                 object = advreport.get_item_for_id(object_id)
                 advreport.enrich_object(object, request=request)
                 context.update({'success': a.get_success_message(), 'object':object, 'action': a})
                 response = render_to_string(advreport.item_template, context, context_instance=RequestContext(request))
-                return HttpResponse(simplejson.dumps({
+                return r or HttpResponse(simplejson.dumps({
                     'status': 'SUCCESS',
                     'content': response
                 }), mimetype='application/javascript')
@@ -268,6 +272,11 @@ def ajax_form(request, slug, method, object_id, param=None):
         elif a.form:
             a = a.copy_with_instanced_form(prefix=object_id, instance=a.get_form_instance(advreport.get_item_for_id(object_id), param=param))
             context = {'object': object, 'advreport': advreport, 'success': a.get_success_message(), 'action': a}
+
+            context.update({'response_method': method, 'response_form': a.form})
+            if a.form_template:
+                context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': a.form}))})
+            
             return render_to_response(
                 'advanced_reports/ajax_form.html',
                 context,

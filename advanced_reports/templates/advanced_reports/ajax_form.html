@@ -9,11 +9,11 @@
     {% if not action.form_via_ajax %}
     <p {% if action.css_class %}class="{{ action.css_class }}"{% endif %}><strong>{{ action.verbose_name }}</strong></p>
     {% endif %}
-    
+
     {% ifequal action.method response_method %}
         {% if response_form_template %}{{ response_form_template }}{% else %}<table>{{ response_form.as_table }}</table>{% endif %}
     {% else %}
-        {% if action.form_template %}{{ action.form_template }}{% else %}<table>{{ action.form.as_table }}</table>{% endif %}
+        {% if action.response_form_template %}{{ action.response_form_template }}{% else %}<table>{{ action.form.as_table }}</table>{% endif %}
     {% endifequal %}
     <p>
         <input type="hidden" name="object_id" value="{{ object.advreport_object_id }}" />
