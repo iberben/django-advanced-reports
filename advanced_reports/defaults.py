@@ -665,6 +665,28 @@ class AdvancedReport(object):
     def get_enriched_items(self, queryset):
         return EnrichedQueryset(queryset, self)
 
+    def get_object_list(self, request, ids=None):
+        default_order_by = ''.join(self.sortable_fields[:1])
+        order_by = request.GET.get('order', default_order_by)
+        context = {}
+        if order_by:
+            order_field = order_by.split('__')[0].split(',')[0].strip('-')
+            ascending = order_by[:1] != '-'
+            context.update({'order_field': order_field,
+                            'ascending': ascending,
+                            'order_by': order_by.strip('-'),
+                            'ordered_by': self.get_ordered_by(order_by)})
+            queryset = self.get_sorted_queryset(order_by, request=request)
+        else:
+            queryset = self._queryset(request)
+
+        # Filter
+        if ids is not None:
+            queryset = queryset.filter(pk__in=ids)
+        object_list = self.get_filtered_items(queryset, request.GET)
+
+        return object_list, context
+
     def get_ordered_by(self, by_field):
         if by_field == '':
             return u''

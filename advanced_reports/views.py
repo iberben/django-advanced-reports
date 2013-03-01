@@ -18,12 +18,15 @@ from advanced_reports.defaults import ActionException
 
 from django.utils import simplejson
 
-def _get_redirect(advreport, next=None):
+def _get_redirect(advreport, next=None, querystring=None):
     if next:
         return redirect(next)
     if advreport.urlname:
         return redirect(reverse(advreport.urlname))
-    return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}))
+    suffix = u''
+    if querystring:
+        suffix = u'?%s' % querystring
+    return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}) + suffix)
 
 @transaction.autocommit
 def list(request, slug, ids=None, internal_mode=False, report_header_visible=True):
@@ -64,27 +67,13 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
                 else:
                     messages.error(request, _(u'No selected %(object)s is applicable for this action.') % {'object': advreport.verbose_name})
                 if not advreport.internal_mode:
-                    return _get_redirect(advreport)
+                    return _get_redirect(advreport, querystring=request.META['QUERY_STRING'])
             except ActionException, e:
                 context.update({'error': e.msg})
 
-        # Sort
-        default_order_by = ''.join(advreport.sortable_fields[:1])
-        order_by = request.GET.get('order', default_order_by)
-        if order_by:
-            order_field = order_by.split('__')[0].split(',')[0].strip('-')
-            ascending = order_by[:1] != '-'
-            context.update({'order_field': order_field,
-                            'ascending': ascending,
-                            'order_by': order_by.strip('-')})
-            queryset = advreport.get_sorted_queryset(order_by, request=request)
-        else:
-            queryset = advreport.queryset()
 
-        # Filter
-        if ids is not None:
-            queryset = queryset.filter(pk__in=ids)
-        object_list = advreport.get_filtered_items(queryset, request.GET)
+        object_list, extra_context = advreport.get_object_list(request, ids=ids)
+        context.update(extra_context)
 
         # CSV?
         if 'csv' in request.GET:
@@ -112,8 +101,7 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
         # Render
         context.update({'advreport': advreport,
                         'paginated': paginated,
-                        'object_list': object_list,
-                        'ordered_by': advreport.get_ordered_by(order_by)})
+                        'object_list': object_list})
 
         func = render_to_string if advreport.internal_mode else render_to_response
         return func(advreport.get_template(), context, context_instance=RequestContext(request))
@@ -286,6 +274,108 @@ def ajax_form(request, slug, method, object_id, param=None):
             raise Http404
 
         context = {'advreport': advreport}
+
+    if advreport.decorate_views:
+        inner = advreport.get_decorator()(inner)
+
+    return inner(request, slug, method, object_id)
+
+
+from django.utils.translation import ugettext_lazy
+_proxy_type = type(ugettext_lazy(''))
+def _json_object_encoder(obj):
+    if isinstance(obj, _proxy_type):
+        return u'%s' % obj
+    else:
+        return None
+
+def _action_dict(action):
+    d = action.attrs_dict
+    if action.form:
+        d['form'] = action.form_template or action.form.as_table()
+    return d
+
+
+def _item_values(o, advreport):
+    return {
+        'values': o.advreport_column_values,
+        'extra_information': o.advreport_extra_information.replace('data-method="', 'ng-bind-html-unsafe="lazydiv__%s__' % advreport.get_item_id(o)),
+        'actions': [_action_dict(a) for a in o.advreport_actions],
+        'item_id': advreport.get_item_id(o)
+    }
+
+
+@transaction.autocommit
+def api_list(request, slug, ids=None):
+    advreport = get_report_or_404(slug)
+    advreport.set_request(request)
+
+    def inner(request, slug, ids):
+        object_list, extra_context = advreport.get_object_list(request)
+
+        paginated = paginate(request, object_list, num_per_page=advreport.items_per_page, use_get_parameters=True)
+
+        report = {
+            'header': advreport.column_headers,
+            'extra': extra_context,
+            'items': [_item_values(o, advreport) for o in paginated.object_list[:]],
+            'items_per_page': advreport.items_per_page,
+            'item_count': len(object_list),
+            'searchable_columns': advreport.searchable_columns,
+            'search_fields': advreport.search_fields
+        }
+        return HttpResponse(simplejson.dumps(report, indent=2, default=_json_object_encoder))
+
+    if advreport.decorate_views:
+        inner = advreport.get_decorator()(inner)
+    return inner(request, slug, ids)
+
+
+@transaction.autocommit
+def api_action(request, slug, method, object_id):
+    advreport = get_report_or_404(slug)
+    advreport.set_request(request)
+
+    def inner(request, slug, method, object_id):
+        object = advreport.get_item_for_id(object_id)
+        advreport.enrich_object(object, request=request)
+        a = advreport.find_object_action(object, method)
+        if a is None:
+            return HttpResponse(_(u'Unsupported action method "%s".' % method), status=404)
+
+        context = {}
+        try:
+            if request.method == 'POST' and a.form is not None:
+                if issubclass(a.form, forms.ModelForm):
+                    form = a.form(request.POST, instance=a.get_form_instance(object), prefix=object_id)
+                else:
+                    form = a.form(request.POST, prefix=object_id)
+
+                if form.is_valid():
+                    advreport.get_action_callable(a.method)(object, form)
+                    object = advreport.get_item_for_id(object_id)
+                    context.update({'success': a.get_success_message()})
+                else:
+                    context.update({'response_method': method, 'response_form': form.as_table()})
+                    if a.form_template:
+                        context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': form}))})
+
+                advreport.enrich_object(object, request=request)
+                context.update({'item': _item_values(object, advreport)})
+                return HttpResponse(simplejson.dumps(context, indent=2, default=_json_object_encoder))
+
+            elif a.form is None:
+                advreport.get_action_callable(a.method)(object)
+                object = advreport.get_item_for_id(object_id)
+                advreport.enrich_object(object, request=request)
+                context = {'item': _item_values(object, advreport), 'success': a.get_success_message()}
+                return HttpResponse(simplejson.dumps(context, indent=2, default=_json_object_encoder))
+
+        except ActionException, e:
+            return HttpResponse(e.msg, status=404)
+
+        # a.form is not None but not a POST request
+        return HttpResponse(_(u'Unsupported request method.'), status=404)
 
     if advreport.decorate_views:
         inner = advreport.get_decorator()(inner)
