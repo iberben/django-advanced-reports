@@ -67,7 +67,7 @@ $(function(){
                     return false;
                 });
 
-                $('#selector').live('click', function(){
+                $('#selector').on('click', function(){
                     if ($(this).is(":checked")) {
                         $(".information-checkbox").attr("checked", "checked");
                     } else {
@@ -299,8 +299,8 @@ $(function(){
                     selector = $('body').find('#' + new_action_row.eq(0).attr('id'));
 
                 if (is_table_layout) {
-                    next_data_row = selector.next().find('.information-row');
-                    next_action_row = selector.next().find('.action-row');
+                    next_data_row = selector.next(); //.find('.information-row');
+                    next_action_row = selector.next().next(); //.find('.action-row');
                 } else {
                     next_data_row = selector.parent().next().find('.information-row');
                     next_action_row = selector.parent().next().find('.action-row');
