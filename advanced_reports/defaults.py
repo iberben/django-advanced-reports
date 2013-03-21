@@ -130,6 +130,11 @@ class action(object):
     Show the action in the list of multiple items. Only applicable to simple actions (without a form).
     '''
 
+    has_file_upload = False
+    '''
+    If the form of the action has a file upload, set it to true. enctype='multipart/form-data' will be added to the form.
+    '''
+
     def __init__(self, **kwargs):
         '''
         Each kwarg maps to a property above. For documentation, refer to the individual property documentation strings.
