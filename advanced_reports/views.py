@@ -126,9 +126,9 @@ def action(request, slug, method, object_id):
         if request.method == 'POST':
             if a.form is not None:
                 if issubclass(a.form, forms.ModelForm):
-                    form = a.form(request.POST, instance=a.get_form_instance(object), prefix=object_id)
+                    form = a.form(request.POST, request.FILES, instance=a.get_form_instance(object), prefix=object_id)
                 else:
-                    form = a.form(request.POST, prefix=object_id)
+                    form = a.form(request.POST, request.FILES, prefix=object_id)
 
                 if form.is_valid():
                     r = advreport.get_action_callable(a.method)(object, form)
@@ -164,9 +164,9 @@ def ajax(request, slug, method, object_id):
         try:
             if request.method == 'POST' and a.form is not None:
                 if issubclass(a.form, forms.ModelForm):
-                    form = a.form(request.POST, instance=a.get_form_instance(object), prefix=object_id)
+                    form = a.form(request.POST, request.FILES, instance=a.get_form_instance(object), prefix=object_id)
                 else:
-                    form = a.form(request.POST, prefix=object_id)
+                    form = a.form(request.POST, request.FILES, prefix=object_id)
 
                 if form.is_valid():
                     advreport.get_action_callable(a.method)(object, form)
@@ -235,15 +235,15 @@ def ajax_form(request, slug, method, object_id, param=None):
 
         if request.method == 'POST' and a.form is not None:
             if issubclass(a.form, forms.ModelForm):
-                form = a.form(request.POST, instance=a.get_form_instance(object, param=param), prefix=object_id)
+                form = a.form(request.POST, request.FILES, instance=a.get_form_instance(object, param=param), prefix=object_id)
             else:
-                form = a.form(request.POST, prefix=object_id)
+                form = a.form(request.POST, request.FILES, prefix=object_id)
 
             if form.is_valid():
                 r = advreport.get_action_callable(a.method)(object, form)
                 object = advreport.get_item_for_id(object_id)
                 advreport.enrich_object(object, request=request)
-                context.update({'success': a.get_success_message(), 'object':object, 'action': a})
+                context.update({'success': a.get_success_message(), 'object': object, 'action': a})
                 response = render_to_string(advreport.item_template, context, context_instance=RequestContext(request))
                 return r or HttpResponse(simplejson.dumps({
                     'status': 'SUCCESS',
@@ -347,9 +347,9 @@ def api_action(request, slug, method, object_id):
         try:
             if request.method == 'POST' and a.form is not None:
                 if issubclass(a.form, forms.ModelForm):
-                    form = a.form(request.POST, instance=a.get_form_instance(object), prefix=object_id)
+                    form = a.form(request.POST, request.FILES, instance=a.get_form_instance(object), prefix=object_id)
                 else:
-                    form = a.form(request.POST, prefix=object_id)
+                    form = a.form(request.POST, request.FILES, prefix=object_id)
 
                 if form.is_valid():
                     advreport.get_action_callable(a.method)(object, form)
