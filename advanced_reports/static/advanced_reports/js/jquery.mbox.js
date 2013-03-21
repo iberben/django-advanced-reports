@@ -225,7 +225,7 @@
             var looks_like_json = $.inArray($.trim(data)[0], ['{', '[', '"']) != -1;
 
             if (optional_settings['response_type'] == RESPONSE_JSON && looks_like_json) {
-                json = JSON.parse(data);
+                json = JSON.parse($('<div/>').html(data).text());
                 if (json.status == 'SUCCESS') {
                     close = true;
                     content = json.content;
@@ -287,7 +287,11 @@
                     // Handle form callback
                     iframe.load(function(){
                         mbox_footer.find('input').removeAttr("disabled");
-                        close = handle_ajax_answer(iframe.contents().find('body').html());
+                        var contents = iframe.contents().find('body pre').html();
+                        if (!contents) {
+                            contents = iframe.contents().find('body').html();
+                        }
+                        close = handle_ajax_answer(contents);
                     });
 
                     // Submit form
