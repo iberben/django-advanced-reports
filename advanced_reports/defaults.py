@@ -899,7 +899,12 @@ class AdvancedReport(object):
 
         for a in self.item_actions:
             if self.verify_action_group(object, a.group):
-                new_action = a.copy_with_instanced_form(prefix=self.get_item_id(object), instance=object)
+                if not a.form_via_ajax:
+                    new_action = a.copy_with_instanced_form(prefix=self.get_item_id(object), instance=object)
+                else:
+                    # Put off fetching the instanced Form until the actual Ajax
+                    # call for performance.
+                    new_action = a
                 if not new_action.hidden and new_action.individual_display:
                     actions.append(new_action)
 
