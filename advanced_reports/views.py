@@ -111,7 +111,7 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
 
     return inner(request, slug, ids)
 
-def action(request, slug, method, object_id):
+def action(request, slug, method, object_id, param=None):
     advreport = get_report_or_404(slug)
     advreport.set_request(request)
 
@@ -136,7 +136,10 @@ def action(request, slug, method, object_id):
 
                     return r or _get_redirect(advreport, next)
         else:
-            r = advreport.get_action_callable(a.method)(object)
+            if param:
+                r = advreport.get_action_callable(a.method)(object, param)
+            else:
+                r = advreport.get_action_callable(a.method)(object)
             # TODO: give feedback
 
             return r or _get_redirect(advreport, next)
@@ -148,7 +151,7 @@ def action(request, slug, method, object_id):
 
 
 @transaction.autocommit
-def ajax(request, slug, method, object_id):
+def ajax(request, slug, method, object_id, param=None):
     advreport = get_report_or_404(slug)
     advreport.set_request(request)
 
@@ -182,7 +185,10 @@ def ajax(request, slug, method, object_id):
                 return render_to_response(advreport.item_template, context, context_instance=RequestContext(request))
 
             elif a.form is None:
-                advreport.get_action_callable(a.method)(object)
+                if param:
+                    advreport.get_action_callable(a.method)(object, param)
+                else:
+                    advreport.get_action_callable(a.method)(object)
                 object = advreport.get_item_for_id(object_id)
                 advreport.enrich_object(object, request=request)
                 context = {'object': object, 'advreport': advreport, 'success': a.get_success_message()}
