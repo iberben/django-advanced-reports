@@ -38,3 +38,4 @@ local.properties
 
 # CDT-specific
 .cproject
+.DS_Store
