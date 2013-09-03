@@ -25,9 +25,6 @@ def staff_member_required(backoffice):
                     REDIRECT_FIELD_NAME: request.get_full_path(),
                 },
             }
-
-            print repr(defaults)
-
             return login(request, **defaults)
         return _checklogin
     return decorate
