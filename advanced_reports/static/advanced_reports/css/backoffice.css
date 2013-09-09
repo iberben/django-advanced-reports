@@ -3,8 +3,9 @@
     border-right: 1px solid #E7E7E7;
     position: fixed;
     left: 0px;
-    top: 0px;
+    top: 50px;
     bottom: 0px;
+    overflow: auto;
 }
 
 .backoffice-content {

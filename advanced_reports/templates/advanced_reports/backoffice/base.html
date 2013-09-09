@@ -26,10 +26,14 @@
             <script src="{{ STATIC_URL }}advanced_reports/js/respond.min.js"></script>
         <![endif]-->
 
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular-cookies.js"></script>
+        <script src="{{ STATIC_URL }}advanced_reports/js/backoffice.js"></script>
+
         {% block extra-head %}{% endblock %}
     </head>
 
-    <body>
+    <body ng-app="BackOfficeApp" ng-controller="MainController" ng-init="setup('{{ api_url }}')">
 
         {% if request.user.is_authenticated %}
             <div class="navbar navbar-default navbar-fixed-top">
@@ -51,6 +55,9 @@
                             <input type="text" placeholder="Search" class="form-control">
                         </div>
                     </form>
+                    <p class="navbar-text navbar-left">
+                        <img ng-show="isLoading()" src="{{ STATIC_URL }}advanced_reports/img/modybox/loading.gif">
+                    </p>
 
 
                     <form class="navbar-form navbar-right">
@@ -67,12 +74,7 @@
         {% endif %}
 
         {% block content %}
-        <div class="row">
-            <div class="col-xs-3 backoffice-objectbar">Nav</div>
-            <div class="col-xs-9 backoffice-content">
-                <h1>jgeskens (user)</h1>
-            </div>
-        </div>
+
         {% endblock %}
 
 
