@@ -142,8 +142,9 @@ class BackOfficeModel(object):
     verbose_name = None
     verbose_name_plural = None
     children = None
-    has_header = True
     priority = 1
+    has_header = True
+    collapsed = True
 
     def get_title(self, instance):
         return unicode(instance)
@@ -176,7 +177,8 @@ class BackOfficeModel(object):
             'slug': self.slug,
             'verbose_name': self.verbose_name,
             'verbose_name_plural': self.verbose_name_plural,
-            'has_header': self.has_header
+            'has_header': self.has_header,
+            'collapsed': self.collapsed
         }
 
     def get_children(self, instance):

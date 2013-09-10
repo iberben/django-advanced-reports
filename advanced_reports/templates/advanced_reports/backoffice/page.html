@@ -1,18 +1,33 @@
 {% extends "advanced_reports/backoffice/base.html" %}
 
 {% block content %}
+    {% verbatim %}
+    <script type="text/ng-template" id="/model_user_result.html">
+        <a href>{{ item.title }} {{ item.first_name }}&nbsp;{{ item.last_name }}</a>
+    </script>
+    <script type="text/ng-template" id="/model_sim_result.html">
+        <a href>SIM: {{ child.title }}</a>
+    </script>
+    <script type="text/ng-template" id="/model_invoice_result.html">
+        <a href>Invoice: {{ child.id }}</a>
+    </script>
+    {% endverbatim %}
 
     <div class="col-xs-3 backoffice-objectbar">
         {% verbatim %}
-        <ul>
-            <li ng-repeat="item in results">
-                <span ng-click="item.expanded = !item.expanded">{{ item.title }}</span>
-                <ul ng-show="item.expanded">
-                    <li ng-repeat="child_type in item.children">
-                        <span ng-show="child_type.has_header" ng-click="child_type.expanded = !child_type.expanded">{{ child_type.verbose_name_plural }}</span>
-                        <ul ng-show="child_type.expanded || !child_type.has_header">
-                            <li ng-repeat="child in child_type.children">
-                                {{ child.title }}
+        <ul class="list-group">
+            <li ng-repeat="item in results" class="list-group-item">
+                <span ng-click="item.expanded = !item.expanded">
+                    <span ng-include="'/model_' + item.model + '_result.html'"></span>
+                </span>
+                <ul ng-show="item.expanded" class="list-group">
+                    <li ng-repeat="child_type in item.children" class="list-group-item">
+                        <span ng-show="child_type.has_header" ng-click="child_type.collapsed = !child_type.collapsed">
+                            <a href>{{ child_type.verbose_name_plural }}</a>
+                        </span>
+                        <ul ng-hide="child_type.collapsed" class="list-group">
+                            <li ng-repeat="child in child_type.children" class="list-group-item">
+                                <span ng-include="'/model_' + child.model + '_result.html'"></span>
                             </li>
                         </ul>
                     </li>
