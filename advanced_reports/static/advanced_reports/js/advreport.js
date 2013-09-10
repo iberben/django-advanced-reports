@@ -111,7 +111,7 @@ $(function(){
                     var object_id = '0';
                     if (container.attr('id'))
                         object_id = container.attr('id').split('_')[1];
-                    
+
                     var url = adv_url + 'action/' + lazy_div.data('method') + '/' + object_id + '/';
                     $.ajax({
                         'type': 'GET',
@@ -164,7 +164,7 @@ $(function(){
 
                     show_options.hide();
                     hide_options.show();
-                    
+
                     // gore code voor IE te fixen
                     setTimeout(function(){
                         action_row.find('input:text').eq(0).focus();
@@ -233,10 +233,10 @@ $(function(){
                 if (checkbox && checkbox.attr('id')){
                     handle_checkbox_click();
                 }
-                
+
                 action_row.find('.form-via-ajax').each(function(){
                     var link = $(this);
-                    
+
                     link.unbind().click(function(){
                         var action_name = link.text();
                         var title = link.data('confirm');
@@ -247,7 +247,7 @@ $(function(){
                         if (!submit_caption || submit_caption == "") {
                             submit_caption = action_name;
                         }
-                    
+
                         $.mbox_ajax_form(
                             title,
                             link.attr("href"),
@@ -261,7 +261,7 @@ $(function(){
                                 }
                             }
                         );
-                        
+
                         return false;
                     });
                 });
@@ -378,29 +378,35 @@ $(function(){
             connect_link: function(link, action_row, data_row) {
                 var instance = this;
 
-                if (link.attr('href').indexOf('_view') != -1) {
+                redirect = link.attr('href').indexOf('_view_with_redirect') != -1;
+
+                if (link.attr('href').indexOf('_view') != -1 || redirect) {
                     if (!link.data('ajax'))
                         return;
-                    
+
                     link.unbind().click(function(){
                         var execute = function()
                         {
                             link.find('.loader').show();
-                            $.ajax({
-                                'type': 'GET',
-                                'url': link.attr('href'),
-                                'dataType': 'text',
-                                'success': function(x) {
-                                    link.find('.loader').hide();
-                                    $.mbox(link.text(), x, {
-                                        'width': '700px'
-                                    });
-                                },
-                                'error': function(x) {
-                                    link.find('.loader').hide();
-                                    $.mbox_error(_("Alert"), x.responseText);
-                                }
-                            });
+                            if (link.attr('href').indexOf('_view_with_redirect') != -1) {
+                                window.location.href = link.attr('href');
+                            } else {
+                                $.ajax({
+                                    'type': 'GET',
+                                    'url': link.attr('href'),
+                                    'dataType': 'text',
+                                    'success': function(x) {
+                                        link.find('.loader').hide();
+                                        $.mbox(link.text(), x, {
+                                            'width': '700px'
+                                        });
+                                    },
+                                    'error': function(x) {
+                                        link.find('.loader').hide();
+                                        $.mbox_error(_("Alert"), x.responseText);
+                                    }
+                                });
+                            }
                         };
 
                         if (link.data('confirm'))
