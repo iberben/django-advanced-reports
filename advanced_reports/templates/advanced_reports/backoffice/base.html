@@ -33,7 +33,7 @@
         {% block extra-head %}{% endblock %}
     </head>
 
-    <body ng-app="BackOfficeApp" ng-controller="MainController" ng-init="setup('{{ api_url }}')">
+    <body ng-app="BackOfficeApp" ng-controller="MainController" ng-init="setup('{{ api_url }}', '{{ root_url }}')">
 
         {% if request.user.is_authenticated %}
             <div class="navbar navbar-default navbar-fixed-top">

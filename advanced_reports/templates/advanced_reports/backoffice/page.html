@@ -2,32 +2,38 @@
 
 {% block content %}
     {% verbatim %}
-    <script type="text/ng-template" id="/model_user_result.html">
-        <a href>{{ item.title }} {{ item.first_name }}&nbsp;{{ item.last_name }}</a>
+
+
+
+    <script type="text/ng-template" id="/home.html">
+        <h1>Astrid Bryan</h1>
     </script>
-    <script type="text/ng-template" id="/model_sim_result.html">
-        <a href>SIM: {{ child.title }}</a>
-    </script>
-    <script type="text/ng-template" id="/model_invoice_result.html">
-        <a href>Invoice: {{ child.id }}</a>
+
+    <script type="text/ng-template" id="/model.html">
+        <h1>Model</h1>
+        {{ params }}
+        {{ path() }}
     </script>
     {% endverbatim %}
 
     <div class="col-xs-3 backoffice-objectbar">
         {% verbatim %}
-        <ul class="list-group">
-            <li ng-repeat="item in results" class="list-group-item">
-                <span ng-click="item.expanded = !item.expanded">
-                    <span ng-include="'/model_' + item.model + '_result.html'"></span>
-                </span>
-                <ul ng-show="item.expanded" class="list-group">
-                    <li ng-repeat="child_type in item.children" class="list-group-item">
-                        <span ng-show="child_type.has_header" ng-click="child_type.collapsed = !child_type.collapsed">
-                            <a href>{{ child_type.verbose_name_plural }}</a>
+        <ul>
+            <li ng-repeat="item in results" ng-class="{active: path() == item.path}">
+                <button class="btn btn-default btn-xs" ng-hide="item.expanded" ng-click="item.expanded = true">+</button>
+                <button class="btn btn-default btn-xs" ng-show="item.expanded" ng-click="item.expanded = false">-</button>
+                <a href="#{{ item.path }}">{{ item.title }}</a>
+                <ul ng-show="item.expanded">
+                    <li ng-repeat="item in item.children">
+                        <span ng-show="item.has_header" ng-click="item.collapsed = !item.collapsed">
+                            <a href>{{ item.verbose_name_plural }}</a>
                         </span>
-                        <ul ng-hide="child_type.collapsed" class="list-group">
-                            <li ng-repeat="child in child_type.children" class="list-group-item">
-                                <span ng-include="'/model_' + child.model + '_result.html'"></span>
+                        <span ng-show="item.is_object">
+                            <a ng-class="{active: path() == item.path}" href="#{{ item.path }}">{{ item.title }}</a>
+                        </span>
+                        <ul ng-hide="item.collapsed || !item.is_meta">
+                            <li ng-repeat="item in item.children">
+                               <a ng-class="{active: path() == item.path}" href="#{{ item.path }}">{{ item.title }}</a>
                             </li>
                         </ul>
                     </li>
@@ -42,6 +48,7 @@
         {{ api_url }}
         <input type="checkbox" ng-model="loading">
         {% endverbatim %}
+        <div ng-view></div>
     </div>
 
 {% endblock %}

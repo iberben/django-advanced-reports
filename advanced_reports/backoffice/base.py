@@ -46,7 +46,8 @@ class BackOfficeBase(object):
 
     def default_context(self):
         return {'backoffice': self,
-                'api_url': reverse(self.name + ':api_home', current_app=self.app_name)}
+                'api_url': reverse(self.name + ':api_home', current_app=self.app_name),
+                'root_url': reverse(self.name + ':home', current_app=self.app_name)}
 
     @never_cache
     def logout(self, request, *args, **kwargs):
@@ -156,7 +157,9 @@ class BackOfficeModel(object):
         serialized = {
             'id': instance.pk,
             'title': self.get_title(instance),
-            'model': self.slug
+            'model': self.slug,
+            'path': '/%s/%d/' % (self.slug, instance.pk),
+            'is_object': True
         }
         serialized.update(self.serialize(instance))
         return serialized
@@ -168,9 +171,13 @@ class BackOfficeModel(object):
 
     def get_serialized_children_by_model(self, instance, bo_model):
         children = self.get_children_by_model(instance, bo_model)
-        serialized = bo_model.serialize_meta()
-        serialized['children'] = [bo_model.get_serialized(c) for c in children]
-        return serialized
+        serialized_children = [bo_model.get_serialized(c) for c in children]
+        if bo_model.has_header:
+            serialized = bo_model.serialize_meta()
+            serialized['children'] = serialized_children
+            return [serialized]
+        else:
+            return serialized_children
 
     def serialize_meta(self):
         return {
@@ -178,14 +185,15 @@ class BackOfficeModel(object):
             'verbose_name': self.verbose_name,
             'verbose_name_plural': self.verbose_name_plural,
             'has_header': self.has_header,
-            'collapsed': self.collapsed
+            'collapsed': self.collapsed,
+            'is_meta': True
         }
 
     def get_children(self, instance):
         if not self.children:
             return ()
         child_models = sorted(self.children.values(), key=lambda m: m.priority)
-        return [self.get_serialized_children_by_model(instance, m) for m in child_models]
+        return sum((self.get_serialized_children_by_model(instance, m) for m in child_models), [])
 
     def get_serialized_with_children(self, instance):
         serialized = self.get_serialized(instance)
