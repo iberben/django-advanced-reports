@@ -4,7 +4,21 @@
 
     <div class="col-xs-3 backoffice-objectbar">
         {% verbatim %}
-        {{ results }}
+        <ul>
+            <li ng-repeat="item in results">
+                <span ng-click="item.expanded = !item.expanded">{{ item.title }}</span>
+                <ul ng-show="item.expanded">
+                    <li ng-repeat="child_type in item.children">
+                        <span ng-show="child_type.has_header" ng-click="child_type.expanded = !child_type.expanded">{{ child_type.verbose_name_plural }}</span>
+                        <ul ng-show="child_type.expanded || !child_type.has_header">
+                            <li ng-repeat="child in child_type.children">
+                                {{ child.title }}
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+        </ul>
         {% endverbatim %}
     </div>
     <div class="col-xs-9 backoffice-content">

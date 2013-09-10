@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
 from django.contrib.auth import REDIRECT_FIELD_NAME
@@ -80,30 +81,39 @@ class BackOfficeBase(object):
             raise Http404
         return JSONResponse(fn(**kwargs))
 
-    def serialize_model_instance(self, instance):
-        bo_model = self.get_model(model=type(instance))
-        serialized = {
-            'id': instance.pk,
-            'title': bo_model.get_title(instance),
-            'model': bo_model.slug
-        }
-        serialized.update(bo_model.serialize_instance(instance))
-        return serialized
-
-    def serialize_model_instances(self, instances):
-        return [self.serialize_model_instance(i) for i in instances]
-
     def register_model(self, bo_model):
         if not bo_model.slug in self.slug_to_bo_model:
             bo_model_instance = bo_model()
             self.slug_to_bo_model[bo_model.slug] = bo_model_instance
             self.model_to_bo_model[bo_model.model] = bo_model_instance
+            self.link_relationship(bo_model_instance)
 
     def get_model(self, slug=None, model=None):
         if slug:
             return self.slug_to_bo_model.get(slug, None)
         else:
             return self.model_to_bo_model.get(model, None)
+
+    def serialize_model_instance(self, instance, include_children=False):
+        bo_model = self.get_model(model=type(instance))
+        if include_children:
+            return bo_model.get_serialized(instance)
+        else:
+            return bo_model.get_serialized_with_children(instance)
+
+    def serialize_model_instances(self, instances, include_children=False):
+        return [self.serialize_model_instance(i) for i in instances]
+
+    def link_relationship(self, bo_model):
+        if bo_model.parent_field:
+            parent_field = bo_model.model._meta.get_field(bo_model.parent_field)
+            parent_model = parent_field.rel.to
+            parent_bo_model = self.get_model(model=parent_model)
+            if parent_bo_model:
+                if parent_bo_model.children is None:
+                    parent_bo_model.children = {}
+                if not bo_model.slug in parent_bo_model.children:
+                    parent_bo_model.children[bo_model.slug] = bo_model
 
     def api_get_search(self, q):
         from django.contrib.auth.models import User
@@ -128,13 +138,58 @@ class BackOfficeTab(object):
 class BackOfficeModel(object):
     slug = None
     model = None
-    parent = None
+    parent_field = None
+    verbose_name = None
+    verbose_name_plural = None
+    children = None
+    has_header = True
+    priority = 1
 
     def get_title(self, instance):
         return unicode(instance)
 
-    def serialize_instance(self, instance):
+    def serialize(self, instance):
         return {}
+
+    def get_serialized(self, instance):
+        serialized = {
+            'id': instance.pk,
+            'title': self.get_title(instance),
+            'model': self.slug
+        }
+        serialized.update(self.serialize(instance))
+        return serialized
+
+    def get_children_by_model(self, instance, bo_model):
+        child_field = bo_model.model._meta.get_field(bo_model.parent_field)
+        related_name = child_field.rel.related_name or ('%s_set' % bo_model.model.__name__.lower())
+        return getattr(instance, related_name).all()
+
+    def get_serialized_children_by_model(self, instance, bo_model):
+        children = self.get_children_by_model(instance, bo_model)
+        serialized = bo_model.serialize_meta()
+        serialized['children'] = [bo_model.get_serialized(c) for c in children]
+        return serialized
+
+    def serialize_meta(self):
+        return {
+            'slug': self.slug,
+            'verbose_name': self.verbose_name,
+            'verbose_name_plural': self.verbose_name_plural,
+            'has_header': self.has_header
+        }
+
+    def get_children(self, instance):
+        if not self.children:
+            return ()
+        child_models = sorted(self.children.values(), key=lambda m: m.priority)
+        return [self.get_serialized_children_by_model(instance, m) for m in child_models]
+
+    def get_serialized_with_children(self, instance):
+        serialized = self.get_serialized(instance)
+        serialized['children'] = self.get_children(instance)
+        return serialized
+
 
 
 def BackOfficeView(object):

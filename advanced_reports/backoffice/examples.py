@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User
-from advanced_reports.backoffice.base import BackOfficeBase
+from advanced_reports.backoffice.base import BackOfficeBase, BackOfficeModel
 
 
 class UserHelpdesk(BackOfficeBase):
@@ -9,14 +9,14 @@ class UserHelpdesk(BackOfficeBase):
         super(UserHelpdesk, self).__init__(name=name, app_name=app_name, **kwargs)
 
 
-class UserModel(object):
+class UserModel(BackOfficeModel):
     slug = 'user'
     model = User
 
     def get_title(self, instance):
         return unicode(instance)
 
-    def serialize_instance(self, instance):
+    def serialize(self, instance):
         return {'first_name': instance.first_name,
                 'last_name': instance.last_name}
 
