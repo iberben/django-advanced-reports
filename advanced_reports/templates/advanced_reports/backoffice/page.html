@@ -1,20 +1,11 @@
 {% extends "advanced_reports/backoffice/base.html" %}
 
 {% block content %}
-    {% verbatim %}
+    {% include "advanced_reports/backoffice/home.html" %}
+    {% include "advanced_reports/backoffice/model.html" %}
+    {% include "advanced_reports/backoffice/tab.html" %}
+    {% include "advanced_reports/backoffice/search.html" %}
 
-
-
-    <script type="text/ng-template" id="/home.html">
-        <h1>Astrid Bryan</h1>
-    </script>
-
-    <script type="text/ng-template" id="/model.html">
-        <h1>Model</h1>
-        {{ params }}
-        {{ path() }}
-    </script>
-    {% endverbatim %}
 
     <div class="col-xs-3 backoffice-objectbar">
         {% verbatim %}
@@ -33,7 +24,7 @@
                         </span>
                         <ul ng-hide="item.collapsed || !item.is_meta">
                             <li ng-repeat="item in item.children">
-                               <a ng-class="{active: path() == item.path}" href="#{{ item.path }}">{{ item.title }}</a>
+                                <a ng-class="{active: path() == item.path}" href="#{{ item.path }}">{{ item.title }}</a>
                             </li>
                         </ul>
                     </li>
@@ -43,12 +34,9 @@
         {% endverbatim %}
     </div>
     <div class="col-xs-9 backoffice-content">
-        <h1>jgeskens (user)</h1>
-        {% verbatim %}
-        {{ api_url }}
-        <input type="checkbox" ng-model="loading">
-        {% endverbatim %}
-        <div ng-view></div>
+        {{ params }}
+        <div app-view-segment="0"></div>
+        test
     </div>
 
 {% endblock %}

@@ -12,13 +12,16 @@ class UserHelpdesk(BackOfficeBase):
 class UserModel(BackOfficeModel):
     slug = 'user'
     model = User
+    verbose_name = 'user'
+    verbose_name_plural = 'users'
 
     def get_title(self, instance):
-        return unicode(instance)
+        return u'%s (%s)' % (instance.get_full_name(), instance.email)
 
     def serialize(self, instance):
         return {'first_name': instance.first_name,
-                'last_name': instance.last_name}
+                'last_name': instance.last_name,
+                'email': instance.email}
 
 
 

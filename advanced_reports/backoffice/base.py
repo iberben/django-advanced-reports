@@ -5,6 +5,7 @@ from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.http import HttpResponse, Http404
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
+from django.template.loader import render_to_string
 from django.views.decorators.cache import never_cache
 from django.utils.translation import ugettext as _
 from advanced_reports.backoffice.api_utils import JSONResponse
@@ -121,6 +122,14 @@ class BackOfficeBase(object):
         users = User.objects.order_by('-pk')[:20]
         return self.serialize_model_instances(users)
 
+    def api_get_model(self, model_slug, pk):
+        bo_model = self.get_model(slug=model_slug[0])
+        obj = bo_model.model.objects.get(pk=pk[0])
+        serialized = bo_model.get_serialized(obj)
+        serialized['meta'] = bo_model.serialize_meta()
+        return serialized
+
+
 
 class BackOfficeTab(object):
     slug = None
@@ -146,6 +155,7 @@ class BackOfficeModel(object):
     priority = 1
     has_header = True
     collapsed = True
+    header_template = None
 
     def get_title(self, instance):
         return unicode(instance)
@@ -153,12 +163,21 @@ class BackOfficeModel(object):
     def serialize(self, instance):
         return {}
 
+    def render_template(self, instance):
+        if self.header_template:
+            context = {
+                'instance': instance
+            }
+            return render_to_string(self.header_template, context)
+        return u''
+
     def get_serialized(self, instance):
         serialized = {
             'id': instance.pk,
             'title': self.get_title(instance),
             'model': self.slug,
             'path': '/%s/%d/' % (self.slug, instance.pk),
+            'header_template': self.render_template(instance),
             'is_object': True
         }
         serialized.update(self.serialize(instance))
