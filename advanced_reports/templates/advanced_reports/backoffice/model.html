@@ -2,15 +2,13 @@
 <script type="text/ng-template" id="/model.html">
     <div ng-show="model">
         <h1>{{ model.title }} <small>{{ model.meta.verbose_name }}</small></h1>
-        <div ng-bind-html-unsafe="model.header_template"></div>
+        <div compile="model.header_template"></div>
 
         <ul class="nav nav-pills">
-            <li class="active"><a href="#{{ model.path }}details/">Details</a></li>
-            <li><a href="#{{ model.path }}invoices/">Invoices</a></li>
-            <li><a href="#{{ model.path }}comments/">Comments</a></li>
+            <li ng-class="{active: params.tab == tab.slug}" ng-repeat="tab in model.meta.tabs"><a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a></li>
         </ul>
-        {{ params.tab }}
-        <div app-view-segment="1"></div>
+
+        <div compile="model.tabs[params.tab].template"></div>
     </div>
 </script>
 {% endverbatim %}

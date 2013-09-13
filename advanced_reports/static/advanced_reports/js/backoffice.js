@@ -6,13 +6,15 @@ app.run(function ($http, $cookies){
 
 app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
 	$routeProvider.
-		when('/', {controller: 'MainController', templateUrl: '/home.html'}).
-		when('/:model/:id/', {controller: 'BOModelController', templateUrl: '/model.html'}).
+		when('/', {controller: 'HomeController', templateUrl: '/home.html'}).
+		when('/search/:query', {controller: 'BOSearchController', templateUrl: '/search.html'}).
+        when('/:model/:id/', {controller: 'BOModelController', templateUrl: '/model.html'}).
+        when('/:model/:id/:tab/', {controller: 'BOModelController', templateUrl: '/model.html'}).
 		otherwise({redirectTo: '/'});
     //$locationProvider.html5Mode(true);
 }]);
 
-app.factory('boApi', ['$http', '$q', function($http, $q){
+app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
     return {
         requests: 0,
         configure: function(url){
@@ -22,10 +24,12 @@ app.factory('boApi', ['$http', '$q', function($http, $q){
             var that = this;
             var defer = $q.defer();
             this.requests += 1;
-            $http.get(this.url + method + '/?' + params).success(function (data, status){
+            $http.get(this.url + method + '/?' + boUtils.toQueryString(params)).
+            success(function (data, status){
                 defer.resolve(data);
                 that.requests -= 1;
-            }).error(function (data, status){
+            }).
+            error(function (data, status){
                 defer.reject(status);
                 that.requests -= 1;
             });
@@ -36,6 +40,24 @@ app.factory('boApi', ['$http', '$q', function($http, $q){
             var defer = $q.defer();
             this.requests += 1;
             $http.post(this.url + method + '/', data).success(function (data, status){
+                defer.resolve(data);
+                that.requests -= 1;
+            }).error(function (data, status){
+                defer.reject(status);
+                that.requests -= 1;
+            });
+            return defer.promise;
+        },
+        post_form: function(method, data){
+            var that = this;
+            var defer = $q.defer();
+            this.requests += 1;
+            $http({
+                method: 'POST',
+                url: this.url + method + '/',
+                data: data,
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+            }).success(function (data, status){
                 defer.resolve(data);
                 that.requests -= 1;
             }).error(function (data, status){
@@ -64,39 +86,7 @@ app.factory('boApi', ['$http', '$q', function($http, $q){
 }]);
 
 
-app.config(['$routeSegmentProvider', '$locationProvider', function($routeSegmentProvider, $locationProvider){
-    $routeSegmentProvider.options.autoLoadTemplates = true;
-	$routeSegmentProvider.
-		when('/', 'home').
-        when('/search/:query', 'search').
-        when('/:model/:id/', 'model').
-        when('/:model/:id/:tab/', 'model.tab').
-
-        segment('home', {controller: 'HomeController', templateUrl: '/home.html'}).
-        segment('search', {controller: 'BOSearch', templateUrl: '/search.html'}).
-        segment('model', {
-            controller: 'BOModelController',
-            templateUrl: '/model.html',
-            dependencies: ['model', 'id']
-//            resolve: {
-//                data: function(boApi, $routeSegment) {
-//                    //return $timeout(function() { return 'SLOW DATA CONTENT'; }, 2000);
-//                    console.log($routeSegment.$routeParams);
-//                    return boApi.get('model', 'model_slug=' + encodeURIComponent('user') + '&pk=' + encodeURIComponent('2'));
-//                }
-//            }
-        }).
-        within().
-            segment('tab', {templateUrl: '/tab.html'}).
-        up();
-
-    //$locationProvider.html5Mode(true);
-}]);
-
-
-
-
-app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$routeSegment', function($scope, $http, $location, boApi, $routeSegment){
+app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', function($scope, $http, $location, boApi, $route){
     $scope.path = function(){
         return $location.path();
     }
@@ -107,7 +97,7 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
 
         boApi.configure(api_url);
 
-        boApi.get('search', 'q=oemfoe').then(function(data){
+        boApi.get('search', {q: 'oemfoe'}).then(function(data){
             $scope.results = data;
         });
     };
@@ -120,8 +110,35 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         $location.url('/search/' + encodeURIComponent($scope.search_query));
     };
 
+    $scope.get_params = function(){
+        if ($route && $route.current && $route.current.params)
+            return $route.current.params;
+        return {};
+    };
 
+    $scope.currentModel = '';
 
+    $scope.fetchModel = function(force){
+        // Fetches the model if needed (if not already fetched)
+        var params = $scope.get_params();
+
+        if (params.model && params.id)
+        {
+            var newModel = params.model + '/' + params.id;
+            if ($scope.currentModel != newModel || force){
+                $scope.currentModel = newModel;
+                boApi.get('model', {model_slug: params.model, pk: params.id}).then(function(data){
+                    $scope.model = data;
+                    if (!params.tab)
+                        $route.current.params.tab = $scope.model.meta.tabs[0].slug;
+                });
+            }
+        }
+    };
+
+    $scope.$on('$routeChangeSuccess', function (){
+        $scope.fetchModel(false);
+    });
 }]);
 
 
@@ -130,19 +147,126 @@ app.controller('HomeController', ['$scope', function($scope){
 }]);
 
 
-app.controller('BOModelController', ['$scope', '$routeSegment', '$location', '$http', 'boApi', function($scope, $routeSegment, $location, $http, boApi){
-    $scope.params = $routeSegment.$routeParams;
+app.controller('BOModelController', ['$scope', '$route', '$location', '$http', 'boApi', function($scope, $route, $location, $http, boApi){
+    $scope.params = $route.current.params;
 
-    $scope.$on('$routeChangeSuccess', function (){
+//    $scope.$on('$routeChangeSuccess', function (){
+//        boApi.get('model', 'model_slug=' + encodeURIComponent($scope.params.model) + '&pk=' + encodeURIComponent($scope.params.id)).then(function(data){
+//            $scope.$parent.model = data;
+//        });
+//    });
+}]);
+
+app.controller('BOSearchController', ['$scope', '$route', function($scope, $route){
+    $scope.params = $route.current.params;
+}]);
+
+//
+// http://stackoverflow.com/questions/17417607/angular-ng-bind-html-unsafe-and-directive-within-it
+//
+app.directive('compile', ['$compile', function ($compile){
+    return {
+        link: function(scope, element, attrs) {
+            scope.$watch(function(scope){
+                // watch the 'compile' expression for changes
+                return scope.$eval(attrs.compile);
+            }, function(value){
+                // when the 'compile' expression changes
+                // assign it into the current DOM
+                element.html(value);
+
+                // compile the new DOM and link it to the current
+                // scope.
+                // NOTE: we only compile .childNodes so that
+                // we don't get into infinite loop compiling ourselves
+                $compile(element.contents())(scope);
+            });
+        },
+        scope: true
+    };
+}]);
 
 
-        boApi.get('model', 'model_slug=' + encodeURIComponent($scope.params.model) + '&pk=' + encodeURIComponent($scope.params.id)).then(function(data){
-            $scope.model = data;
+
+app.directive('view', ['$compile', 'boApi', 'boUtils', function($compile, boApi, boUtils){
+    return {
+        link: function(scope, element, attrs){
+            var params = scope.$eval(attrs.view);
+            var view_instance = attrs.instance || params.slug;
+
+            var attachView = function(data, params){
+                data.params = params;
+                data.fetch = function(){
+                    loadView(data.params);
+                };
+                data.post = function(post_data){
+                    boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(function(data){
+                        attachView(data, params);
+                        element.html(data.content);
+                        $compile(element.contents())(scope);
+                    }, function(error){
+                        attachView({}, params);
+                        element.html(error);
+                    });
+                };
+                data.action = function(method, action_params){
+                    boApi.post('view_action', {
+                        method: method,
+                        params: action_params,
+                        view_params: params
+                    }).then(function(d){
+                        data.fetch();
+                    }, function(error){
+                        element.html(error);
+                    });
+                };
+                scope.$parent.$parent.$parent[view_instance] = data;
+                scope.view = data;
+            };
+
+            var loadView = function(params){
+                boApi.get('view', params).then(function(data){
+                    attachView(data, params);
+                    element.html(data.content);
+                    $compile(element.contents())(scope);
+                }, function(error){
+                    attachView({}, params);
+                    element.html(error);
+                });
+            };
+            loadView(params);
+        },
+        scope: true
+    };
+}]);
+
+
+
+//compile: function() {
+//    return {
+//      pre: function(scope, element, attrs) {
+//        scope.$eval(attrs.ngInit);
+//      }
+//    }
+//  }
+
+app.directive('postToView', function(){
+    return function(scope, element, attrs){
+        element.on('submit', function(e){
+            scope.$apply(function(){
+                scope.view.post(element.serialize());
+            });
         });
+    };
+});
 
-    });
-}]);
-
-app.controller('BOSearch', ['$scope', '$routeSegment', function($scope, $routeSegment){
-    $scope.params = $routeSegment.$routeParams;
-}]);
+app.factory('boUtils', function(){
+   return {
+       toQueryString: function(obj){
+           var str = [];
+           for(var p in obj)
+               str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
+           return str.join('&');
+       }
+   };
+});

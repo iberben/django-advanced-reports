@@ -24,8 +24,6 @@ class BackOfficeBase(object):
     """
     title = 'Untitled Backoffice'
     login_template = None
-    model_to_bo_model = {}
-    slug_to_bo_model = {}
 
     def __init__(self, name='backoffice', app_name='backoffice'):
         self.name = name
@@ -74,14 +72,23 @@ class BackOfficeBase(object):
         if request.method == 'GET':
             kwargs = dict(request.GET)
         elif request.method in ('POST', 'PUT'):
-            kwargs = dict(json.loads(request.body))
+            if request.META['CONTENT_TYPE'] == 'application/x-www-form-urlencoded':
+                kwargs = dict(request.POST)
+            else:
+                kwargs = dict(json.loads(request.body))
         else:
             kwargs = {}
 
         fn = getattr(self, 'api_%s_%s' % (request.method.lower(), method), None)
         if fn is None:
             raise Http404
-        return JSONResponse(fn(**kwargs))
+        return JSONResponse(fn(request, **kwargs))
+
+    ######################################################################
+    # Model Registration
+    ######################################################################
+    model_to_bo_model = {}
+    slug_to_bo_model = {}
 
     def register_model(self, bo_model):
         if not bo_model.slug in self.slug_to_bo_model:
@@ -117,32 +124,71 @@ class BackOfficeBase(object):
                 if not bo_model.slug in parent_bo_model.children:
                     parent_bo_model.children[bo_model.slug] = bo_model
 
-    def api_get_search(self, q):
+    ######################################################################
+    # View Registration
+    ######################################################################
+    slug_to_bo_view = {}
+
+    def register_view(self, bo_view):
+        if not bo_view.slug in self.slug_to_bo_view:
+            bo_view_instance = bo_view()
+            self.slug_to_bo_view[bo_view.slug] = bo_view_instance
+
+    def get_view(self, slug):
+        return self.slug_to_bo_view.get(slug, None)
+
+    ######################################################################
+    # Internal JSON API
+    ######################################################################
+    def api_get_search(self, request, q):
         from django.contrib.auth.models import User
         users = User.objects.order_by('-pk')[:20]
         return self.serialize_model_instances(users)
 
-    def api_get_model(self, model_slug, pk):
+    def api_get_model(self, request, model_slug, pk):
         bo_model = self.get_model(slug=model_slug[0])
         obj = bo_model.model.objects.get(pk=pk[0])
         serialized = bo_model.get_serialized(obj)
         serialized['meta'] = bo_model.serialize_meta()
         return serialized
 
+    def api_get_view(self, request, slug=None, **kwargs):
+        bo_view = self.get_view(slug[0])
+        return bo_view.get_serialized(request, **kwargs)
 
+    def api_post_view(self, request, slug=None, **kwargs):
+        bo_view = self.get_view(slug[0])
+        return bo_view.get_serialized_post(request, **kwargs)
+
+    def api_post_view_action(self, request, method=None, params=None, view_params=None):
+        bo_view = self.get_view(view_params.pop('slug'))
+        fn = getattr(bo_view, method, None)
+        if not fn:
+            raise Http404(u'Cannot find method %s on view %s' % (method, bo_view.slug))
+        fn(request, params=params, **view_params)
 
 class BackOfficeTab(object):
     slug = None
     title = None
-    views = ()
+    template = None
 
-    def __init__(self, slug, title, views):
+    def __init__(self, slug, title, template):
         self.slug = slug
         self.title = title
-        self.views = views
+        self.template = template
 
-    def get_views(self):
-        return self.views
+    def get_serialized_meta(self):
+        return {
+            'slug': self.slug,
+            'title': self.title
+        }
+
+    def get_serialized(self, instance):
+        return {
+            'slug': self.slug,
+            'title': self.title,
+            'template': render_to_string(self.template, {'instance': instance})
+        }
 
 
 class BackOfficeModel(object):
@@ -156,6 +202,7 @@ class BackOfficeModel(object):
     has_header = True
     collapsed = True
     header_template = None
+    tabs = ()
 
     def get_title(self, instance):
         return unicode(instance)
@@ -178,6 +225,7 @@ class BackOfficeModel(object):
             'model': self.slug,
             'path': '/%s/%d/' % (self.slug, instance.pk),
             'header_template': self.render_template(instance),
+            'tabs': dict((t.slug, t.get_serialized(instance)) for t in self.tabs),
             'is_object': True
         }
         serialized.update(self.serialize(instance))
@@ -205,6 +253,7 @@ class BackOfficeModel(object):
             'verbose_name_plural': self.verbose_name_plural,
             'has_header': self.has_header,
             'collapsed': self.collapsed,
+            'tabs': [t.get_serialized_meta() for t in self.tabs],
             'is_meta': True
         }
 
@@ -220,6 +269,25 @@ class BackOfficeModel(object):
         return serialized
 
 
-
-def BackOfficeView(object):
+class BackOfficeView(object):
     slug = None
+
+    def get_serialized(self, request, **kwargs):
+        serialized = {
+            'slug': self.slug,
+            'content': self.get(request, **kwargs)
+        }
+        return serialized
+
+    def get_serialized_post(self, request, **kwargs):
+        serialized = {
+            'slug': self.slug,
+            'content': self.post(request, **kwargs)
+        }
+        return serialized
+
+    def get(self, request, **kwargs):
+        return repr(kwargs)
+
+    def post(self, request, **kwargs):
+        return repr(kwargs)
