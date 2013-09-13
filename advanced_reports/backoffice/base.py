@@ -9,6 +9,7 @@ from django.template.loader import render_to_string
 from django.views.decorators.cache import never_cache
 from django.utils.translation import ugettext as _
 from advanced_reports.backoffice.api_utils import JSONResponse
+from advanced_reports.backoffice.models import SearchIndex
 
 from advanced_reports.defaults import action
 
@@ -267,6 +268,20 @@ class BackOfficeModel(object):
         serialized = self.get_serialized(instance)
         serialized['children'] = self.get_children(instance)
         return serialized
+
+    def reindex(self, instance, backoffice_instance):
+        index_text = self.search_index(instance)
+        index, created = SearchIndex.objects.get_or_create(backoffice_instance=backoffice_instance,
+                                                           model_slug=self.slug,
+                                                           model_id=instance.pk,
+                                                           defaults={'to_index': index_text})
+        if not created:
+            index.to_index = index_text
+            index.save()
+
+    def search_index(self, instance):
+        return unicode(instance)
+
 
 
 class BackOfficeView(object):
