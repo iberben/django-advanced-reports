@@ -39,4 +39,15 @@
 
     </div>
 
+    <script>
+        app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
+            $routeProvider.
+                when('/', {controller: 'HomeController', templateUrl: '/home.html'}).
+                when('/search/:query', {controller: 'BOSearchController', templateUrl: '/search.html'}).
+                when('/:model/:id/', {controller: 'BOModelController', templateUrl: '/model.html'}).
+                when('/:model/:id/:tab/', {controller: 'BOModelController', templateUrl: '/model.html'}).
+                otherwise({redirectTo: '/'});
+            //$locationProvider.html5Mode(true);
+        }]);
+    </script>
 {% endblock %}

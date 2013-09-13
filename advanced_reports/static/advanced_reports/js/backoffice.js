@@ -4,16 +4,6 @@ app.run(function ($http, $cookies){
     $http.defaults.headers.common['X-CSRFToken'] = $cookies['csrftoken'];
 });
 
-app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
-	$routeProvider.
-		when('/', {controller: 'HomeController', templateUrl: '/home.html'}).
-		when('/search/:query', {controller: 'BOSearchController', templateUrl: '/search.html'}).
-        when('/:model/:id/', {controller: 'BOModelController', templateUrl: '/model.html'}).
-        when('/:model/:id/:tab/', {controller: 'BOModelController', templateUrl: '/model.html'}).
-		otherwise({redirectTo: '/'});
-    //$locationProvider.html5Mode(true);
-}]);
-
 app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
     return {
         requests: 0,
@@ -187,11 +177,12 @@ app.directive('compile', ['$compile', function ($compile){
 }]);
 
 
-
 app.directive('view', ['$compile', 'boApi', 'boUtils', function($compile, boApi, boUtils){
     return {
         link: function(scope, element, attrs){
-            var params = scope.$eval(attrs.view);
+            var slug = attrs.view;
+            var params = attrs.params && scope.$eval(attrs.params) || {};
+            params.slug = slug;
             var view_instance = attrs.instance || params.slug;
 
             var attachView = function(data, params){
@@ -212,7 +203,7 @@ app.directive('view', ['$compile', 'boApi', 'boUtils', function($compile, boApi,
                 data.action = function(method, action_params){
                     boApi.post('view_action', {
                         method: method,
-                        params: action_params,
+                        params: action_params || {},
                         view_params: params
                     }).then(function(d){
                         data.fetch();
@@ -220,7 +211,7 @@ app.directive('view', ['$compile', 'boApi', 'boUtils', function($compile, boApi,
                         element.html(error);
                     });
                 };
-                scope.$parent.$parent.$parent[view_instance] = data;
+                scope.$parent[view_instance] = data;
                 scope.view = data;
             };
 
@@ -239,16 +230,6 @@ app.directive('view', ['$compile', 'boApi', 'boUtils', function($compile, boApi,
         scope: true
     };
 }]);
-
-
-
-//compile: function() {
-//    return {
-//      pre: function(scope, element, attrs) {
-//        scope.$eval(attrs.ngInit);
-//      }
-//    }
-//  }
 
 app.directive('postToView', function(){
     return function(scope, element, attrs){

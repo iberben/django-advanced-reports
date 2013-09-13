@@ -24,11 +24,15 @@ class BackOfficeBase(object):
     """
     title = 'Untitled Backoffice'
     login_template = None
+    model_template = 'advanced_reports/backoffice/model-base.html'
 
     def __init__(self, name='backoffice', app_name='backoffice'):
         self.name = name
         self.app_name = app_name
 
+
+    def define_urls(self):
+        return ()
 
     @property
     def urls(self):
@@ -37,7 +41,7 @@ class BackOfficeBase(object):
                         url(r'^logout/$', self.logout, name='logout'),
                         url(r'^api/(?P<method>[^/]+)/$', self.decorate(self.api), name='api'),
                         url(r'^api/$', self.decorate(self.api), name='api_home'),
-                        url(r'^(?P<page_slug>[^/]+)/$', self.decorate(self.page), name='page'),
+                        *self.define_urls()
         ), self.app_name, self.name
 
     def decorate(self, view):
@@ -55,13 +59,8 @@ class BackOfficeBase(object):
         kwargs['extra_context'] = self.default_context()
         return logout(request, *args, **kwargs)
 
-    def page(self, request, *args, **kwargs):
-        return render_to_response('advanced_reports/backoffice/page.html',
-                                  self.default_context(),
-                                  context_instance=RequestContext(request))
-
     def home(self, request):
-        return render_to_response('advanced_reports/backoffice/page.html',
+        return render_to_response(self.model_template,
                                   self.default_context(),
                                   context_instance=RequestContext(request))
 
@@ -166,6 +165,7 @@ class BackOfficeBase(object):
         if not fn:
             raise Http404(u'Cannot find method %s on view %s' % (method, bo_view.slug))
         fn(request, params=params, **view_params)
+
 
 class BackOfficeTab(object):
     slug = None
