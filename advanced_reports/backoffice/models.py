@@ -3,6 +3,7 @@ from django.db import models
 from djorm_pgfulltext.fields import VectorField
 from djorm_pgfulltext.models import SearchManager
 
+
 class SearchIndex(models.Model):
     backoffice_instance = models.CharField(max_length=32)
     model_slug = models.CharField(max_length=32)

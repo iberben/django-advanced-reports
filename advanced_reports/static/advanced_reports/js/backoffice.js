@@ -87,7 +87,7 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
 
         boApi.configure(api_url);
 
-        boApi.get('search', {q: 'oemfoe'}).then(function(data){
+        boApi.get('search', {q: 'jef'}).then(function(data){
             $scope.results = data;
         });
     };
@@ -129,6 +129,16 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     $scope.$on('$routeChangeSuccess', function (){
         $scope.fetchModel(false);
     });
+
+    $scope.search_preview_results = null;
+    $scope.search_preview = function(query){
+        boApi.get('search_preview', {q: query}).then(function(data){
+            $scope.search_preview_results = data;
+            $scope.results = data;
+        }, function(error){
+            $scope.search_preview_results = null;
+        });
+    };
 }]);
 
 

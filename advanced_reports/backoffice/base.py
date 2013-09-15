@@ -10,6 +10,7 @@ from django.views.decorators.cache import never_cache
 from django.utils.translation import ugettext as _
 from advanced_reports.backoffice.api_utils import JSONResponse
 from advanced_reports.backoffice.models import SearchIndex
+from advanced_reports.backoffice.search import convert_to_raw_tsquery
 
 from advanced_reports.defaults import action
 
@@ -138,12 +139,36 @@ class BackOfficeBase(object):
         return self.slug_to_bo_view.get(slug, None)
 
     ######################################################################
+    # Search
+    ######################################################################
+    def serialize_search_result(self, index):
+        bo_model = self.get_model(slug=index.model_slug)
+        instance = bo_model.model.objects.get(pk=index.model_id)
+        return bo_model.get_serialized_with_children(instance)
+
+    def serialize_search_results(self, indices):
+        return [self.serialize_search_result(i) for i in indices]
+
+    def search(self, query, filter_on_model_slug=None, page=1, page_size=20):
+        if query == u'':
+            return ()
+        f = dict(backoffice_instance=self.name)
+        if filter_on_model_slug:
+            f['model_slug'] = filter_on_model_slug
+        ts_query = convert_to_raw_tsquery(query)
+        indices = SearchIndex.objects.search(ts_query, raw=True).filter(**f)[(page-1)*page_size:page*page_size]
+        return self.serialize_search_results(indices)
+
+    ######################################################################
     # Internal JSON API
     ######################################################################
-    def api_get_search(self, request, q):
-        from django.contrib.auth.models import User
-        users = User.objects.order_by('-pk')[:20]
-        return self.serialize_model_instances(users)
+    def api_get_search(self, request, q, page=None, filter_model=None):
+        page = int(page[0]) if page else 1
+        filter_model = filter_model[0] if filter_model else None
+        return self.search(q[0], page=page, filter_on_model_slug=filter_model)
+
+    def api_get_search_preview(self, request, q, filter_model=None):
+        return self.search(q[0], page_size=5, filter_on_model_slug=filter_model)
 
     def api_get_model(self, request, model_slug, pk):
         bo_model = self.get_model(slug=model_slug[0])
