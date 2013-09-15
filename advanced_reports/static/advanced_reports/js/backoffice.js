@@ -86,10 +86,6 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         $scope.root_url = root_url;
 
         boApi.configure(api_url);
-
-        boApi.get('search', {q: 'jef'}).then(function(data){
-            $scope.results = data;
-        });
     };
 
     $scope.isLoading = function(){
@@ -250,6 +246,24 @@ app.directive('postToView', function(){
         });
     };
 });
+
+app.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
+    return function(scope, element, attrs){
+        var to = [null];
+        var fn = $parse(attrs.keyupDelay);
+        var delay = scope.$eval(attrs['delay'] || "'500'");
+        element.on('keyup', function(event){
+            if (to[0])
+                $timeout.cancel(to[0]);
+            to[0] = $timeout(function(){
+                scope.count = (scope.count || 0) + 1;
+                scope.$apply(function(){
+                    fn(scope, {$event: event});
+                });
+            }, delay);
+        });
+    };
+}]);
 
 app.factory('boUtils', function(){
    return {
