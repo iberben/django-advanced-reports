@@ -4,6 +4,17 @@ app.run(function ($http, $cookies){
     $http.defaults.headers.common['X-CSRFToken'] = $cookies['csrftoken'];
 });
 
+app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
+    $routeProvider.
+        when('/', {controller: 'HomeController', templateUrl: '/home.html'}).
+        when('/search/:query', {controller: 'BOSearchController', templateUrl: '/search.html'}).
+        when('/search/:query/:model/', {controller: 'BOSearchController', templateUrl: '/search.html'}).
+        when('/:model/:id/', {controller: 'BOModelController', templateUrl: '/model.html'}).
+        when('/:model/:id/:tab/', {controller: 'BOModelController', templateUrl: '/model.html'}).
+        otherwise({redirectTo: '/'});
+    //$locationProvider.html5Mode(true);
+}]);
+
 app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
     return {
         requests: 0,
@@ -79,7 +90,11 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
 app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', function($scope, $http, $location, boApi, $route){
     $scope.path = function(){
         return $location.path();
-    }
+    };
+
+    $scope.hasRoute = function(){
+        return $scope.path() != '/';
+    };
 
     $scope.setup = function(api_url, root_url){
         $scope.api_url = api_url;
@@ -92,8 +107,47 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         return boApi.isLoading();
     };
 
-    $scope.search = function(){
-        $location.url('/search/' + encodeURIComponent($scope.search_query));
+    $scope.search_results_preview_visible = false;
+    $scope.search_reset_results_preview = function(){
+        $scope.search_results_preview_visible = false;
+        $scope.search_results_preview = null;
+    };
+
+    $scope.search_show_results_preview = function(){
+        $scope.search_results_preview_visible = true;
+    }
+
+    $scope.is_search_results_preview_visible = function(){
+        var visible = $scope.search_results_preview_visible && $scope.search_query.length > 0;
+        if ($scope.search_results_preview_visible && !visible)
+            $scope.search_reset_results_preview();
+        return visible;
+    };
+
+    $scope.search_preview = function(query){
+        if (query.length == 0)
+            return;
+        boApi.get('search_preview', {q: query}).then(function(data){
+            $scope.search_results_preview = data;
+        }, function(error){
+            $scope.search_results_preview = null;
+        });
+    };
+
+    $scope.goto_search = function(){
+        $scope.search_reset_results_preview();
+        if ($scope.search_query.length > 0)
+            $location.url('/search/' + encodeURIComponent($scope.search_query));
+    };
+
+    $scope.search = function(query, filter_model){
+        var params = filter_model ? {q: query, filter_model: filter_model} : {q: query};
+        boApi.get('search', params).then(function(data){
+            $scope.search_results = data;
+
+        }, function(error){
+            $scope.search_results = null;
+        });
     };
 
     $scope.get_params = function(){
@@ -126,15 +180,7 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         $scope.fetchModel(false);
     });
 
-    $scope.search_preview_results = null;
-    $scope.search_preview = function(query){
-        boApi.get('search_preview', {q: query}).then(function(data){
-            $scope.search_preview_results = data;
-            $scope.results = data;
-        }, function(error){
-            $scope.search_preview_results = null;
-        });
-    };
+
 }]);
 
 
@@ -253,14 +299,15 @@ app.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
         var fn = $parse(attrs.keyupDelay);
         var delay = scope.$eval(attrs['delay'] || "'500'");
         element.on('keyup', function(event){
-            if (to[0])
-                $timeout.cancel(to[0]);
-            to[0] = $timeout(function(){
-                scope.count = (scope.count || 0) + 1;
-                scope.$apply(function(){
-                    fn(scope, {$event: event});
-                });
-            }, delay);
+            scope.$apply(function(){
+                if (to[0])
+                    $timeout.cancel(to[0]);
+                to[0] = $timeout(function(){
+
+                        fn(scope, {$event: event});
+
+                }, delay);
+            });
         });
     };
 }]);
@@ -273,5 +320,13 @@ app.factory('boUtils', function(){
                str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
            return str.join('&');
        }
+   };
+});
+
+app.filter('capitalize', function(){
+    return function(input){
+        if (input.length > 0)
+            return input.charAt(0).toUpperCase() + input.slice(1);
+        return '';
    };
 });

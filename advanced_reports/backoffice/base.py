@@ -8,7 +8,7 @@ from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.views.decorators.cache import never_cache
 from django.utils.translation import ugettext as _
-from advanced_reports.backoffice.api_utils import JSONResponse
+from advanced_reports.backoffice.api_utils import JSONResponse, to_json
 from advanced_reports.backoffice.models import SearchIndex
 from advanced_reports.backoffice.search import convert_to_raw_tsquery
 
@@ -144,10 +144,25 @@ class BackOfficeBase(object):
     def serialize_search_result(self, index):
         bo_model = self.get_model(slug=index.model_slug)
         instance = bo_model.model.objects.get(pk=index.model_id)
-        return bo_model.get_serialized_with_children(instance)
+        serialized = bo_model.get_serialized(instance)
+        serialized['meta'] = bo_model.serialize_meta()
+        return serialized
 
     def serialize_search_results(self, indices):
-        return [self.serialize_search_result(i) for i in indices]
+        model_counts = defaultdict(lambda: 0)
+        #import pdb; pdb.set_trace()
+        serialized_results = [self.serialize_search_result(i) for i in indices]
+
+        # Count models
+        for serialized_result in serialized_results:
+            model_counts[serialized_result['model']] += 1
+        model_counts = [[self.get_model(mc[0]), mc[1]] for mc in model_counts.items()]
+        model_counts.sort(key=lambda x: x[0].priority)
+        model_counts = [{'meta': mc[0].serialize_meta(),
+                         'count': mc[1]
+                        } for mc in model_counts]
+        return {'results': serialized_results,
+                'model_counts': model_counts}
 
     def search(self, query, filter_on_model_slug=None, page=1, page_size=20):
         if query == u'':
@@ -168,12 +183,13 @@ class BackOfficeBase(object):
         return self.search(q[0], page=page, filter_on_model_slug=filter_model)
 
     def api_get_search_preview(self, request, q, filter_model=None):
+        filter_model = filter_model[0] if filter_model else None
         return self.search(q[0], page_size=5, filter_on_model_slug=filter_model)
 
     def api_get_model(self, request, model_slug, pk):
         bo_model = self.get_model(slug=model_slug[0])
         obj = bo_model.model.objects.get(pk=pk[0])
-        serialized = bo_model.get_serialized(obj)
+        serialized = bo_model.get_serialized_with_children(obj)
         serialized['meta'] = bo_model.serialize_meta()
         return serialized
 
@@ -224,7 +240,7 @@ class BackOfficeModel(object):
     verbose_name = None
     verbose_name_plural = None
     children = None
-    priority = 1
+    priority = 999
     has_header = True
     collapsed = True
     header_template = None

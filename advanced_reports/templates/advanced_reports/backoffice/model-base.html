@@ -1,53 +1,5 @@
 {% extends "advanced_reports/backoffice/base.html" %}
 
 {% block content %}
-    {% include "advanced_reports/backoffice/home.html" %}
-    {% include "advanced_reports/backoffice/model.html" %}
-    {% include "advanced_reports/backoffice/tab.html" %}
-    {% include "advanced_reports/backoffice/search.html" %}
-
-
-    <div class="col-xs-3 backoffice-objectbar">
-        {% verbatim %}
-        <ul>
-            <li ng-repeat="item in results" ng-class="{active: path() == item.path}">
-                <button class="btn btn-default btn-xs" ng-hide="item.expanded" ng-click="item.expanded = true">+</button>
-                <button class="btn btn-default btn-xs" ng-show="item.expanded" ng-click="item.expanded = false">-</button>
-                <a href="#{{ item.path }}">{{ item.title }}</a>
-                <ul ng-show="item.expanded">
-                    <li ng-repeat="item in item.children">
-                        <span ng-show="item.has_header" ng-click="item.collapsed = !item.collapsed">
-                            <a href>{{ item.verbose_name_plural }}</a>
-                        </span>
-                        <span ng-show="item.is_object">
-                            <a ng-class="{active: path() == item.path}" href="#{{ item.path }}">{{ item.title }}</a>
-                        </span>
-                        <ul ng-hide="item.collapsed || !item.is_meta">
-                            <li ng-repeat="item in item.children">
-                                <a ng-class="{active: path() == item.path}" href="#{{ item.path }}">{{ item.title }}</a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </li>
-        </ul>
-        {% endverbatim %}
-    </div>
-    <div class="col-xs-9 backoffice-content">
-
-        <div ng-view></div>
-
-    </div>
-
-    <script>
-        app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
-            $routeProvider.
-                when('/', {controller: 'HomeController', templateUrl: '/home.html'}).
-                when('/search/:query', {controller: 'BOSearchController', templateUrl: '/search.html'}).
-                when('/:model/:id/', {controller: 'BOModelController', templateUrl: '/model.html'}).
-                when('/:model/:id/:tab/', {controller: 'BOModelController', templateUrl: '/model.html'}).
-                otherwise({redirectTo: '/'});
-            //$locationProvider.html5Mode(true);
-        }]);
-    </script>
+<div ng-view></div>
 {% endblock %}

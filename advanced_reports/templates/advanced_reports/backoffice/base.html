@@ -33,7 +33,11 @@
         {% block extra-head %}{% endblock %}
     </head>
 
-    <body ng-app="BackOfficeApp" ng-controller="MainController" ng-init="setup('{% url 'backoffice:api_home' %}', '{% url 'backoffice:home' %}')">
+    <body ng-click="search_reset_results_preview()" ng-app="BackOfficeApp" ng-controller="MainController" ng-init="setup('{% url 'backoffice:api_home' %}', '{% url 'backoffice:home' %}')">
+        {% include "advanced_reports/backoffice/home.html" %}
+        {% include "advanced_reports/backoffice/model.html" %}
+        {% include "advanced_reports/backoffice/tab.html" %}
+        {% include "advanced_reports/backoffice/search.html" %}
 
         {% if request.user.is_authenticated %}
             <div class="navbar navbar-default navbar-fixed-top">
@@ -47,9 +51,30 @@
                 </div>
 
                 <div class="navbar-collapse collapse">
-                    <form class="navbar-form navbar-left" ng-submit="search()">
-                        <div class="form-group">
-                            <input type="text" placeholder="Search" class="form-control" ng-model="search_query" keyup-delay="search_preview(search_query)">
+                    <form class="navbar-form navbar-left" ng-submit="goto_search()">
+                        <div class="form-group dropdown">
+                            <input type="text"
+                                   placeholder="Search"
+                                   class="form-control"
+                                   ng-model="search_query"
+                                   ng-change="search_show_results_preview()"
+                                   keyup-delay="search_preview(search_query)"
+                                   delay="150">
+                            <ul class="dropdown-menu-always-visible dropdown-menu" ng-show="is_search_results_preview_visible()">
+                                {% verbatim %}
+                                <li ng-repeat="result in search_results_preview.results">
+                                    <a href="{{ root_url }}#{{ result.path }}">
+                                        <small>{{ result.verbose_name }}</small> {{ result.title }}
+                                    </a>
+                                </li>
+                                {% endverbatim %}
+                                <li ng-show="!search_results_preview" class="disabled">
+                                    <a><img src="{{ STATIC_URL }}advanced_reports/img/modybox/loading.gif"></a>
+                                </li>
+                                <li ng-show="search_results_preview.results.length == 0" class="disabled">
+                                    <a>{% trans "No results found" %}</a>
+                                </li>
+                            </ul>
                         </div>
                     </form>
 
@@ -77,15 +102,17 @@
                         <a href="{% url 'backoffice:logout' %}" class="btn btn-danger">{% trans "Sign out" %}</a>
                     </form>
                     <p class="navbar-text navbar-right">
-                        {% blocktrans with request.user.username as username %}Signed in as {{ username }}{% endblocktrans %}
+                        {% blocktrans with request.user.first_name as first_name %}Signed in as {{ first_name }}{% endblocktrans %}
                     </p>
                 </div><!--/.navbar-collapse -->
             </div>
         {% endif %}
 
-        {% block content %}
-
-        {% endblock %}
+        <!-- Switch between Django-rendered and AngularJS-rendered content -->
+        <div class="page" ng-view ng-show="hasRoute()"></div>
+        <div class="page" ng-hide="hasRoute()">
+            {% block content %}{% endblock %}
+        </div>
 
         <!-- Bootstrap core JavaScript
         ================================================== -->
