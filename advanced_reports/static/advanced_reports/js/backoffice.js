@@ -330,3 +330,9 @@ app.filter('capitalize', function(){
         return '';
    };
 });
+
+app.filter('uriencode', function(){
+    return function(input){
+        return encodeURIComponent(input);
+    };
+});

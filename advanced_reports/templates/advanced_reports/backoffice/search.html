@@ -13,13 +13,12 @@
             </div>
 
             <ul class="list-group">
-
                 <li class="list-group-item" ng-show="params.model">
-                    <a href="{% verbatim %}#/search/{{ params.query }}{% endverbatim %}">{% trans "Show all" %}</a>
+                    <a href="{% verbatim %}#/search/{{ params.query|uriencode }}{% endverbatim %}">{% trans "Show all" %}</a>
                 </li>
                 {% verbatim %}
                 <li class="list-group-item" ng-repeat="model_count in search_results.model_counts" ng-class="{active: params.model == model_count.meta.slug}">
-                    <a ng-hide="params.model == model_count.meta.slug" href="#/search/{{ params.query }}/{{ model_count.meta.slug }}/">{{ model_count.meta.verbose_name_plural|capitalize }}</a>
+                    <a ng-hide="params.model == model_count.meta.slug" href="#/search/{{ params.query|uriencode }}/{{ model_count.meta.slug|uriencode }}/">{{ model_count.meta.verbose_name_plural|capitalize }}</a>
                     <span ng-show="params.model == model_count.meta.slug">{{ model_count.meta.verbose_name_plural|capitalize }}</span>
                     <span class="badge pull-right">{{ model_count.count }}</span>
                 </li>

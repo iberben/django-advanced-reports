@@ -1,14 +1,13 @@
 from collections import defaultdict
 from django.conf.urls import patterns, url
 from django.core.urlresolvers import reverse
-from django.contrib.auth import REDIRECT_FIELD_NAME
-from django.http import HttpResponse, Http404
+from django.db.models.signals import post_save, post_delete
+from django.http import Http404
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.views.decorators.cache import never_cache
-from django.utils.translation import ugettext as _
-from advanced_reports.backoffice.api_utils import JSONResponse, to_json
+from advanced_reports.backoffice.api_utils import JSONResponse
 from advanced_reports.backoffice.models import SearchIndex
 from advanced_reports.backoffice.search import convert_to_raw_tsquery
 
@@ -47,6 +46,7 @@ class BackOfficeBase(object):
         ), self.app_name, self.name
 
     def decorate(self, view):
+        # TODO: add permissions
         return staff_member_required(self)(view)
 
     def default_context(self):
@@ -90,6 +90,24 @@ class BackOfficeBase(object):
     ######################################################################
     model_to_bo_model = {}
     slug_to_bo_model = {}
+    search_index_dependency_to_dependants = defaultdict(lambda: [])
+
+    def _reindex_model_signal_handler(self, sender, **kwargs):
+        bo_model = self.get_model(model=sender)
+        instance = kwargs.get('instance')
+
+        if bo_model:
+            bo_model.reindex(instance, self.name)
+            print 'Reindexed:', repr(instance)
+
+        if sender in self.search_index_dependency_to_dependants:
+            dependants = self.search_index_dependency_to_dependants[sender]
+            for dependant in dependants:
+                get_dependant_instance, expected_dependant_model = dependant.search_index_dependencies[sender]
+                dependant_instance = get_dependant_instance(instance)
+                if isinstance(dependant_instance, expected_dependant_model):
+                    dependant.reindex(dependant_instance, self.name)
+                    print 'Reindexed dependant:', repr(dependant_instance)
 
     def register_model(self, bo_model):
         if not bo_model.slug in self.slug_to_bo_model:
@@ -97,6 +115,16 @@ class BackOfficeBase(object):
             self.slug_to_bo_model[bo_model.slug] = bo_model_instance
             self.model_to_bo_model[bo_model.model] = bo_model_instance
             self.link_relationship(bo_model_instance)
+            post_save.connect(self._reindex_model_signal_handler, sender=bo_model.model)
+            print 'post_save'
+
+            for dependency in bo_model_instance.search_index_dependencies:
+                self.search_index_dependency_to_dependants[dependency].append(bo_model_instance)
+                post_save.connect(self._reindex_model_signal_handler, sender=dependency)
+                post_delete.connect(self._reindex_model_signal_handler, sender=dependency)
+                print 'post_save_dependency'
+
+
 
     def get_model(self, slug=None, model=None):
         if slug:
@@ -245,6 +273,7 @@ class BackOfficeModel(object):
     collapsed = True
     header_template = None
     tabs = ()
+    search_index_dependencies = {}
 
     def get_title(self, instance):
         return unicode(instance)

@@ -1,14 +1,52 @@
 {% verbatim %}
 <script type="text/ng-template" id="/model.html">
-    <div ng-show="model">
-        <h1>{{ model.title }} <small>{{ model.meta.verbose_name }}</small></h1>
-        <div compile="model.header_template"></div>
+<div class="row" ng-show="model">
+    <div class="col-xs-5 col-md-3 col-lg-2">
+        <div class="panel panel-default" ng-show="false">
+            <div class="panel-heading">
+                <h2 class="panel-title">John Doe</h2>
+                <span>john@doe.com</span>
+            </div>
 
-        <ul class="nav nav-pills">
-            <li ng-class="{active: params.tab == tab.slug}" ng-repeat="tab in model.meta.tabs"><a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a></li>
-        </ul>
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <a href="">Details</a>
+                </li>
+                <li class="list-group-item">
+                    <a href="">Invoices</a>
+                </li>
+                <li class="list-group-item">
+                    <a href="">Meldingen</a>
+                </li>
+            </ul>
+        </div>
 
-        <div compile="model.tabs[params.tab].template"></div>
+        <div class="panel panel-default" ng-repeat="child in model.children">
+            <div class="panel-heading">
+                <h2 class="panel-title">{{ child.title }}</h2>
+                <span>+48 123 456 789</span>
+            </div>
+        </div>
     </div>
+
+    <div class="col-xs-7 col-md-9 col-lg-10">
+        <!-- panel -->
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h2 class="panel-title">{{ model.title }} <small>{{ model.meta.verbose_name }}</small></h2>
+                <div compile="model.header_template"></div>
+            </div>
+            <div class="panel-body">
+                <ul class="nav nav-pills">
+                    <li ng-class="{active: params.tab == tab.slug}" ng-repeat="tab in model.meta.tabs">
+                        <a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a>
+                    </li>
+                </ul>
+                <div compile="model.tabs[params.tab].template"></div>
+            </div>
+        </div>
+        <!-- /panel -->
+    </div>
+</div>
 </script>
 {% endverbatim %}
