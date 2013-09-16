@@ -23,16 +23,41 @@ class BackOfficeBase(object):
     The base class of a Back Office application. Inherit from this class and
     define your own custom backoffice!
     """
+
+    #: The title of the BackOffice application. This is used on pages that
+    #: inherit from the ``model_template``.
     title = 'Untitled Backoffice'
-    login_template = None
+
+    #: The template file that will be used to show models. It has to define
+    #: an ng-view inside of it. Please extend the default template if you
+    #: want to specify your own navigation (which you will probably want
+    #: to do) and put your own template here.
     model_template = 'advanced_reports/backoffice/model-base.html'
 
     def __init__(self, name='backoffice', app_name='backoffice'):
+        """
+        Constructor for a BackOfficeBase implementation.
+
+        :param name: the instance name for this implementation used for
+        Django url namespacing.
+        :param app_name: the app name for this implementation. In most cases
+        can be just left alone.
+        :return: a BackOfficeBase implementation instance.
+        """
         self.name = name
         self.app_name = app_name
 
 
     def define_urls(self):
+        """
+        Implement this to add some custom url patterns to a backoffice.
+        They will automatically get the proper namespacing. For example,
+        if your backoffice is called "helpdesk" and your url is called
+        "stats", you must use ``{% url 'helpdesk:stats' %}`` in your
+        templates.
+
+        :return: a tuple/list of url patterns (not using ``patterns()``!)
+        """
         return ()
 
     @property
