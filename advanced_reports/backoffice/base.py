@@ -98,7 +98,6 @@ class BackOfficeBase(object):
 
         if bo_model:
             bo_model.reindex(instance, self.name)
-            print 'Reindexed:', repr(instance)
 
         if sender in self.search_index_dependency_to_dependants:
             dependants = self.search_index_dependency_to_dependants[sender]
@@ -107,7 +106,6 @@ class BackOfficeBase(object):
                 dependant_instance = get_dependant_instance(instance)
                 if isinstance(dependant_instance, expected_dependant_model):
                     dependant.reindex(dependant_instance, self.name)
-                    print 'Reindexed dependant:', repr(dependant_instance)
 
     def register_model(self, bo_model):
         if not bo_model.slug in self.slug_to_bo_model:
@@ -116,13 +114,11 @@ class BackOfficeBase(object):
             self.model_to_bo_model[bo_model.model] = bo_model_instance
             self.link_relationship(bo_model_instance)
             post_save.connect(self._reindex_model_signal_handler, sender=bo_model.model)
-            print 'post_save'
 
             for dependency in bo_model_instance.search_index_dependencies:
                 self.search_index_dependency_to_dependants[dependency].append(bo_model_instance)
                 post_save.connect(self._reindex_model_signal_handler, sender=dependency)
                 post_delete.connect(self._reindex_model_signal_handler, sender=dependency)
-                print 'post_save_dependency'
 
 
 
