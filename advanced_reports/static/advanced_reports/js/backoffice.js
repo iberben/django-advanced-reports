@@ -295,17 +295,15 @@ app.directive('postToView', function(){
 
 app.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
     return function(scope, element, attrs){
-        var to = [null];
+        var to = null;
         var fn = $parse(attrs.keyupDelay);
         var delay = scope.$eval(attrs['delay'] || "'500'");
         element.on('keyup', function(event){
             scope.$apply(function(){
-                if (to[0])
-                    $timeout.cancel(to[0]);
-                to[0] = $timeout(function(){
-
-                        fn(scope, {$event: event});
-
+                if (to)
+                    $timeout.cancel(to);
+                to = $timeout(function(){
+                    fn(scope, {$event: event});
                 }, delay);
             });
         });
@@ -332,7 +330,5 @@ app.filter('capitalize', function(){
 });
 
 app.filter('uriencode', function(){
-    return function(input){
-        return encodeURIComponent(input);
-    };
+    return encodeURIComponent;
 });

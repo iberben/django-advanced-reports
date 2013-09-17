@@ -21,3 +21,33 @@ def to_json(obj):
 
 def JSONResponse(obj):
     return HttpResponse(to_json(obj), content_type='application/json')
+
+
+class ViewRequestParameters(object):
+    def __init__(self, request):
+        self.GET = request.GET
+        self.POST = request.POST
+        self.body = request.body
+        self.json_dict = json.loads(self.body) if 'application/json' in request.META['CONTENT_TYPE'] else {}
+
+        self.fallbacks = (self.GET, self.POST, self.json_dict)
+        self.list_fallbacks = (self.GET, self.POST)
+
+    def get(self, item, default=None):
+        for fallback in self.fallbacks:
+            obj = fallback.get(item, None)
+            if obj is not None:
+                return obj
+        return default
+
+    def getlist(self, item, default=None):
+        for fallback in self.list_fallbacks:
+            l = fallback.getlist(item)
+            if l != []:
+                return l
+        if default is None:
+            return []
+        return default
+
+    def __repr__(self):
+        return 'ViewRequestParameters(%r, %r, %r)' % (self.GET, self.POST, self.json_dict)

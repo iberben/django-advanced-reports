@@ -7,7 +7,7 @@ from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.views.decorators.cache import never_cache
-from advanced_reports.backoffice.api_utils import JSONResponse
+from advanced_reports.backoffice.api_utils import JSONResponse, ViewRequestParameters
 from advanced_reports.backoffice.models import SearchIndex
 from advanced_reports.backoffice.search import convert_to_raw_tsquery
 
@@ -95,20 +95,12 @@ class BackOfficeBase(object):
         if not method:
             return JSONResponse(None)
 
-        if request.method == 'GET':
-            kwargs = dict(request.GET)
-        elif request.method in ('POST', 'PUT'):
-            if request.META['CONTENT_TYPE'] == 'application/x-www-form-urlencoded':
-                kwargs = dict(request.POST)
-            else:
-                kwargs = dict(json.loads(request.body))
-        else:
-            kwargs = {}
+        request.view_params = ViewRequestParameters(request)
 
         fn = getattr(self, 'api_%s_%s' % (request.method.lower(), method), None)
         if fn is None:
             raise Http404
-        return JSONResponse(fn(request, **kwargs))
+        return JSONResponse(fn(request))
 
     ######################################################################
     # Model Registration
@@ -226,36 +218,48 @@ class BackOfficeBase(object):
     ######################################################################
     # Internal JSON API
     ######################################################################
-    def api_get_search(self, request, q, page=None, filter_model=None):
-        page = int(page[0]) if page else 1
-        filter_model = filter_model[0] if filter_model else None
-        return self.search(q[0], page=page, filter_on_model_slug=filter_model)
+    def api_get_search(self, request):
+        page = int(request.view_params.get('page', '1'))
+        filter_model = request.view_params.get('filter_model')
+        q = request.view_params.get('q')
+        return self.search(q, page=page, filter_on_model_slug=filter_model)
 
-    def api_get_search_preview(self, request, q, filter_model=None):
-        filter_model = filter_model[0] if filter_model else None
+    def api_get_search_preview(self, request):
+        filter_model = request.view_params.get('filter_model')
+        q = request.view_params.get('q')
         return self.search(q[0], page_size=5, filter_on_model_slug=filter_model)
 
-    def api_get_model(self, request, model_slug, pk):
-        bo_model = self.get_model(slug=model_slug[0])
-        obj = bo_model.model.objects.get(pk=pk[0])
+    def api_get_model(self, request):
+        model_slug = request.view_params.get('model_slug')
+        pk = request.view_params.get('pk')
+        bo_model = self.get_model(slug=model_slug)
+        obj = bo_model.model.objects.get(pk=pk)
         serialized = bo_model.get_serialized_with_children(obj)
         serialized['meta'] = bo_model.serialize_meta()
         return serialized
 
-    def api_get_view(self, request, slug=None, **kwargs):
-        bo_view = self.get_view(slug[0])
-        return bo_view.get_serialized(request, **kwargs)
+    def api_get_view(self, request):
+        bo_view = self.get_view(request.view_params.get('slug'))
+        return bo_view.get_serialized(request)
 
-    def api_post_view(self, request, slug=None, **kwargs):
-        bo_view = self.get_view(slug[0])
-        return bo_view.get_serialized_post(request, **kwargs)
+    def api_post_view(self, request):
+        bo_view = self.get_view(request.view_params.get('slug'))
+        return bo_view.get_serialized_post(request)
 
-    def api_post_view_action(self, request, method=None, params=None, view_params=None):
-        bo_view = self.get_view(view_params.pop('slug'))
+    def api_post_view_action(self, request):
+        method = request.view_params.get('method')
+        action_params = request.view_params.get('params')
+        view_params = request.view_params.get('view_params')
+
+        request.action_params = action_params
+        request.view_params = view_params
+
+        bo_view = self.get_view(view_params.get('slug'))
+
         fn = getattr(bo_view, method, None)
         if not fn:
             raise Http404(u'Cannot find method %s on view %s' % (method, bo_view.slug))
-        fn(request, params=params, **view_params)
+        return fn(request)
 
 
 class BackOfficeTab(object):
@@ -280,6 +284,9 @@ class BackOfficeTab(object):
             'title': self.title,
             'template': render_to_string(self.template, {'instance': instance})
         }
+
+    def __repr__(self):
+        return 'BackOfficeTab(%r, %r, %r)' % (self.slug, self.title, self.template)
 
 
 class BackOfficeModel(object):
@@ -378,22 +385,25 @@ class BackOfficeModel(object):
 class BackOfficeView(object):
     slug = None
 
-    def get_serialized(self, request, **kwargs):
+    def get_serialized(self, request):
         serialized = {
             'slug': self.slug,
-            'content': self.get(request, **kwargs)
+            'content': self.get(request)
         }
         return serialized
 
-    def get_serialized_post(self, request, **kwargs):
+    def get_serialized_post(self, request):
         serialized = {
             'slug': self.slug,
-            'content': self.post(request, **kwargs)
+            'content': self.post(request)
         }
         return serialized
 
-    def get(self, request, **kwargs):
-        return repr(kwargs)
+    def get(self, request):
+        return repr(request.view_params)
 
-    def post(self, request, **kwargs):
-        return repr(kwargs)
+    def post(self, request):
+        return repr(request.view_params)
+
+    def FOO(self, request):
+        return repr(request.action_params)

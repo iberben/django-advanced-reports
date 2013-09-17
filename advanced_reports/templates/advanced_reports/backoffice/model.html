@@ -37,7 +37,7 @@
                 <div compile="model.header_template"></div>
             </div>
             <div class="panel-body">
-                <ul class="nav nav-pills">
+                <ul class="nav nav-tabs">
                     <li ng-class="{active: params.tab == tab.slug}" ng-repeat="tab in model.meta.tabs">
                         <a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a>
                     </li>
