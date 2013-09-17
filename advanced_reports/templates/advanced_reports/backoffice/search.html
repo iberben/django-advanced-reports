@@ -13,8 +13,9 @@
             </div>
 
             <ul class="list-group">
-                <li class="list-group-item" ng-show="params.model">
-                    <a href="{% verbatim %}#/search/{{ params.query|uriencode }}{% endverbatim %}">{% trans "Show all" %}</a>
+                <li class="list-group-item" ng-class="{active: !params.model}">
+                    <a ng-show="params.model" href="{% verbatim %}#/search/{{ params.query|uriencode }}{% endverbatim %}">{% trans "Show all" %}</a>
+                    <span ng-hide="params.model">{% trans "Show all" %}</span>
                 </li>
                 {% verbatim %}
                 <li class="list-group-item" ng-repeat="model_count in search_results.model_counts" ng-class="{active: params.model == model_count.meta.slug}">
