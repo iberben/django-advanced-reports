@@ -36,11 +36,11 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
             });
             return defer.promise;
         },
-        post: function(method, data){
+        post: function(method, data, url_suffix){
             var that = this;
             var defer = $q.defer();
             this.requests += 1;
-            $http.post(this.url + method + '/', data).success(function (data, status){
+            $http.post(this.url + method + '/' + (url_suffix || ''), data).success(function (data, status){
                 defer.resolve(data);
                 that.requests -= 1;
             }).error(function (data, status){
@@ -255,10 +255,9 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
                 data.post = function(post_data){
                     boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(compile, showError);
                 };
-                data.action = function(method, actionParams, reloadViewOnSuccess){
-                    var deferred = $q.defer();
+                data.action = function(method, actionParams, reloadViewOnSuccess, url_suffix){
                     return boApi.post('view_action', {method: method, params: actionParams || {}, view_params: params
-                    }).then(function(result){
+                    }, url_suffix).then(function(result){
                         if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
                             data.fetch();
                         return result;

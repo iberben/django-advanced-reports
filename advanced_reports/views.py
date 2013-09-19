@@ -288,10 +288,10 @@ def ajax_form(request, slug, method, object_id, param=None):
     return inner(request, slug, method, object_id)
 
 
-def _action_dict(action):
-    d = action.attrs_dict
+def _action_dict(o, action):
+    d = dict(action.attrs_dict)
     if action.form:
-        d['form'] = action.form_template or action.form.as_table()
+        d['form'] = action.form_template or action.form(instance=o, prefix=o.pk).as_table()
     return d
 
 
@@ -299,7 +299,7 @@ def _item_values(o, advreport):
     return {
         'values': o.advreport_column_values,
         'extra_information': o.advreport_extra_information.replace('data-method="', 'ng-bind-html-unsafe="lazydiv__%s__' % advreport.get_item_id(o)),
-        'actions': [_action_dict(a) for a in o.advreport_actions],
+        'actions': [_action_dict(o, a) for a in o.advreport_actions],
         'item_id': advreport.get_item_id(o)
     }
 

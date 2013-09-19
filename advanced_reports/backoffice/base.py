@@ -2,8 +2,9 @@ from collections import defaultdict
 from django.conf.urls import patterns, url
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_delete
 from django.http import Http404
+from django.http.response import HttpResponse
 from django.shortcuts import render_to_response
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
@@ -17,6 +18,17 @@ from advanced_reports.defaults import action
 from .decorators import staff_member_required
 
 import json
+
+
+class AutoSlug(object):
+    def __init__(self, remove_suffix=None):
+        self.remove_suffix = remove_suffix
+
+    def __get__(self, instance, owner):
+        slug = owner.__name__
+        if self.remove_suffix and slug.endswith(self.remove_suffix):
+            slug = slug[:-len(self.remove_suffix)]
+        return slug.lower()
 
 
 class BackOfficeBase(object):
@@ -138,7 +150,12 @@ class BackOfficeBase(object):
         fn = getattr(self, 'api_%s_%s' % (request.method.lower(), method), None)
         if fn is None:
             raise Http404
-        return JSONResponse(fn(request))
+
+        response = fn(request)
+
+        if isinstance(response, HttpResponse):
+            return response
+        return JSONResponse(response)
 
     ######################################################################
     # Model Registration
@@ -179,6 +196,17 @@ class BackOfficeBase(object):
                 if isinstance(dependant_instance, expected_dependant_model):
                     dependant.reindex(dependant_instance, self.name)
 
+    def _delete_index_signal_handler(self, sender, **kwargs):
+        """
+        Signal handler for deleting search indexes for models that will
+        be deleted..
+        """
+        bo_model = self.get_model(model=sender)
+        instance = kwargs.get('instance')
+
+        if bo_model:
+            bo_model.delete_index(instance, self.name)
+
     def register_model(self, bo_model):
         """
         Register a ``BackOfficeModel`` implementation class with this
@@ -195,6 +223,7 @@ class BackOfficeBase(object):
             # Connect signals to listen for changes to this model and their
             # ``search_index_dependencies``.
             post_save.connect(self._reindex_model_signal_handler, sender=bo_model.model)
+            pre_delete.connect(self._delete_index_signal_handler, sender=bo_model.model)
             for dependency in bo_model_instance.search_index_dependencies:
                 self.search_index_dependency_to_dependants[dependency].append(bo_model_instance)
                 post_save.connect(self._reindex_model_signal_handler, sender=dependency)
@@ -431,7 +460,7 @@ class BackOfficeBase(object):
 
     def api_post_view_action(self, request):
         """
-        Performs an action a given view.
+        Performs an action to a given view.
 
         :param request: ``request.view_params with 'method', 'params' and 'view_params'``
         :return: the results of the called view method.
@@ -465,7 +494,7 @@ class BackOfficeTab(object):
         the current model instance.
     """
 
-    slug = None
+    slug = AutoSlug(remove_suffix='Tab')
     title = None
     template = None
 
@@ -498,7 +527,7 @@ class BackOfficeModel(object):
     """
 
     #: A unique slug to identify a model ('user', 'sim', ...)
-    slug = None
+    slug = AutoSlug(remove_suffix='Model')
 
     #: The actual Django model that is being used
     model = None
@@ -627,13 +656,21 @@ class BackOfficeModel(object):
             index.to_index = index_text
             index.save()
 
+    def delete_index(self, instance, backoffice_instance):
+        try:
+            index = SearchIndex.objects.get(backoffice_instance=backoffice_instance,
+                                            model_slug=self.slug,
+                                            model_id=instance.pk)
+            index.delete()
+        except ObjectDoesNotExist:
+            pass
+
     def search_index(self, instance):
         return unicode(instance)
 
 
-
 class BackOfficeView(object):
-    slug = None
+    slug = AutoSlug(remove_suffix='View')
 
     def get_serialized(self, request):
         serialized = {
@@ -650,10 +687,10 @@ class BackOfficeView(object):
         return serialized
 
     def get(self, request):
-        return repr(request.view_params)
+        raise NotImplementedError
 
     def post(self, request):
-        return repr(request.view_params)
+        raise NotImplementedError
 
     def FOO(self, request):
-        return repr(request.action_params)
+        raise NotImplementedError
