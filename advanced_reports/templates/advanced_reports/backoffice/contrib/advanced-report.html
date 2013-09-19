@@ -1,0 +1,264 @@
+{% load i18n %}
+<div ng-controller="AdvancedReportCtrl" ng-init="fetch_report()">
+    <div ng-hide="loaded||error||report">
+        <img src="{{ STATIC_URL }}img/loader.gif">
+        Loading...
+    </div>
+
+    <div ng-show="form" style="position: fixed; width: 600px; top: 100px; background: #FFF; border: 1px solid #000; margin-left: auto; margin-right: auto; padding: 8px;">
+        <h2 ng-bind="form.verbose_name"></h2>
+        <form>
+            {% csrf_token %}
+            <table ng-bind-html-unsafe="form.form"></table>
+            <p>
+                <input type="submit" ng-click="submit_form(form, $event)" value="{% templatetag openvariable %}form.submit||'{% trans "Submit" %}'{% templatetag closevariable %}">
+                <img ng-show="form.item.loading&amp;&amp;loader=='action_'+form.method" src="{{ STATIC_URL }}img/loader.gif">
+                <input type="reset" ng-click="form=null" value="{% trans "Cancel" %}">
+            </p>
+        </form>
+    </div>
+
+    <div ng-show="report.search_fields">
+        <form>
+            <p>
+                <input type="text" ng-model="filters.q" title="{% templatetag openvariable %}report.searchable_columns{% templatetag closevariable %}">
+                <input type="submit" value="{% trans "Search" %}" ng-click="apply_filters()">
+                <img ng-show="!loaded&amp;&amp;loader=='search'" src="{{ STATIC_URL }}img/loader.gif">
+                <a href ng-show="has_applied_filters()" ng-click="remove_filters()">{% trans "show all" %}</a>
+            </p>
+        </form>
+    </div>
+
+    <p ng-show="report">
+        <span ng-show="page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></span>
+        <span ng-show="page > 1"><a href ng-click="change_page(page-1)">&lt;</a></span>
+        {% trans "Page {{ page }} of {{ page_count }}" %}
+        <span ng-show="page < page_count"><a href ng-click="change_page(page+1)">&gt;</a></span>
+        <span ng-show="page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></span>
+
+        <img ng-show="!loaded&amp;&amp;loader=='page'" src="{{ STATIC_URL }}img/loader.gif">
+    </p>
+
+    <div class="tablecontainer" ng-show="report">
+        <table class="data">
+            <tr>
+                <th ng-repeat="column in report.header" ng-style="column.style">
+                    <span ng-bind="column.verbose_name" ng-show="!column.sortable"></span>
+                    <a href ng-bind="column.verbose_name" ng-show="column.sortable" ng-click="change_order(column.order_by)"></a>
+                    <span ng-show="report.extra.order_field==column.name" ng-bind="{true:'&darr;', false:'&uarr;'}[report.extra.ascending]"></span>
+                    <img ng-show="!loaded&amp;&amp;loader=='order_'+column.order_by" src="{{ STATIC_URL }}img/loader.gif">
+                </th>
+            </tr>
+
+            <tbody ng-repeat="item in report.items">
+                <tr ng-click="toggle_expand(item)">
+                    <td ng-repeat="value in item.values" ng-bind-html-unsafe="value.html" ng-style="value.style" ng-class="value.class"></td>
+                </tr>
+
+                <tr ng-show="item.expanded">
+                    <td colspan="{% templatetag openvariable %}report.header.length{% templatetag closevariable %}">
+                        <ul class="action-bar" style="list-style: none;">
+                            <li ng-repeat="action in item.actions" style="display: inline; margin-right: 10px;">
+                                <a href ng-bind="action.verbose_name" ng-click="execute_action(item, action)"></a>
+                                <img ng-show="item.loading&amp;&amp;loader=='action_'+action.method" src="{{ STATIC_URL }}img/loader.gif">
+                            </li>
+                        </ul>
+                        <div compile="item.extra_information"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <p ng-show="report">
+        <span ng-show="page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></span>
+        <span ng-show="page > 1"><a href ng-click="change_page(page-1)">&lt;</a></span>
+        {% trans "Page {{ page }} of {{ page_count }}" %}
+        <span ng-show="page < page_count"><a href ng-click="change_page(page+1)">&gt;</a></span>
+        <span ng-show="page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></span>
+
+        <img ng-show="!loaded&amp;&amp;loader=='page'" src="{{ STATIC_URL }}img/loader.gif">
+    </p>
+</div>
+
+<script type="text/javascript">
+function AdvancedReportCtrl($scope, $http) {
+    $scope.loader = 'report';
+    $scope.loaded = true;
+    $scope.report = null;
+    $scope.page = 1;
+    $scope.page_count = null;
+    $scope.current_order_by = null;
+    $scope.filters = {};
+    $scope.applied_filters = {};
+
+    $scope.fetch_report = function() {
+        $scope.loaded = false;
+        if ($scope.current_order_by)
+            $scope.filters['order'] = $scope.current_order_by;
+
+        var qs_list = [];
+        for (var k in $scope.filters)
+            if ($scope.filters[k])
+                qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.filters[k]));
+        var qs = '&' + qs_list.join('&');
+
+        $http.get($scope.settings.list + '?page=' + $scope.page + qs).
+        success(function(data, status){
+            $scope.report = data;
+            $scope.loaded = true;
+            $scope.page_count = Math.floor(data.item_count / data.items_per_page) + 1;
+        }).
+        error(function(data, status){
+            $scope.error = data;
+        });
+    };
+
+    $scope.change_page = function(page) {
+        $scope.loader = 'page';
+        $scope.page = page;
+        $scope.fetch_report();
+    };
+
+    $scope.toggle_expand = function(item) {
+        if (!item.expanded && (item.extra_information.length > 0 || item.actions.length > 0)) {
+            item.expanded = true;
+            $scope.fetch_lazy_divs(item);
+        } else {
+            item.expanded = false;
+        }
+    };
+
+    $scope.change_order = function(order_by) {
+        $scope.loader = 'order_' + order_by;
+        var ascending = $scope.report.extra.order_by != order_by || !$scope.report.extra.ascending;
+        $scope.current_order_by = (ascending ? '' : '-') + order_by;
+        $scope.page = 1;
+        $scope.fetch_report();
+    };
+
+
+    $scope.has_applied_filters = function() {
+        return _.keys($scope.applied_filters).length > 0;
+    };
+
+    $scope.apply_filters = function() {
+        $scope.applied_filters = {};
+        for (var k in $scope.filters)
+            $scope.applied_filters[k] = $scope.filters[k];
+        $scope.loader='search';
+        $scope.page = 1;
+        $scope.fetch_report();
+    };
+
+    $scope.remove_filters = function() {
+        $scope.loader='search';
+        $scope.filters = {};
+        $scope.applied_filters = {};
+        $scope.page = 1;
+        $scope.fetch_report();
+    };
+
+    $scope.update_item = function(item, new_item) {
+        for (var key in new_item) {
+            item[key] = new_item[key];
+        }
+        $scope.fetch_lazy_divs(item);
+    };
+
+    $scope.execute_action = function(item, action) {
+        if (action.form) {
+            $scope.form = action;
+            $scope.form.item = item;
+        } else {
+            item.loading = true;
+            $scope.loader = 'action_' + action.method;
+            $http.get($scope.settings.list + 'action/' + action.method + '/' + item.item_id + '/').
+            success(function(data, status) {
+                item.loading = false;
+                $scope.update_item(item, data.item)
+            }).
+            error(function(data, status) {
+                item.loading = false;
+                alert(data);
+            });
+        }
+    };
+
+    $scope.submit_form = function(form, e) {
+        var data = angular.element(e.srcElement).closest('form').serialize();
+        var item = form.item;
+
+        item.loading = true;
+        $scope.loader = 'action_' + form.method;
+        $http.post($scope.settings.list + 'action/' + form.method + '/' + item.item_id + '/', data).
+        success(function(data, status) {
+            item.loading = false;
+            if (data.success) {
+                $scope.update_item(item, data.item);
+                $scope.form = null;
+            } else {
+                form.form = data.response_form;
+                $scope.form = form;
+            }
+        }).
+        error(function(data, status) {
+            item.loading = false;
+            form.form = data;
+            $scope.form = form;
+        });
+    };
+
+    $scope.fetch_lazy_divs = function(item) {
+        var binds = item.extra_information.split('ng-bind-html-unsafe="');
+        binds.splice(0, 1);
+
+        var fetchBindIndex = function(i) {
+            var bind = binds[i].split('"')[0];
+            binds[i] = bind;
+            var parts = bind.split('__');
+            if (parts[0] == 'lazydiv')
+            {
+                $http.get($scope.settings.base + 'action/' + parts[2] + '/' + parts[1] + '/').
+                success(function(data, status) {
+                    $scope[bind] = data;
+                }).
+                error(function(data, status) {
+                    $scope[bind] = 'error';
+                });
+            }
+        };
+
+        for (var i = 0; i < binds.length; i++) {
+            fetchBindIndex(i);
+        }
+    };
+}
+
+angular.module('advanced_reports', [], function($compileProvider) {
+  // configure new 'compile' directive by passing a directive
+  // factory function. The factory function injects the '$compile'
+  $compileProvider.directive('compile', function($compile) {
+    // directive factory creates a link function
+    return function(scope, element, attrs) {
+      scope.$watch(
+        function(scope) {
+           // watch the 'compile' expression for changes
+          return scope.$eval(attrs.compile);
+        },
+        function(value) {
+          // when the 'compile' expression changes
+          // assign it into the current DOM
+          element.html(value);
+
+          // compile the new DOM and link it to the current
+          // scope.
+          // NOTE: we only compile .childNodes so that
+          // we don't get into infinite loop compiling ourselves
+          $compile(element.contents())(scope);
+        }
+      );
+    };
+  });
+}).value('$anchorScroll', angular.noop);
+</script>

@@ -1,5 +1,6 @@
 from collections import defaultdict
 from django.conf.urls import patterns, url
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models.signals import post_save, post_delete
 from django.http import Http404
@@ -291,7 +292,10 @@ class BackOfficeBase(object):
         bo_model = self.get_model(slug=index.model_slug)
         if bo_model is None:
             return None
-        instance = bo_model.model.objects.get(pk=index.model_id)
+        try:
+            instance = bo_model.model.objects.get(pk=index.model_id)
+        except ObjectDoesNotExist:
+            return None
         serialized = bo_model.get_serialized(instance)
         serialized['meta'] = bo_model.serialize_meta()
         return serialized
@@ -407,10 +411,10 @@ class BackOfficeBase(object):
         and calls the ``get_serialized()`` method on it, whose contents are
         returned.
 
-        :param request: ``request.view_params with 'slug'``
+        :param request: ``request.view_params with 'view_slug'``
         :return: a serialized view content
         """
-        bo_view = self.get_view(request.view_params.get('slug'))
+        bo_view = self.get_view(request.view_params.get('view_slug'))
         return bo_view.get_serialized(request)
 
     def api_post_view(self, request):
@@ -419,10 +423,10 @@ class BackOfficeBase(object):
         and calls the ``get_serialized_post()`` method on it, whose contents are
         returned.
 
-        :param request: ``request.view_params with 'slug'``
+        :param request: ``request.view_params with 'view_slug'``
         :return: a serialized view content
         """
-        bo_view = self.get_view(request.view_params.get('slug'))
+        bo_view = self.get_view(request.view_params.get('view_slug'))
         return bo_view.get_serialized_post(request)
 
     def api_post_view_action(self, request):
@@ -436,10 +440,11 @@ class BackOfficeBase(object):
         action_params = request.view_params.get('params')
         view_params = request.view_params.get('view_params')
 
+        # Attach the actual view_params and action_params to the request.
         request.action_params = action_params
         request.view_params = view_params
 
-        bo_view = self.get_view(view_params.get('slug'))
+        bo_view = self.get_view(view_params.get('view_slug'))
 
         fn = getattr(bo_view, method, None)
         if not fn:

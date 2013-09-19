@@ -229,13 +229,23 @@ app.directive('compile', ['$compile', function ($compile){
 }]);
 
 
-app.directive('view', ['$compile', 'boApi', 'boUtils', function($compile, boApi, boUtils){
+app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, $q, boApi, boUtils){
     return {
         link: function(scope, element, attrs){
             var slug = attrs.view;
             var params = attrs.params && scope.$eval(attrs.params) || {};
-            params.slug = slug;
-            var view_instance = attrs.instance || params.slug;
+            params.view_slug = slug;
+            var viewInstance = attrs.instance || params.slug;
+
+            var compile = function(data){
+                attachView(data, params);
+                element.html(data.content);
+                $compile(element.contents())(scope);
+            };
+            var showError = function(error){
+                attachView({}, params);
+                element.html(error);
+            };
 
             var attachView = function(data, params){
                 data.params = params;
@@ -243,40 +253,29 @@ app.directive('view', ['$compile', 'boApi', 'boUtils', function($compile, boApi,
                     loadView(data.params);
                 };
                 data.post = function(post_data){
-                    boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(function(data){
-                        attachView(data, params);
-                        element.html(data.content);
-                        $compile(element.contents())(scope);
+                    boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(compile, showError);
+                };
+                data.action = function(method, actionParams, reloadViewOnSuccess){
+                    var deferred = $q.defer();
+                    return boApi.post('view_action', {method: method, params: actionParams || {}, view_params: params
+                    }).then(function(result){
+                        if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
+                            data.fetch();
+                        return result;
                     }, function(error){
-                        attachView({}, params);
-                        element.html(error);
+                        if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
+                            showError(error);
+                        return error;
                     });
                 };
-                data.action = function(method, action_params){
-                    boApi.post('view_action', {
-                        method: method,
-                        params: action_params || {},
-                        view_params: params
-                    }).then(function(d){
-                        data.fetch();
-                    }, function(error){
-                        element.html(error);
-                    });
-                };
-                scope.$parent[view_instance] = data;
+                scope.$parent[viewInstance] = data;
                 scope.view = data;
             };
 
             var loadView = function(params){
-                boApi.get('view', params).then(function(data){
-                    attachView(data, params);
-                    element.html(data.content);
-                    $compile(element.contents())(scope);
-                }, function(error){
-                    attachView({}, params);
-                    element.html(error);
-                });
+                boApi.get('view', params).then(compile, showError);
             };
+
             loadView(params);
         },
         scope: true

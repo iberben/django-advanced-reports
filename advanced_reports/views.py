@@ -14,9 +14,10 @@ from django.db import transaction
 from django_ajax.pagination import paginate
 
 from advanced_reports import get_report_or_404
+from advanced_reports.backoffice.api_utils import JSONResponse
 from advanced_reports.defaults import ActionException
 
-from django.utils import simplejson
+import json
 
 def _get_redirect(advreport, next=None, querystring=None):
     if next:
@@ -251,10 +252,10 @@ def ajax_form(request, slug, method, object_id, param=None):
                 advreport.enrich_object(object, request=request)
                 context.update({'success': a.get_success_message(), 'object': object, 'action': a})
                 response = render_to_string(advreport.item_template, context, context_instance=RequestContext(request))
-                return r or HttpResponse(simplejson.dumps({
+                return r or JSONResponse({
                     'status': 'SUCCESS',
                     'content': response
-                }), mimetype='application/javascript')
+                })
             else:
                 context.update({'response_method': method, 'response_form': form})
                 if a.form_template:
@@ -286,14 +287,6 @@ def ajax_form(request, slug, method, object_id, param=None):
 
     return inner(request, slug, method, object_id)
 
-
-from django.utils.translation import ugettext_lazy
-_proxy_type = type(ugettext_lazy(''))
-def _json_object_encoder(obj):
-    if isinstance(obj, _proxy_type):
-        return u'%s' % obj
-    else:
-        return None
 
 def _action_dict(action):
     d = action.attrs_dict
@@ -330,7 +323,7 @@ def api_list(request, slug, ids=None):
             'searchable_columns': advreport.searchable_columns,
             'search_fields': advreport.search_fields
         }
-        return HttpResponse(simplejson.dumps(report, indent=2, default=_json_object_encoder))
+        return JSONResponse(report)
 
     if advreport.decorate_views:
         inner = advreport.get_decorator()(inner)
@@ -343,9 +336,9 @@ def api_action(request, slug, method, object_id):
     advreport.set_request(request)
 
     def inner(request, slug, method, object_id):
-        object = advreport.get_item_for_id(object_id)
-        advreport.enrich_object(object, request=request)
-        a = advreport.find_object_action(object, method)
+        obj = advreport.get_item_for_id(object_id)
+        advreport.enrich_object(obj, request=request)
+        a = advreport.find_object_action(obj, method)
         if a is None:
             return HttpResponse(_(u'Unsupported action method "%s".' % method), status=404)
 
@@ -353,29 +346,29 @@ def api_action(request, slug, method, object_id):
         try:
             if request.method == 'POST' and a.form is not None:
                 if issubclass(a.form, forms.ModelForm):
-                    form = a.form(request.POST, request.FILES, instance=a.get_form_instance(object), prefix=object_id)
+                    form = a.form(request.POST, request.FILES, instance=a.get_form_instance(obj), prefix=object_id)
                 else:
                     form = a.form(request.POST, request.FILES, prefix=object_id)
 
                 if form.is_valid():
-                    advreport.get_action_callable(a.method)(object, form)
-                    object = advreport.get_item_for_id(object_id)
+                    advreport.get_action_callable(a.method)(obj, form)
+                    obj = advreport.get_item_for_id(object_id)
                     context.update({'success': a.get_success_message()})
                 else:
                     context.update({'response_method': method, 'response_form': form.as_table()})
                     if a.form_template:
                         context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': form}))})
 
-                advreport.enrich_object(object, request=request)
-                context.update({'item': _item_values(object, advreport)})
-                return HttpResponse(simplejson.dumps(context, indent=2, default=_json_object_encoder))
+                advreport.enrich_object(obj, request=request)
+                context.update({'item': _item_values(obj, advreport)})
+                return JSONResponse(context)
 
             elif a.form is None:
-                advreport.get_action_callable(a.method)(object)
-                object = advreport.get_item_for_id(object_id)
-                advreport.enrich_object(object, request=request)
-                context = {'item': _item_values(object, advreport), 'success': a.get_success_message()}
-                return HttpResponse(simplejson.dumps(context, indent=2, default=_json_object_encoder))
+                advreport.get_action_callable(a.method)(obj)
+                obj = advreport.get_item_for_id(object_id)
+                advreport.enrich_object(obj, request=request)
+                context = {'item': _item_values(obj, advreport), 'success': a.get_success_message()}
+                return JSONResponse(context)
 
         except ActionException, e:
             return HttpResponse(e.msg, status=404)
