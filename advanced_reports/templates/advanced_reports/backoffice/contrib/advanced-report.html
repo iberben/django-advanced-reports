@@ -1,5 +1,6 @@
 {% load i18n %}
 <div ng-controller="AdvancedReportCtrl" ng-init="fetch_report()">
+    <pre ng-show="false" ng-bind="params|json"></pre>
 
     <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" bo-element="action_popup">
         <div class="modal-dialog">
@@ -89,6 +90,10 @@ function AdvancedReportCtrl($scope, $http) {
     $scope.filters = {};
     $scope.applied_filters = {};
 
+    $scope.$on('$routeChangeSuccess', function (){
+        $scope.fetch_report();
+    });
+
     $scope.fetch_report = function() {
         $scope.loaded = false;
         if ($scope.current_order_by)
@@ -98,6 +103,9 @@ function AdvancedReportCtrl($scope, $http) {
         for (var k in $scope.filters)
             if ($scope.filters[k])
                 qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.filters[k]));
+        for (var k in $scope.params)
+            if (k != 'tab')
+                qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.params[k]));
         var qs = '&' + qs_list.join('&');
 
         $scope.view.action('fetch', {}, false, '?page=' + $scope.page + qs).then(function(data){
