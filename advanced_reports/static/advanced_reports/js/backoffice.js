@@ -6,11 +6,13 @@ app.run(function ($http, $cookies){
 
 app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
     $routeProvider.
-        when('/', {controller: 'HomeController', templateUrl: '/home.html'}).
-        when('/search/:query', {controller: 'BOSearchController', templateUrl: '/search.html'}).
-        when('/search/:query/:model/', {controller: 'BOSearchController', templateUrl: '/search.html'}).
-        when('/:model/:id/', {controller: 'BOModelController', templateUrl: '/model.html'}).
-        when('/:model/:id/:tab/', {controller: 'BOModelController', templateUrl: '/model.html'}).
+        when('/', {controller: 'EmptyController', templateUrl: '/home.html', useView: false}).
+        when('/tab/:tab/', {controller: 'EmptyController', useView: false}).
+
+        when('/search/:query', {controller: 'EmptyController', templateUrl: '/search.html', useView: true}).
+        when('/search/:query/:model/', {controller: 'EmptyController', templateUrl: '/search.html', useView: true}).
+        when('/:model/:id/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true}).
+        when('/:model/:id/:tab/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true}).
         otherwise({redirectTo: '/'});
     //$locationProvider.html5Mode(true);
 }]);
@@ -88,12 +90,16 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
 
 
 app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', function($scope, $http, $location, boApi, $route){
+    $scope.params = {};
+
     $scope.path = function(){
         return $location.path();
     };
 
-    $scope.hasRoute = function(){
-        return $scope.path() != '/';
+    $scope.useView = function(){
+        if ($route && $route.current)
+            return $route.current.useView;
+        return false;
     };
 
     $scope.setup = function(api_url, root_url){
@@ -177,31 +183,12 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     };
 
     $scope.$on('$routeChangeSuccess', function (){
+        $scope.params = $route.current.params;
         $scope.fetchModel(false);
     });
-
-
 }]);
 
-
-app.controller('HomeController', ['$scope', function($scope){
-
-}]);
-
-
-app.controller('BOModelController', ['$scope', '$route', '$location', '$http', 'boApi', function($scope, $route, $location, $http, boApi){
-    $scope.params = $route.current.params;
-
-//    $scope.$on('$routeChangeSuccess', function (){
-//        boApi.get('model', 'model_slug=' + encodeURIComponent($scope.params.model) + '&pk=' + encodeURIComponent($scope.params.id)).then(function(data){
-//            $scope.$parent.model = data;
-//        });
-//    });
-}]);
-
-app.controller('BOSearchController', ['$scope', '$route', function($scope, $route){
-    $scope.params = $route.current.params;
-}]);
+app.controller('EmptyController', ['$scope', function($scope){}]);
 
 //
 // http://stackoverflow.com/questions/17417607/angular-ng-bind-html-unsafe-and-directive-within-it
@@ -330,3 +317,10 @@ app.filter('capitalize', function(){
 app.filter('uriencode', function(){
     return encodeURIComponent;
 });
+
+app.directive('boElement', ['$parse', function($parse){
+    return function(scope, element, attrs){
+        var obj = $parse(attrs.boElement);
+        obj.assign(scope, element);
+    };
+}]);

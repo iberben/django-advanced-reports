@@ -60,7 +60,7 @@
                                    ng-change="search_show_results_preview()"
                                    keyup-delay="search_preview(search_query)"
                                    delay="150">
-                            <ul class="dropdown-menu-always-visible dropdown-menu" ng-show="is_search_results_preview_visible()">
+                            <ul class="always-visible dropdown-menu" ng-show="is_search_results_preview_visible()">
                                 {% verbatim %}
                                 <li ng-repeat="result in search_results_preview.results">
                                     <a href="{{ root_url }}#{{ result.path }}">
@@ -109,8 +109,8 @@
         {% endif %}
 
         <!-- Switch between Django-rendered and AngularJS-rendered content -->
-        <div class="page" ng-view ng-show="hasRoute()"></div>
-        <div class="page" ng-hide="hasRoute()">
+        <div class="page" ng-view ng-show="useView()"></div>
+        <div class="page" ng-hide="useView()">
             {% block content %}{% endblock %}
         </div>
 
