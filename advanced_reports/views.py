@@ -291,7 +291,7 @@ def ajax_form(request, slug, method, object_id, param=None):
 def _action_dict(o, action):
     d = dict(action.attrs_dict)
     if action.form:
-        d['form'] = action.form_template or action.form(instance=o, prefix=o.pk).as_table()
+        d['form'] = action.form_template or str(action.form(instance=o, prefix=o.pk))
     return d
 
 
@@ -355,7 +355,7 @@ def api_action(request, slug, method, object_id):
                     obj = advreport.get_item_for_id(object_id)
                     context.update({'success': a.get_success_message()})
                 else:
-                    context.update({'response_method': method, 'response_form': form.as_table()})
+                    context.update({'response_method': method, 'response_form': str(form)})
                     if a.form_template:
                         context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': form}))})
 

@@ -12,9 +12,9 @@
     {% endif %}
 
     {% ifequal action.method response_method %}
-        {% if response_form_template %}{{ response_form_template }}{% else %}<table>{{ response_form.as_table }}</table>{% endif %}
+        {% if response_form_template %}{{ response_form_template }}{% else %}<table>{{ response_form }}</table>{% endif %}
     {% else %}
-        {% if action.response_form_template %}{{ action.response_form_template }}{% else %}<table>{{ action.form.as_table }}</table>{% endif %}
+        {% if action.response_form_template %}{{ action.response_form_template }}{% else %}<table>{{ action.form }}</table>{% endif %}
     {% endifequal %}
     <p>
         <input type="hidden" name="object_id" value="{{ object.advreport_object_id }}" />
