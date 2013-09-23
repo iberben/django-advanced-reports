@@ -3,10 +3,31 @@
 <div ng-controller="AdvancedReportCtrl" ng-init="fetch_report()">
     <pre ng-show="false" ng-bind="params|json"></pre>
 
-    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" bo-element="action_popup">
+    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" bo-element="action_form_popup">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form bo-element="action_form">
+                <form bo-element="action_form_form">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" ng-bind="form.verbose_name"></h4>
+                    </div>
+                    <div class="modal-body">
+                        {% csrf_token %}
+                        <div class="form-horizontal" role="form" ng-bind-html-unsafe="form.form"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" ng-click="action_form_popup.modal('hide')">{% trans "Cancel" %}</button>
+                        <input type="submit" class="btn btn-primary" ng-click="submit_form(form)" value="{% templatetag openvariable %}form.submit||'{% trans "Submit" %}'{% templatetag closevariable %}">
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" bo-element="action_confirm_popup">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form>
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                         <h4 class="modal-title" ng-bind="form.verbose_name"></h4>
@@ -95,6 +116,18 @@ function AdvancedReportCtrl($scope, $http) {
         $scope.fetch_report();
     });
 
+    $scope.$watch('get_querystring()', function(params){
+        console.log(params);
+    });
+
+    $scope.get_querystring = function(){
+        var qs_list = [];
+        for (var k in $scope.params)
+            if (k != 'tab')
+                qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.params[k]));
+        return '&' + qs_list.join('&');
+    };
+
     $scope.fetch_report = function() {
         $scope.loaded = false;
         if ($scope.current_order_by)
@@ -177,7 +210,7 @@ function AdvancedReportCtrl($scope, $http) {
         if (action.form){
             $scope.form = action;
             $scope.form.item = item;
-            $scope.action_popup.modal('show');
+            $scope.action_form_popup.modal('show');
         } else {
             item.loading = true;
             $scope.loader = 'action_' + action.method;
@@ -193,8 +226,7 @@ function AdvancedReportCtrl($scope, $http) {
     };
 
     $scope.submit_form = function(form) {
-
-        var data = $scope.action_form.serialize();
+        var data = $scope.action_form_form.serialize();
         var item = form.item;
 
         item.loading = true;
@@ -205,7 +237,7 @@ function AdvancedReportCtrl($scope, $http) {
             if (result.success){
                 $scope.update_item(item, result.item);
                 $scope.form = null;
-                $scope.action_popup.modal('hide');
+                $scope.action_form_popup.modal('hide');
             }else{
                 form.form = result.response_form;
                 $scope.form = form;

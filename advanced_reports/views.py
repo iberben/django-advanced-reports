@@ -291,7 +291,8 @@ def ajax_form(request, slug, method, object_id, param=None):
 def _action_dict(o, action):
     d = dict(action.attrs_dict)
     if action.form:
-        d['form'] = action.form_template or str(action.form(instance=o, prefix=o.pk))
+        form_instance = action.form
+        d['form'] = action.form_template and render_to_string(action.form_template, {'form': form_instance}) or unicode(form_instance)
     return d
 
 

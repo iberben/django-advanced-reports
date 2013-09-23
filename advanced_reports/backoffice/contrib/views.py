@@ -9,7 +9,7 @@ from advanced_reports.views import api_list, api_action
 
 class AdvancedReportView(BackOfficeView):
     slug = 'advanced_report'
-    template = 'advanced_reports/backoffice/contrib/advanced-report.html'
+    template = 'advanced_reports/backoffice/contrib/advanced-reports/advanced-report.html'
 
     def get(self, request):
         report_slug = request.view_params.get('slug')

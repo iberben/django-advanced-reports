@@ -215,7 +215,6 @@ app.directive('compile', ['$compile', function ($compile){
     };
 }]);
 
-
 app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, $q, boApi, boUtils){
     return {
         link: function(scope, element, attrs){

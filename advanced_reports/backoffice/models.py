@@ -18,5 +18,3 @@ class SearchIndex(models.Model):
 
     def __unicode__(self):
         return u'%s/%s/%d' % (self.backoffice_instance, self.model_slug, self.model_id)
-
-

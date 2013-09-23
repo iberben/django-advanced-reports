@@ -65,7 +65,13 @@ class action(object):
 
     form_via_ajax = False
     '''
-    Optional. If True, the form will be loaded via mbox.
+    Optional. If True, the form will be shown in a popup.
+    '''
+
+    prefetch_ajax_form = True
+    '''
+    Optional. If False, the form will not be loaded together with the item, but later. Only applies when
+    form_via_ajax is True.
     '''
 
     link_via_ajax = False
@@ -134,6 +140,7 @@ class action(object):
     '''
     If the form of the action has a file upload, set it to true. enctype='multipart/form-data' will be added to the form.
     '''
+
 
     def __init__(self, **kwargs):
         '''
@@ -899,7 +906,7 @@ class AdvancedReport(object):
 
         for a in self.item_actions:
             if self.verify_action_group(object, a.group):
-                if not a.form_via_ajax:
+                if not a.form_via_ajax or a.prefetch_ajax_form:
                     new_action = a.copy_with_instanced_form(prefix=self.get_item_id(object), instance=object)
                 else:
                     # Put off fetching the instanced Form until the actual Ajax
