@@ -8,6 +8,17 @@ from advanced_reports.views import api_list, api_action
 
 
 class AdvancedReportView(BackOfficeView):
+    """
+    A BackOffice view that renders an Advanced Report.
+
+    Usage:
+    <div view="advanced_report" params="{slug: 'report_slug', updateLocation: true|false}"></div>
+
+    ``slug`` is the slug of your registered Advanced Report
+
+    ``updateLocation`` is a boolean. If true, the location bar will be updated with querystring parameters
+    reflecting the current filters and ordering.
+    """
     slug = 'advanced_report'
     template = 'advanced_reports/backoffice/contrib/advanced-reports/advanced-report.html'
 
@@ -30,3 +41,18 @@ class AdvancedReportView(BackOfficeView):
             request.POST = post
             print repr(request.POST)
         return api_action(request, slug, method, int(pk))
+
+
+class AdvancedReportActionView(BackOfficeView):
+    slug = 'actionview'
+
+    def get(self, request):
+        report_slug = request.view_params.get('slug')
+        method = request.view_params.get('method')
+        pk = request.view_params.get('pk')
+
+        advreport = get_report_for_slug(report_slug)
+        item = advreport.get_item_for_id(pk)
+        enriched_item = advreport.enrich_object(item, request=request)
+        response = getattr(advreport, method)(enriched_item)
+        return response.content

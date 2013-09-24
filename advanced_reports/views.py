@@ -15,7 +15,7 @@ from django_ajax.pagination import paginate
 
 from advanced_reports import get_report_or_404
 from advanced_reports.backoffice.api_utils import JSONResponse
-from advanced_reports.defaults import ActionException
+from advanced_reports.defaults import ActionException, Resolver
 
 import json
 
@@ -293,6 +293,10 @@ def _action_dict(o, action):
     if action.form:
         form_instance = action.form
         d['form'] = action.form_template and render_to_string(action.form_template, {'form': form_instance}) or unicode(form_instance)
+    if action.confirm:
+        context = {'item': o}
+        context.update(o.__dict__)
+        d['confirm'] = action.confirm % Resolver(context)
     return d
 
 

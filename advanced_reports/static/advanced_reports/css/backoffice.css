@@ -65,3 +65,7 @@
 .panel-stuff .panel-body {
     padding-left: 130px;
 }
+
+.modal-dialog-extra-padding {
+    padding-top: 60px;
+}

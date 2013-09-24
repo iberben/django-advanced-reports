@@ -166,9 +166,11 @@ class action(object):
                 new_action.response_form_template = mark_safe(render_to_string(self.form_template, {'form': new_action.form}))
 
         if instance:
-            if new_action.confirm: new_action.confirm = new_action.confirm % Resolver({'item': instance})
-            if new_action.success: new_action.success = new_action.success % Resolver({'item': instance})
-            if new_action.verbose_name: new_action.verbose_name = new_action.verbose_name % Resolver({'item': instance})
+            context = {'item': instance}
+            context.update(instance.__dict__)
+            if new_action.confirm: new_action.confirm = new_action.confirm % Resolver(context)
+            if new_action.success: new_action.success = new_action.success % Resolver(context)
+            if new_action.verbose_name: new_action.verbose_name = new_action.verbose_name % Resolver(context)
 
         return new_action
 

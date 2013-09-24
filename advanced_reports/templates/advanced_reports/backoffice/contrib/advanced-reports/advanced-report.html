@@ -1,10 +1,20 @@
 {% load i18n %}
 {% load bootstrap %}
-<div ng-controller="AdvancedReportCtrl" ng-init="fetch_report()">
-    <pre ng-show="false" ng-bind="params|json"></pre>
 
-    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" bo-element="action_form_popup">
-        <div class="modal-dialog">
+<script type="text/ng-template" id="/pagination.html">
+    <p ng-show="report">
+        <span ng-show="search.page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></span>
+        <span ng-show="search.page > 1"><a href ng-click="change_page(search.page-1)">&lt;</a></span>
+        {% trans "Page {{ search.page }} of {{ page_count }}" %}
+        <span ng-show="search.page < page_count"><a href ng-click="change_page(search.page+1)">&gt;</a></span>
+        <span ng-show="search.page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></span>
+    </p>
+</script>
+
+
+<div ng-controller="AdvancedReportCtrl">
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="action_form_popup">
+        <div class="modal-dialog-extra-padding modal-dialog">
             <div class="modal-content">
                 <form bo-element="action_form_form">
                     <div class="modal-header">
@@ -16,29 +26,26 @@
                         <div class="form-horizontal" role="form" ng-bind-html-unsafe="form.form"></div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" ng-click="action_form_popup.modal('hide')">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-primary" ng-click="submit_form(form)" value="{% templatetag openvariable %}form.submit||'{% trans "Submit" %}'{% templatetag closevariable %}">
+                        <button ng-disabled="isLoading()" type="button" class="btn btn-default" ng-click="action_form_popup.modal('hide')">{% trans "Cancel" %}</button>
+                        <input ng-disabled="isLoading()" type="submit" class="btn btn-primary" ng-click="submit_form(form)" value="{% templatetag openvariable %}form.submit||'{% trans "Submit" %}'{% templatetag closevariable %}">
                     </div>
                 </form>
             </div><!-- /.modal-content -->
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
-    <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" bo-element="action_confirm_popup">
-        <div class="modal-dialog">
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="action_confirm_popup">
+        <div class="modal-dialog-extra-padding modal-dialog">
             <div class="modal-content">
                 <form>
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                        <h4 class="modal-title" ng-bind="form.verbose_name"></h4>
+                        <h4 class="modal-title">{% trans "Are you sure?" %}</h4>
                     </div>
-                    <div class="modal-body">
-                        {% csrf_token %}
-                        <div class="form-horizontal" role="form" ng-bind-html-unsafe="form.form"></div>
-                    </div>
+                    <div class="modal-body" ng-bind="action_to_confirm.confirm"></div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-default" ng-click="action_popup.modal('hide')">{% trans "Cancel" %}</button>
-                        <input type="submit" class="btn btn-primary" ng-click="submit_form(form)" value="{% templatetag openvariable %}form.submit||'{% trans "Submit" %}'{% templatetag closevariable %}">
+                        <button ng-disabled="isLoading()" type="button" class="btn btn-default" ng-click="action_confirm_popup.modal('hide')">{% trans "Cancel" %}</button>
+                        <input ng-disabled="isLoading()" type="submit" class="btn btn-primary" ng-click="action_to_confirm.execute()" value="{% verbatim %}{{ action_to_confirm.verbose_name }}{% endverbatim %}">
                     </div>
                 </form>
             </div><!-- /.modal-content -->
@@ -57,13 +64,7 @@
         </form>
     </div>
 
-    <p ng-show="report">
-        <span ng-show="page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></span>
-        <span ng-show="page > 1"><a href ng-click="change_page(page-1)">&lt;</a></span>
-        {% trans "Page {{ page }} of {{ page_count }}" %}
-        <span ng-show="page < page_count"><a href ng-click="change_page(page+1)">&gt;</a></span>
-        <span ng-show="page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></span>
-    </p>
+    <div ng-include="'/pagination.html'"></div>
 
     <div class="tablecontainer" ng-show="report">
         <table class="data table table-hover">
@@ -92,57 +93,46 @@
         </table>
     </div>
 
-    <p ng-show="report">
-        <span ng-show="page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></span>
-        <span ng-show="page > 1"><a href ng-click="change_page(page-1)">&lt;</a></span>
-        {% trans "Page {{ page }} of {{ page_count }}" %}
-        <span ng-show="page < page_count"><a href ng-click="change_page(page+1)">&gt;</a></span>
-        <span ng-show="page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></span>
-    </p>
+    <div ng-include="'/pagination.html'"></div>
+
+    <button ng-click="apply_query('q', 'Jef')">apply</button>
+    <pre ng-bind="search|json"></pre>
 </div>
 
 <script type="text/javascript">
-function AdvancedReportCtrl($scope, $http) {
+function AdvancedReportCtrl($scope, $http, $location) {
     $scope.loader = 'report';
     $scope.loaded = true;
     $scope.report = null;
-    $scope.page = 1;
     $scope.page_count = null;
-    $scope.current_order_by = null;
     $scope.filters = {};
     $scope.applied_filters = {};
+    $scope.search = $location.search() || {};
 
-    $scope.$on('$routeChangeSuccess', function (){
+    $scope.$watch(function(){
+        return $location.search();
+    }, function(search){
+        $scope.search = search;
         $scope.fetch_report();
-    });
-
-    $scope.$watch('get_querystring()', function(params){
-        console.log(params);
-    });
-
-    $scope.get_querystring = function(){
-        var qs_list = [];
-        for (var k in $scope.params)
-            if (k != 'tab')
-                qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.params[k]));
-        return '&' + qs_list.join('&');
-    };
+    }, true);
 
     $scope.fetch_report = function() {
         $scope.loaded = false;
-        if ($scope.current_order_by)
-            $scope.filters['order'] = $scope.current_order_by;
+
+        if (!$scope.search.page)
+        {
+            $scope.search.page = 1;
+        }
+
+        if ($scope.view.params.updateLocation)
+            $location.search($scope.search);
 
         var qs_list = [];
-        for (var k in $scope.filters)
-            if ($scope.filters[k])
-                qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.filters[k]));
-        for (var k in $scope.params)
-            if (k != 'tab')
-                qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.params[k]));
-        var qs = '&' + qs_list.join('&');
+        for (var k in $scope.search)
+            qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.search[k]));
+        var qs = '?' + qs_list.join('&');
 
-        $scope.view.action('fetch', {}, false, '?page=' + $scope.page + qs).then(function(data){
+        $scope.view.action('fetch', {}, false, qs).then(function(data){
             $scope.report = data;
             $scope.loaded = true;
             $scope.page_count = Math.floor(data.item_count / data.items_per_page) + 1;
@@ -153,7 +143,7 @@ function AdvancedReportCtrl($scope, $http) {
 
     $scope.change_page = function(page) {
         $scope.loader = 'page';
-        $scope.page = page;
+        $scope.search.page = page;
         $scope.fetch_report();
     };
 
@@ -169,33 +159,33 @@ function AdvancedReportCtrl($scope, $http) {
     $scope.change_order = function(order_by) {
         $scope.loader = 'order_' + order_by;
         var ascending = $scope.report.extra.order_by != order_by || !$scope.report.extra.ascending;
-        $scope.current_order_by = (ascending ? '' : '-') + order_by;
-        $scope.page = 1;
+        $scope.search.order = (ascending ? '' : '-') + order_by;
+        $scope.search.page = 1;
         $scope.fetch_report();
     };
 
-
     $scope.has_applied_filters = function() {
         var count = 0;
-        for (var key in $scope.applied_filters)
-            count += 1;
+        for (var key in $scope.search)
+            if (key != 'order' && key != 'page')
+                count += 1;
         return count > 0;
     };
 
     $scope.apply_filters = function() {
-        $scope.applied_filters = {};
+        $scope.search = {};
         for (var k in $scope.filters)
-            $scope.applied_filters[k] = $scope.filters[k];
+            $scope.search[k] = $scope.filters[k];
         $scope.loader='search';
-        $scope.page = 1;
+        $scope.search.page = 1;
         $scope.fetch_report();
     };
 
     $scope.remove_filters = function() {
         $scope.loader='search';
-        $scope.filters = {};
-        $scope.applied_filters = {};
-        $scope.page = 1;
+        $scope.filter = {};
+        $scope.search = {};
+        $scope.search.page = 1;
         $scope.fetch_report();
     };
 
@@ -206,22 +196,33 @@ function AdvancedReportCtrl($scope, $http) {
         $scope.fetch_lazy_divs(item);
     };
 
-    $scope.execute_action = function(item, action) {
+    $scope.execute_action = function(item, action, force) {
         if (action.form){
             $scope.form = action;
             $scope.form.item = item;
             $scope.action_form_popup.modal('show');
         } else {
-            item.loading = true;
-            $scope.loader = 'action_' + action.method;
+            var execute = function(){
+                item.loading = true;
+                $scope.loader = 'action_' + action.method;
 
-            $scope.view.action('action', {method: action.method, pk: item.item_id}, false).then(function(data){
-                item.loading = false;
-                $scope.update_item(item, data.item);
-            }, function(error){
-                item.loading = false;
-                alert(error);
-            });
+                $scope.view.action('action', {method: action.method, pk: item.item_id}, false).then(function(data){
+                    item.loading = false;
+                    $scope.action_confirm_popup.modal('hide');
+                    $scope.update_item(item, data.item);
+                }, function(error){
+                    item.loading = false;
+                    alert(error);
+                });
+            };
+
+            if (action.confirm.length > 0 && !force){
+                action.execute = execute;
+                $scope.action_to_confirm = action;
+                $scope.action_confirm_popup.modal('show');
+            } else {
+                execute();
+            }
         }
     };
 
