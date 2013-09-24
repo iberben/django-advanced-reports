@@ -94,9 +94,6 @@
     </div>
 
     <div ng-include="'/pagination.html'"></div>
-
-    <button ng-click="apply_query('q', 'Jef')">apply</button>
-    <pre ng-bind="search|json"></pre>
 </div>
 
 <script type="text/javascript">
@@ -120,16 +117,15 @@ function AdvancedReportCtrl($scope, $http, $location) {
         $scope.loaded = false;
 
         if (!$scope.search.page)
-        {
             $scope.search.page = 1;
-        }
 
         if ($scope.view.params.updateLocation)
             $location.search($scope.search);
 
         var qs_list = [];
         for (var k in $scope.search)
-            qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.search[k]));
+            if (typeof $scope.search[k] !== 'undefined')
+                qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.search[k]));
         var qs = '?' + qs_list.join('&');
 
         $scope.view.action('fetch', {}, false, qs).then(function(data){
@@ -173,7 +169,7 @@ function AdvancedReportCtrl($scope, $http, $location) {
     };
 
     $scope.apply_filters = function() {
-        $scope.search = {};
+        $scope.search = {order: $scope.search.order};
         for (var k in $scope.filters)
             $scope.search[k] = $scope.filters[k];
         $scope.loader='search';
@@ -184,7 +180,7 @@ function AdvancedReportCtrl($scope, $http, $location) {
     $scope.remove_filters = function() {
         $scope.loader='search';
         $scope.filter = {};
-        $scope.search = {};
+        $scope.search = {order: $scope.search.order};
         $scope.search.page = 1;
         $scope.fetch_report();
     };

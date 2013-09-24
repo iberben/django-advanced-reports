@@ -9,10 +9,10 @@ app.config(['$routeProvider', '$locationProvider', function($routeProvider, $loc
         when('/', {controller: 'EmptyController', templateUrl: '/home.html', useView: false}).
         when('/tab/:tab/', {controller: 'EmptyController', useView: false}).
 
-        when('/search/:query', {controller: 'EmptyController', templateUrl: '/search.html', useView: true}).
-        when('/search/:query/:model/', {controller: 'EmptyController', templateUrl: '/search.html', useView: true}).
-        when('/:model/:id/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true}).
-        when('/:model/:id/:tab/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true}).
+        when('/search/:query', {controller: 'EmptyController', templateUrl: '/search.html', useView: true, reloadOnSearch: false}).
+        when('/search/:query/:model/', {controller: 'EmptyController', templateUrl: '/search.html', useView: true, reloadOnSearch: false}).
+        when('/:model/:id/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
+        when('/:model/:id/:tab/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
         otherwise({redirectTo: '/'});
     //$locationProvider.html5Mode(true);
 }]);
@@ -131,7 +131,7 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     };
 
     $scope.search_preview = function(query){
-        if (query.length == 0)
+        if (!query || query.length == 0)
             return;
         boApi.get('search_preview', {q: query}).then(function(data){
             $scope.search_results_preview = data;
