@@ -191,9 +191,7 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
 
 app.controller('EmptyController', ['$scope', function($scope){}]);
 
-//
 // http://stackoverflow.com/questions/17417607/angular-ng-bind-html-unsafe-and-directive-within-it
-//
 app.directive('compile', ['$compile', function ($compile){
     return {
         link: function(scope, element, attrs) {
@@ -322,5 +320,81 @@ app.directive('boElement', ['$parse', function($parse){
     return function(scope, element, attrs){
         var obj = $parse(attrs.boElement);
         obj.assign(scope, element);
+    };
+}]);
+
+app.directive('focusOn', function() {
+    return function(scope, elem, attr) {
+        scope.$on(attr.focusOn, function(e, event_attr) {
+            if (!event_attr || attr.focusAttr == '' + event_attr)
+            {
+                // http://stackoverflow.com/questions/17384464/jquery-focus-not-working-in-chrome
+                setTimeout(function(){
+                    elem[0].focus();
+                }, 100);
+            }
+        });
+    };
+});
+
+/*
+<ul class="always-visible dropdown-menu" ng-show="is_search_results_preview_visible()">
+    {% verbatim %}
+    <li ng-repeat="result in search_results_preview.results">
+        <a href="{{ root_url }}#{{ result.path }}">
+            <small>{{ result.verbose_name }}</small> {{ result.title }}
+        </a>
+    </li>
+    {% endverbatim %}
+    <li ng-show="!search_results_preview" class="disabled">
+        <a><img src="{{ STATIC_URL }}advanced_reports/img/modybox/loading.gif"></a>
+    </li>
+    <li ng-show="search_results_preview.results.length == 0" class="disabled">
+        <a>{% trans "No results found" %}</a>
+    </li>
+</ul>
+ */
+
+app.directive('autoComplete', [function(){
+    return {
+        template:  '' +
+            '<span ng-transclude></span>' +
+            '<ul class="always-visible dropdown-menu">' +
+            '    <li><a href="#">8940000000000000000</a></li>' +
+            '    <li class="disabled"><a>{{ txt_no_results }}</a></li>' +
+            '</ul>' +
+            '<pre>{{ results|json }}</pre>' +
+            '',
+        link: function(scope, element, attrs){
+            element.css('position', 'relative');
+            var input = element.find('input');
+            var transcludedScope = scope.$$nextSibling;
+            scope.model = transcludedScope[scope.modelName];
+
+            scope.$watch(function(scope){
+                return input.val();
+            }, function(value){
+                scope.model = value;
+            });
+
+            scope.$watch('model', function(value){
+                input.val(value);
+            });
+
+            input.on('keyup', function(event){
+                console.log(scope);
+                scope.$apply(function(){
+                    scope.results = scope.view.action(attrs.autoComplete, {partial: input.val()}, false);
+                });
+            });
+        },
+        scope: {
+            txt_no_results: '@noResultsText',
+            view: '=viewObject',
+            model: '=',
+            modelName: '@'
+        },
+        replace: false,
+        transclude: true
     };
 }]);

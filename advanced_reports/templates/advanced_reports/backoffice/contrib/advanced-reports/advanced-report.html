@@ -21,7 +21,6 @@
                         <h4 class="modal-title" ng-bind="form.verbose_name"></h4>
                     </div>
                     <div class="modal-body">
-                        {% csrf_token %}
                         <div class="form-horizontal" role="form" ng-bind-html-unsafe="form.form"></div>
                     </div>
                     <div class="modal-footer">
@@ -79,26 +78,37 @@
                 <tr ng-click="toggle_expand(item)">
                     <td ng-repeat="value in item.values" ng-bind-html-unsafe="value.html" ng-style="value.style" ng-class="value.class"></td>
                 </tr>
-
+                {% verbatim %}
                 <tr ng-show="item.expanded">
-                    <td colspan="{% templatetag openvariable %}report.header.length{% templatetag closevariable %}">
+                    <td colspan="{{ report.header.length }}">
                         <div class="btn-group">
-                            <a class="btn btn-default" href ng-bind="action.verbose_name" ng-click="execute_action(item, action)" ng-repeat="action in item.actions"></a>
+                            <a class="btn btn-default" href ng-click="execute_action(item, action)" ng-repeat="action in item.actions|filter:is_button_action">{{ action.verbose_name }}</a>
+                        </div>
+                        <div ng-repeat="action in item.actions|filter:is_inline_form_action">
+                            <form bo-element="action_form_element" ng-submit="execute_inline_form_action(item, action, action_form_element)">
+                                <div class="form-inline" role="form" compile="action.form"></div>
+                            </form>
                         </div>
                         <div compile="item.extra_information"></div>
                     </td>
                 </tr>
+                {% endverbatim %}
             </tbody>
         </table>
     </div>
 
     <div ng-include="'/pagination.html'"></div>
+
+    <input ng-model="test">
+
+    <div auto-complete="autocomplete" no-results-text="{% trans "No results found" %}" view-object="view" model="test">
+        <input type="text">
+    </div>
+
 </div>
 
 <script type="text/javascript">
 function AdvancedReportCtrl($scope, $http, $location) {
-    $scope.loader = 'report';
-    $scope.loaded = true;
     $scope.report = null;
     $scope.page_count = null;
     $scope.filters = {};
@@ -113,23 +123,24 @@ function AdvancedReportCtrl($scope, $http, $location) {
     }, true);
 
     $scope.fetch_report = function() {
-        $scope.loaded = false;
-
         if (!$scope.search.page)
             $scope.search.page = 1;
+
+        for (var j in $scope.search){
+            if (typeof $scope.search[j] === 'undefined')
+                delete $scope.search[j];
+        }
 
         if ($scope.view.params.updateLocation)
             $location.search($scope.search);
 
         var qs_list = [];
         for (var k in $scope.search)
-            if (typeof $scope.search[k] !== 'undefined')
-                qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.search[k]));
+            qs_list.push(encodeURIComponent(k) + '=' + encodeURIComponent($scope.search[k]));
         var qs = '?' + qs_list.join('&');
 
         $scope.view.action('fetch', {}, false, qs).then(function(data){
             $scope.report = data;
-            $scope.loaded = true;
             $scope.page_count = Math.floor(data.item_count / data.items_per_page) + 1;
         }, function(error){
             $scope.error = error;
@@ -137,7 +148,6 @@ function AdvancedReportCtrl($scope, $http, $location) {
     };
 
     $scope.change_page = function(page) {
-        $scope.loader = 'page';
         $scope.search.page = page;
         $scope.fetch_report();
     };
@@ -145,6 +155,7 @@ function AdvancedReportCtrl($scope, $http, $location) {
     $scope.toggle_expand = function(item) {
         if (!item.expanded && (item.extra_information.length > 0 || item.actions.length > 0)) {
             item.expanded = true;
+            $scope.$broadcast('item_expanded', item.item_id);
             $scope.fetch_lazy_divs(item);
         } else {
             item.expanded = false;
@@ -152,7 +163,6 @@ function AdvancedReportCtrl($scope, $http, $location) {
     };
 
     $scope.change_order = function(order_by) {
-        $scope.loader = 'order_' + order_by;
         var ascending = $scope.report.extra.order_by != order_by || !$scope.report.extra.ascending;
         $scope.search.order = (ascending ? '' : '-') + order_by;
         $scope.search.page = 1;
@@ -171,7 +181,6 @@ function AdvancedReportCtrl($scope, $http, $location) {
         $scope.search = {order: $scope.search.order};
         for (var k in $scope.filters)
             $scope.search[k] = $scope.filters[k];
-        $scope.loader='search';
         $scope.search.page = 1;
         $scope.fetch_report();
     };
@@ -184,10 +193,21 @@ function AdvancedReportCtrl($scope, $http, $location) {
         $scope.fetch_report();
     };
 
-    $scope.update_item = function(item, new_item) {
+    $scope.update_item = function(item, new_item, expand_next) {
         for (var key in new_item) {
-            item[key] = new_item[key];
+            if (new_item.hasOwnProperty(key))
+                item[key] = new_item[key];
         }
+        if (expand_next)
+        {
+            var this_item_id = $scope.report.items.indexOf(item);
+            if (this_item_id < $scope.report.items.length - 1)
+            {
+                $scope.toggle_expand(item);
+                $scope.toggle_expand($scope.report.items[this_item_id+1]);
+            }
+        }
+
         $scope.fetch_lazy_divs(item);
     };
 
@@ -198,15 +218,10 @@ function AdvancedReportCtrl($scope, $http, $location) {
             $scope.action_form_popup.modal('show');
         } else {
             var execute = function(){
-                item.loading = true;
-                $scope.loader = 'action_' + action.method;
-
                 $scope.view.action('action', {method: action.method, pk: item.item_id}, false).then(function(data){
-                    item.loading = false;
                     $scope.action_confirm_popup.modal('hide');
-                    $scope.update_item(item, data.item);
+                    $scope.update_item(item, data.item, action.next_on_success);
                 }, function(error){
-                    item.loading = false;
                     alert(error);
                 });
             };
@@ -225,13 +240,9 @@ function AdvancedReportCtrl($scope, $http, $location) {
         var data = $scope.action_form_form.serialize();
         var item = form.item;
 
-        item.loading = true;
-        $scope.loader = 'action_' + form.method;
-
         $scope.view.action('action', {method: form.method, pk: item.item_id, data: data}, false).then(function(result){
-            item.loading = false;
             if (result.success){
-                $scope.update_item(item, result.item);
+                $scope.update_item(item, result.item, form.next_on_success);
                 $scope.form = null;
                 $scope.action_form_popup.modal('hide');
             }else{
@@ -239,9 +250,20 @@ function AdvancedReportCtrl($scope, $http, $location) {
                 $scope.form = form;
             }
         }, function(error){
-            item.loading = false;
-            form.form = data;
-            $scope.form = form;
+            alert(error);
+        });
+    };
+
+    $scope.execute_inline_form_action = function(item, action, action_form_element){
+        var data = action_form_element.serialize();
+        $scope.view.action('action', {method: action.method, pk: item.item_id, data: data}, false).then(function(result){
+            if (result.success){
+                $scope.update_item(item, result.item, action.next_on_success);
+            }else{
+                action.form = result.response_form;
+            }
+        }, function(error){
+            alert(error);
         });
     };
 
@@ -268,6 +290,14 @@ function AdvancedReportCtrl($scope, $http, $location) {
         for (var i = 0; i < binds.length; i++) {
             fetchBindIndex(i);
         }
+    };
+
+    $scope.is_button_action = function(action){
+        return !action.form || action.form_via_ajax;
+    };
+
+    $scope.is_inline_form_action = function(action){
+        return action.form && !action.form_via_ajax;
     };
 }
 </script>

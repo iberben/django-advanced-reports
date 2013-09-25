@@ -259,7 +259,7 @@ def ajax_form(request, slug, method, object_id, param=None):
             else:
                 context.update({'response_method': method, 'response_form': form})
                 if a.form_template:
-                    context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': form}))})
+                    context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': form, 'item': object}))})
 
             context.update({'object': object, 'action': a})
             return render_to_response('advanced_reports/ajax_form.html', context, context_instance=RequestContext(request))
@@ -270,7 +270,7 @@ def ajax_form(request, slug, method, object_id, param=None):
 
             context.update({'response_method': method, 'response_form': a.form})
             if a.form_template:
-                context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': a.form}))})
+                context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': a.form, 'item': object}))})
             
             return render_to_response(
                 'advanced_reports/ajax_form.html',
@@ -292,7 +292,7 @@ def _action_dict(o, action):
     d = dict(action.attrs_dict)
     if action.form:
         form_instance = action.form
-        d['form'] = action.form_template and render_to_string(action.form_template, {'form': form_instance}) or unicode(form_instance)
+        d['form'] = action.form_template and render_to_string(action.form_template, {'form': form_instance, 'item': o}) or unicode(form_instance)
     if action.confirm:
         context = {'item': o}
         context.update(o.__dict__)
@@ -362,7 +362,7 @@ def api_action(request, slug, method, object_id):
                 else:
                     context.update({'response_method': method, 'response_form': unicode(form)})
                     if a.form_template:
-                        context.update({'response_form': render_to_string(a.form_template, {'form': form})})
+                        context.update({'response_form': render_to_string(a.form_template, {'form': form, 'item': obj})})
 
                 advreport.enrich_object(obj, request=request)
                 context.update({'item': _item_values(obj, advreport)})

@@ -39,7 +39,6 @@ class AdvancedReportView(BackOfficeView):
         if data:
             post = QueryDict(data)
             request.POST = post
-            print repr(request.POST)
         return api_action(request, slug, method, int(pk))
 
 
@@ -53,6 +52,6 @@ class AdvancedReportActionView(BackOfficeView):
 
         advreport = get_report_for_slug(report_slug)
         item = advreport.get_item_for_id(pk)
-        enriched_item = advreport.enrich_object(item, request=request)
-        response = getattr(advreport, method)(enriched_item)
+        advreport.enrich_object(item, request=request)
+        response = getattr(advreport, method)(item)
         return response.content

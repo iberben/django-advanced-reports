@@ -163,7 +163,7 @@ class action(object):
             #if self.form_template:
             new_action.form_template = self.form_template # mark_safe(render_to_string(self.form_template, {'form': new_action.form}))
             if self.form_template:
-                new_action.response_form_template = mark_safe(render_to_string(self.form_template, {'form': new_action.form}))
+                new_action.response_form_template = mark_safe(render_to_string(self.form_template, {'form': new_action.form, 'item': instance}))
 
         if instance:
             context = {'item': instance}
