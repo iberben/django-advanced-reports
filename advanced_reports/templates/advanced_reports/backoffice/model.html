@@ -38,7 +38,7 @@
             </div>
             <div class="panel-body">
                 <ul class="nav nav-tabs">
-                    <li ng-class="{active: params.tab == tab.slug}" ng-repeat="tab in model.meta.tabs">
+                    <li ng-class="{active: params.tab == tab.slug || model.tabs[params.tab].shadow == tab.slug}" ng-repeat="tab in model.meta.tabs|filter:isVisibleTab">
                         <a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a>
                     </li>
                 </ul>

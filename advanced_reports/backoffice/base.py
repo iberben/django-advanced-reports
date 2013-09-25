@@ -498,26 +498,29 @@ class BackOfficeTab(object):
     title = None
     template = None
 
-    def __init__(self, slug, title, template):
+    def __init__(self, slug, title, template, shadow=None):
         self.slug = slug
         self.title = title
         self.template = template
+        self.shadow = shadow
 
     def get_serialized_meta(self):
         return {
             'slug': self.slug,
-            'title': self.title
+            'title': self.title,
+            'shadow': self.shadow
         }
 
     def get_serialized(self, instance):
         return {
             'slug': self.slug,
             'title': self.title,
-            'template': render_to_string(self.template, {'instance': instance})
+            'template': render_to_string(self.template, {'instance': instance}),
+            'shadow': self.shadow
         }
 
     def __repr__(self):
-        return 'BackOfficeTab(%r, %r, %r)' % (self.slug, self.title, self.template)
+        return 'BackOfficeTab(%r, %r, %r, shadow=%r)' % (self.slug, self.title, self.template, self.shadow)
 
 
 class BackOfficeModel(object):

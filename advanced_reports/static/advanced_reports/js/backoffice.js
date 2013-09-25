@@ -187,6 +187,24 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         $scope.params = $route.current.params;
         $scope.fetchModel(false);
     });
+
+    $scope.get_url = function(url_params){
+        var params = angular.copy($scope.get_params());
+        for (var k in url_params){
+            if (url_params.hasOwnProperty(k))
+                params[k] = url_params[k];
+        }
+        if (params.detail && params.tab)
+            return '#/' + params.model + '/' + params.id + '/' + params.tab + '/' + params.detail + '/';
+        else if (params.tab)
+            return '#/' + params.model + '/' + params.id + '/' + params.tab + '/';
+        else
+            return '#/' + params.model + '/' + params.id + '/';
+    };
+
+    $scope.isVisibleTab = function(tab){
+        return !tab.shadow;
+    };
 }]);
 
 app.controller('EmptyController', ['$scope', function($scope){}]);
@@ -398,3 +416,11 @@ app.directive('autoComplete', [function(){
         transclude: true
     };
 }]);
+
+
+app.directive('linkTo', function(){
+   return function(scope, element, attrs){
+       var url = scope.$eval(attrs.linkTo);
+       element.attr('href', url);
+   };
+});
