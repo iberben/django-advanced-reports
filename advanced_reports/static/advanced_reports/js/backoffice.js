@@ -13,6 +13,7 @@ app.config(['$routeProvider', '$locationProvider', function($routeProvider, $loc
         when('/search/:query/:model/', {controller: 'EmptyController', templateUrl: '/search.html', useView: true, reloadOnSearch: false}).
         when('/:model/:id/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
         when('/:model/:id/:tab/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
+        when('/:model/:id/:tab/:detail/', {templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
         otherwise({redirectTo: '/'});
     //$locationProvider.html5Mode(true);
 }]);
