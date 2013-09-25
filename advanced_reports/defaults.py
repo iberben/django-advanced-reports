@@ -908,8 +908,9 @@ class AdvancedReport(object):
 
         for a in self.item_actions:
             if self.verify_action_group(object, a.group):
+                instance = a.form_instance(object) if a.form_instance else object
                 if not a.form_via_ajax or a.prefetch_ajax_form:
-                    new_action = a.copy_with_instanced_form(prefix=self.get_item_id(object), instance=object)
+                    new_action = a.copy_with_instanced_form(prefix=self.get_item_id(object), instance=instance)
                 else:
                     # Put off fetching the instanced Form until the actual Ajax
                     # call for performance.
