@@ -226,7 +226,7 @@ function AdvancedReportCtrl($scope, $http, $location) {
                 });
             };
 
-            if (action.confirm.length > 0 && !force){
+            if (action.confirm && !force){
                 action.execute = execute;
                 $scope.action_to_confirm = action;
                 $scope.action_confirm_popup.modal('show');
