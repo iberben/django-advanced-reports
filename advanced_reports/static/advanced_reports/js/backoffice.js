@@ -90,7 +90,7 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
 }]);
 
 
-app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', function($scope, $http, $location, boApi, $route){
+app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', 'boReverser', function($scope, $http, $location, boApi, $route, boReverser){
     $scope.params = {};
 
     $scope.path = function(){
@@ -108,6 +108,7 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         $scope.root_url = root_url;
 
         boApi.configure(api_url);
+        boReverser.configure(['model', 'id', 'tab', 'detail']);
     };
 
     $scope.isLoading = function(){
@@ -189,21 +190,54 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     });
 
     $scope.get_url = function(url_params){
-        var params = angular.copy($scope.get_params());
-        for (var k in url_params){
-            if (url_params.hasOwnProperty(k))
-                params[k] = url_params[k];
-        }
-        if (params.detail && params.tab)
-            return '#/' + params.model + '/' + params.id + '/' + params.tab + '/' + params.detail + '/';
-        else if (params.tab)
-            return '#/' + params.model + '/' + params.id + '/' + params.tab + '/';
-        else
-            return '#/' + params.model + '/' + params.id + '/';
+        return boReverser.reverse(url_params);
     };
 
     $scope.isVisibleTab = function(tab){
         return !tab.shadow;
+    };
+}]);
+
+app.factory('boReverser', ['$route', 'boUtils', function($route, boUtils){
+    return {
+        configure: function(hierarchy, prefix){
+            this.hierarchy = hierarchy;
+            this.prefix = prefix || '#/';},
+
+        reverse: function(url_params){
+            var search = {};
+            var hasSearch = false;
+            var highestLevel = this.hierarchy.length;
+            var params = angular.copy($route.current.params);
+            for (var k in url_params){
+                if (url_params.hasOwnProperty(k)){
+                    if (this.hierarchy.indexOf(k) >= 0){
+                        params[k] = url_params[k];
+                        var level = this.hierarchy.indexOf(k);
+                        if (level < highestLevel)
+                            highestLevel = level;}
+                    else{
+                        search[k] = url_params[k];
+                        hasSearch = true;}}}
+
+            for (var l in params){
+                if (params.hasOwnProperty(l)){
+                    var level2 = this.hierarchy.indexOf(l);
+                    if (!url_params[l] && level2 > highestLevel || level2 == -1){
+                        delete params[l];}}}
+
+            var pathSegments = [];
+            for (var i = 0; i < this.hierarchy.length; i++){
+                var segmentName = this.hierarchy[i];
+                if (params[segmentName])
+                    pathSegments.push(params[segmentName]);}
+
+            var url = this.prefix + pathSegments.join('/') + '/';
+            if (hasSearch){
+                url += '?' + boUtils.toQueryString(search);}
+
+            return url;
+        }
     };
 }]);
 
