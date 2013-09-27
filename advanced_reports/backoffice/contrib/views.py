@@ -37,7 +37,8 @@ class AdvancedReportView(BackOfficeView):
         slug = request.view_params.get('slug')
         data = request.action_params.get('data')
         if data:
-            post = QueryDict(data)
+            # We have to do str(data) because otherwise QueryDict is too lazy to decode...
+            post = QueryDict(str(data), encoding='utf-8')
             request.POST = post
         return api_action(request, slug, method, int(pk))
 
