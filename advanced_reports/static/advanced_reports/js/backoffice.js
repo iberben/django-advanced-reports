@@ -272,13 +272,16 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
             var slug = attrs.view;
             var params = attrs.params && scope.$eval(attrs.params) || {};
             params.view_slug = slug;
-            var viewInstance = attrs.instance || params.slug;
+            var viewInstance = attrs.instance || slug;
+            var internalScope = scope.$new();
+            var viewToUpdateOnPost = attrs.viewToUpdateOnPost;
 
             var compile = function(data){
                 attachView(data, params);
                 element.html(data.content);
-                $compile(element.contents())(scope);
+                $compile(element.contents())(internalScope);
             };
+
             var showError = function(error){
                 attachView({}, params);
                 element.html(error);
@@ -290,7 +293,11 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
                     loadView(data.params);
                 };
                 data.post = function(post_data){
-                    boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(compile, showError);
+                    boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(function(data){
+                        compile(data);
+                        if (viewToUpdateOnPost){
+                            scope.$eval(viewToUpdateOnPost).fetch();}
+                    }, showError);
                 };
                 data.action = function(method, actionParams, reloadViewOnSuccess, url_suffix){
                     return boApi.post('view_action', {method: method, params: actionParams || {}, view_params: params
@@ -304,8 +311,8 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
                         return error;
                     });
                 };
-                scope.$parent[viewInstance] = data;
-                scope.view = data;
+                scope[viewInstance] = data;
+                internalScope.view = data;
             };
 
             var loadView = function(params){
@@ -314,7 +321,7 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
 
             loadView(params);
         },
-        scope: true
+        scope: false
     };
 }]);
 
