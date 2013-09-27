@@ -1,0 +1,48 @@
+/**
+ * Helpers
+ *
+ * @author	Kristof Houben <kristof.houben@mobilevikings.com>
+ */
+
+.left{
+	float: left !important;
+	margin-right: 20px;
+}
+
+.right{
+	float: right !important;
+	margin-left: 20px;
+}
+
+.none{
+	float: none !important;
+}
+
+.align-left{ text-align: left !important; }
+.align-right{ text-align: right !important; }
+.align-center{ text-align: center !important; }
+
+.clear{ clear: both; }
+.first{ margin-left: 0 !important; }
+.last{ margin-right: 0 !important; }
+.top{ margin-top: 0 !important; }
+.bottom{ margin-bottom: 0 !important; }
+
+/* HIDDENS
+=====================================*/
+.hidden { display: none; }
+.invisible { visibility: hidden; }
+.visuallyhidden { 
+	position:absolute !important;    
+  	clip: rect(1px 1px 1px 1px);
+	clip: rect(1px, 1px, 1px, 1px); 
+}
+.visuallyhidden.focusable:active,
+.visuallyhidden.focusable:focus { 
+	clip: auto; 
+	height: auto; 
+	margin: 0; 
+	overflow: visible; 
+	position: static; 
+	width: auto;
+}

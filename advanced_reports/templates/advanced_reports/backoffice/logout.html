@@ -1,20 +1,20 @@
 {% extends "advanced_reports/backoffice/base.html" %}
 {% load i18n %}
 
-{% block extra-head %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}advanced_reports/css/signin.css">
-{% endblock %}
+{% block header-title-wrapper %}{% endblock %}
 
 {% block content %}
 <div class="container">
     <h1>{{ backoffice.title }}</h1>
-    <p>
+
+    <h2>{% trans "Signed out" %}</h2>
+    <p class="intruduction">
         {% blocktrans %}Successfully signed out.{% endblocktrans %}
     </p>
 
-    <p>
+    <div>
         <a href="{% url 'backoffice:home' %}">{% blocktrans %}Click here to sign in again.{% endblocktrans %}</a>
-    </p>
+    </div>
 </div>
 
 

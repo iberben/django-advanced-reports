@@ -1,0 +1,50 @@
+/**
+ * Init
+ *
+ * @author	Kristof Houben <kristof@mobilevikings.com>
+ */
+
+/* ELEMENT DEFAULTS
+=====================================*/
+body{
+	-webkit-font-smoothing: subpixel-antialiased;
+}
+
+p, 
+blockquote, 
+ul, 
+ol, 
+dl, 
+form, 
+table, 
+pre{ line-height: inherit; margin: 0 0 16px 0; }
+
+strong{
+	font-weight: bold;
+}
+
+ul{ 
+	margin-left: 16px; 
+	list-style: disc;
+}
+
+ol{
+	margin-left: 24px;
+	list-style: decimal;
+}
+
+/* SIMPLE GRID
+=====================================*/
+.col{ float: left; display: inline; }		
+	
+.cols .col{ width: 48%; margin-left: 4%; }	
+.cols3 .col{ width: 30%; margin-left: 5%; }
+.cols4 .col{ width: 21%; margin-left: 4%; }
+.cols5 .col{ width: 16%; margin-left: 5%; }
+.cols6 .col{ width: 12%; margin-left: 5%; }
+
+.ie6 .cols .col{ margin-left: 2%; }	
+.ie6 .cols3 .col{ margin-left: 2%; }
+.ie6 .cols4 .col{ margin-left: 2%; }
+.ie6 .cols5 .col{ margin-left: 2%; }
+.ie6 .cols6 .col{ margin-left: 4%; }

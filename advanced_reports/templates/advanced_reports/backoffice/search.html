@@ -2,58 +2,65 @@
 
 <script type="text/ng-template" id="/search.html">
 
-<h1>{% trans "Search results for '{{ params.query }}'" %}</h1>
-
-<!-- page -->
-<div class="row" ng-init="search(params.query, params.model)">
-    <div class="col-xs-5 col-md-3">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h2 class="panel-title">{% trans "Refine search" %}</h2>
-            </div>
-
-            <ul class="list-group">
-                <li class="list-group-item" ng-class="{active: !params.model}">
-                    <a ng-show="params.model" href="{% verbatim %}#/search/{{ params.query|uriencode }}{% endverbatim %}">{% trans "Show all" %}</a>
-                    <span ng-hide="params.model">{% trans "Show all" %}</span>
-                </li>
-                {% verbatim %}
-                <li class="list-group-item" ng-repeat="model_count in search_results.model_counts" ng-class="{active: params.model == model_count.meta.slug}">
-                    <a ng-hide="params.model == model_count.meta.slug" href="#/search/{{ params.query|uriencode }}/{{ model_count.meta.slug|uriencode }}/">{{ model_count.meta.verbose_name_plural|capitalize }}</a>
-                    <span ng-show="params.model == model_count.meta.slug">{{ model_count.meta.verbose_name_plural|capitalize }}</span>
-                    <span class="badge pull-right">{{ model_count.count }}</span>
-                </li>
-                {% endverbatim %}
-            </ul>
+<div class="page">
+    <header class="main-header">
+        <div class="container">
+            <h1>{% trans "Search results for '{{ params.query }}'" %}</h1>
         </div>
-    </div>
+    </header>
 
-    <div class="col-xs-7 col-md-9">
-        <!-- panel -->
-        {% verbatim %}
-        <div class="panel panel-default panel-stuff" ng-repeat="result in search_results.results">
-            <div class="panel-image">
-                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACsUlEQVR4Xu2Y24upYRTGl0PI0JSimHDjMIVETVMzpvzrziLSTIkiLpTcjJLzcfaziuz2Njufsb8La93o+3jX+65nHX55NZ+fnzu6YdOIAFIB0gIyA254BpIMQaGAUEAoIBQQCtywAoJBwaBgUDAoGLxhCMifIcGgYFAwKBgUDAoGb1iBizHYbDap3+/Tbrcjp9NJwWCQNBrNQdJflKF6vU5ms5lisdhv353S/Ro+T+11kQCNRoN6vR7p9Xr2v16vyev1kt/v52eIkkql+L3BYKBEIkFarfbberuGz+82VCzAZrOhdDrNGX17e6PVakXdbpesVis9PDzwnq1Wi9/BTCYTvb6+0mQyoff3d9LpdBSPx2k8HhOCNhqNFIlEKJvNnu3zuOLO7WbFAiyXSz7sdrvloOfzObdAIBDgM8xmM8rlcuTxeGg0GtF0OmWhcNhKpULD4ZBsNhuvw3eoGqxX6vPcwPe/VywAertarbIftADKHIYgQqEQB4nAk8kklUolWiwWBwGOxcOa+/t7enp6okt8/ncBkOF8Ps+l+/LywlksFovc6+FwmMW5u7sjt9tN7XabK8Xn8/EzrNPp8HvY8/MzV9GlPpWIoLgCkHHMAPQ2BNg/Q4DHx0eq1Wp/nAcDEBWB4ZjJZA5VY7fbKRqNHnwo8fmv4XpKHMUCIAhUALLmcrn4E33tcDi4AlDmMBysXC5zcMg0gvv4+KDBYEAWi4UrB9WBAYi1Sn0qyT7WKBYAizHACoUCgQgwtAN6GUEeG1oDAoACmAsQZE8PCAHuY47saXKuT1UocBwgUAZDRn/KruHzb2e7qAJ+Klg1/YgAciMkN0JyIyQ3QmpOYbX3FgoIBYQCQgGhgNqTWM39hQJCAaGAUEAooOYUVntvoYBQQCggFBAKqD2J1dxfKHDrFPgCDLCNn09hb34AAAAASUVORK5CYII" class="media-object" alt="" />
+    <div class="container content">
+    <!-- page -->
+    <div class="row" ng-init="search(params.query, params.model)">
+        <div class="col-xs-5 col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h2 class="panel-title">{% trans "Refine search" %}</h2>
+                </div>
+
+                <ul class="list-group">
+                    <li class="list-group-item" ng-class="{active: !params.model}">
+                        <a ng-show="params.model" href="{% verbatim %}#/search/{{ params.query|uriencode }}{% endverbatim %}">{% trans "Show all" %}</a>
+                        <span ng-hide="params.model">{% trans "Show all" %}</span>
+                    </li>
+                    {% verbatim %}
+                    <li class="list-group-item" ng-repeat="model_count in search_results.model_counts" ng-class="{active: params.model == model_count.meta.slug}">
+                        <a ng-hide="params.model == model_count.meta.slug" href="#/search/{{ params.query|uriencode }}/{{ model_count.meta.slug|uriencode }}/">{{ model_count.meta.verbose_name_plural|capitalize }}</a>
+                        <span ng-show="params.model == model_count.meta.slug">{{ model_count.meta.verbose_name_plural|capitalize }}</span>
+                        <span class="badge pull-right">{{ model_count.count }}</span>
+                    </li>
+                    {% endverbatim %}
+                </ul>
             </div>
+        </div>
 
-            <div class="panel-body">
-                <header>
-                    <h2><a href="#">{{ result.title }}</a></h2>
-                    <span>{{ result.meta.verbose_name }}</span>
-                </header>
+        <div class="col-xs-7 col-md-9">
+            <!-- panel -->
+            {% verbatim %}
+            <div class="panel panel-default panel-stuff" ng-repeat="result in search_results.results">
+                <div class="panel-image">
+                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAACsUlEQVR4Xu2Y24upYRTGl0PI0JSimHDjMIVETVMzpvzrziLSTIkiLpTcjJLzcfaziuz2Njufsb8La93o+3jX+65nHX55NZ+fnzu6YdOIAFIB0gIyA254BpIMQaGAUEAoIBQQCtywAoJBwaBgUDAoGLxhCMifIcGgYFAwKBgUDAoGb1iBizHYbDap3+/Tbrcjp9NJwWCQNBrNQdJflKF6vU5ms5lisdhv353S/Ro+T+11kQCNRoN6vR7p9Xr2v16vyev1kt/v52eIkkql+L3BYKBEIkFarfbberuGz+82VCzAZrOhdDrNGX17e6PVakXdbpesVis9PDzwnq1Wi9/BTCYTvb6+0mQyoff3d9LpdBSPx2k8HhOCNhqNFIlEKJvNnu3zuOLO7WbFAiyXSz7sdrvloOfzObdAIBDgM8xmM8rlcuTxeGg0GtF0OmWhcNhKpULD4ZBsNhuvw3eoGqxX6vPcwPe/VywAertarbIftADKHIYgQqEQB4nAk8kklUolWiwWBwGOxcOa+/t7enp6okt8/ncBkOF8Ps+l+/LywlksFovc6+FwmMW5u7sjt9tN7XabK8Xn8/EzrNPp8HvY8/MzV9GlPpWIoLgCkHHMAPQ2BNg/Q4DHx0eq1Wp/nAcDEBWB4ZjJZA5VY7fbKRqNHnwo8fmv4XpKHMUCIAhUALLmcrn4E33tcDi4AlDmMBysXC5zcMg0gvv4+KDBYEAWi4UrB9WBAYi1Sn0qyT7WKBYAizHACoUCgQgwtAN6GUEeG1oDAoACmAsQZE8PCAHuY47saXKuT1UocBwgUAZDRn/KruHzb2e7qAJ+Klg1/YgAciMkN0JyIyQ3QmpOYbX3FgoIBYQCQgGhgNqTWM39hQJCAaGAUEAooOYUVntvoYBQQCggFBAKqD2J1dxfKHDrFPgCDLCNn09hb34AAAAASUVORK5CYII" class="media-object" alt="" />
+                </div>
 
-                <div class="content">
-                    <div class="btn-group">
-                        <a ng-repeat="tab in result.meta.tabs" href="{{ root_url }}#{{ result.path }}{{ tab.slug }}" class="btn btn-default" >{{ tab.title }}</a>
+                <div class="panel-body">
+                    <header>
+                        <h2><a href="#">{{ result.title }}</a></h2>
+                        <span>{{ result.meta.verbose_name }}</span>
+                    </header>
+
+                    <div class="content">
+                        <div class="btn-group">
+                            <a ng-repeat="tab in result.meta.tabs" href="{{ root_url }}#{{ result.path }}{{ tab.slug }}" class="btn btn-default" >{{ tab.title }}</a>
+                        </div>
                     </div>
                 </div>
             </div>
+            {% endverbatim %}
+            <!-- /panel -->
         </div>
-        {% endverbatim %}
-        <!-- /panel -->
     </div>
+    </div>
+    <!-- /page -->
 </div>
-
-<!-- /page -->
 </script>
 

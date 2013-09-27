@@ -1,25 +1,51 @@
 {% extends "advanced_reports/backoffice/base.html" %}
 {% load i18n widget_tweaks %}
 
-{% block extra-head %}
-<link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}advanced_reports/css/signin.css">
-{% endblock %}
+{% block header-title-wrapper %}{% endblock %}
 
 {% block content %}
 
-<form class="form-signin" action="{{ request.path }}" method="post" id="login-form">{% csrf_token %}
+<form class="form-signin" role="form"
+        action="{{ request.path }}" method="post" id="login-form">
+
+    {% csrf_token %}
+    
     <h1>{{ backoffice.title }}</h1>
-    <h2 class="form-signin-heading">{% trans "Please sign in" %}</h2>
 
-    {% if not form.this_is_the_login_form.errors %}{{ form.username.errors }}{% endif %}
-    {{ form.username|add_class:"form-control"|attr:"autofocus"|attr:_("placeholder:Username") }}
+    <div class="container">
 
-    {% if not form.this_is_the_login_form.errors %}{{ form.password.errors }}{% endif %}
-    {{ form.password|add_class:"form-control"|attr:_("placeholder:Password") }}
+        <div class="col-md-4">
 
-    <input type="hidden" name="this_is_the_login_form" value="1" />
-    <input type="hidden" name="next" value="{{ next }}" />
+        </div>
 
-    <button class="btn btn-lg btn-primary btn-block" type="submit">{% trans "Sign in" %}</button>
+        <!-- col-md-8 -->
+        <div class="col-md-8">
+            
+            <h2 class="form-signin-heading">{% trans "Please sign in" %}</h2>
+            <p class="introduction">
+                {% blocktrans %}To get the full experience to our awesome helpdesk, please sign in!{% endblocktrans %}
+            </p>
+
+            {% include "advanced_reports/backoffice/_form_errors.html" %}
+
+            <div class="form-group">
+                {{ form.username.label_tag }}
+                {{ form.username|add_class:"form-control"|attr:"autofocus"|attr:_("placeholder:Username") }}
+                {% if not form.this_is_the_login_form.errors %}{{ form.username.errors }}{% endif %}
+            </div>
+
+            <div class="form-group">
+                {{ form.password.label_tag }}
+                {{ form.password|add_class:"form-control"|attr:_("placeholder:Password") }}
+                {% if not form.this_is_the_login_form.errors %}{{ form.password.errors }}{% endif %}
+            </div>
+
+            <input type="hidden" name="this_is_the_login_form" value="1" />
+            <input type="hidden" name="next" value="{{ next }}" />
+
+            <button class="btn btn-lg btn-primary btn-block" type="submit">{% trans "Sign in" %}</button>
+
+        </div>
+        <!-- /col-md-8 -->
 </form>
 {% endblock %}

@@ -1,0 +1,55 @@
+/**
+ * Mixins
+ *
+ * @author	Kristof Houben <kristof.houben@mobilevikings.com>
+ */
+
+@mixin clearfix{
+	zoom: 1;
+	&:before,
+	&:after {
+		display: table;
+		content: "\0020";
+		zoom: 1;
+	}
+	&:after {	
+		clear: both;
+	}
+}
+
+@mixin ir{
+	text-indent: 100%;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+@mixin size($width: 5px, $height: 5px) {
+    height: $height;
+    width: $width;
+}
+
+@mixin square($size: 5px) {
+    @include size($size, $size);
+}
+
+@mixin ie7-inline-block {
+  *display: inline; /* IE7 inline-block hack */
+  *zoom: 1;
+}
+
+@mixin ie7-restore-left-whitespace {
+  *margin-left: .3em;
+
+  &:first-child {
+    *margin-left: 0;
+  }
+}
+
+.ie7-restore-right-whitespace {
+  *margin-right: .3em;
+
+  &:last-child {
+    *margin-left: 0;
+  }
+}
+

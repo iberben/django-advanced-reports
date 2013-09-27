@@ -1,0 +1,68 @@
+
+body {
+    font-family: 'Open Sans', $font;
+    line-height: $baseLine;
+    font-size: $baseFont;
+    /*background: #f0f0f0;*/
+    background: $white;
+}
+
+/* TITLES
+==========================*/
+h1, h2, h3 {
+    font-weight: 200;
+    font-family: 'Open Sans', $font;
+}
+
+/* ERRORS
+==========================*/
+.errorlist {
+    color: $errorColor;
+    font-weight: 700;
+    list-style: none;
+    margin-left: 0;
+    padding-top: 5px;
+
+    li {
+        padding-left: 0;
+        margin-left: 0;
+    }
+}
+
+/* ELEMENTS
+==========================*/
+ul {
+    margin-left: 0;
+}
+
+.introduction {
+    font-size: 1.141em;
+}
+
+.page {
+    header {
+        &.main-header {
+            margin-top: 52px;
+            background: $highlightColor;
+            padding: 3em 0;
+            color: $white;
+
+            h1 {
+                margin: 0;
+            }
+        }
+    }
+}
+
+.content {
+    margin-top: 10px;
+}
+
+.sidebar-left {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+.main-content {
+    background: $white;
+}
