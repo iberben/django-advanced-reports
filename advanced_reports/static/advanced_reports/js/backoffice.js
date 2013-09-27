@@ -83,6 +83,9 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
             });
             return defer.promise;
         },
+        link: function(method, params){
+            return this.url + method + '/?' + boUtils.toQueryString(params);
+        },
         isLoading: function(){
             return this.requests > 0;
         }
@@ -311,6 +314,10 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
                         return error;
                     });
                 };
+                data.action_link = function(method, actionParams){
+                    var combinedParams = angular.extend({method: method}, params, actionParams);
+                    return boApi.link('view_view', combinedParams);
+                };
                 scope[viewInstance] = data;
                 internalScope.view = data;
             };
@@ -359,6 +366,14 @@ app.factory('boUtils', function(){
            for(var p in obj)
                str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
            return str.join('&');
+       },
+       startsWith: function(str, prefix){
+           // http://stackoverflow.com/questions/646628/javascript-startswith
+           return str.indexOf(prefix) === 0;
+       },
+       endsWith: function(str, suffix){
+           // http://stackoverflow.com/questions/280634/endswith-in-javascript
+           return str.indexOf(suffix, str.length - suffix.length) !== -1;
        }
    };
 });
@@ -414,21 +429,37 @@ app.directive('focusOn', function() {
 </ul>
  */
 
-app.directive('autoComplete', [function(){
+app.directive('onFocus', ['$parse', function($parse){
+    return function(scope, element, attrs){
+        var fn = $parse(attrs.onFocus);
+        element.on('focus', function(event){
+            scope.$apply(function(){
+                fn(scope, {$event: event});
+            });
+        });
+    };
+}]);
+
+app.directive('autoComplete', ['$timeout', 'boUtils', function($timeout, boUtils){
     return {
-        template:  '' +
+        template: '' +
             '<span ng-transclude></span>' +
-            '<ul class="always-visible dropdown-menu">' +
-            '    <li><a href="#">8940000000000000000</a></li>' +
-            '    <li class="disabled"><a>{{ txt_no_results }}</a></li>' +
+            '<ul class="always-visible dropdown-menu" ng-show="showCompletions">' +
+            '    <li ng-repeat="result in results">' +
+            '        <a href on-focus="fillOutCompletion(result)" ng-mouseenter="fillOutCompletion(result)" ng-click="fillOutCompletion(result); show(false)">{{ result }}</a>' +
+            '    </li>' +
+            '    <li ng-hide="results" class="disabled"><a>{{ txt_no_results }}</a></li>' +
             '</ul>' +
-            '<pre>{{ results|json }}</pre>' +
             '',
         link: function(scope, element, attrs){
             element.css('position', 'relative');
-            var input = element.find('input');
+            var to = null;
+            var input = element.find('input,textarea');
             var transcludedScope = scope.$$nextSibling;
+
+            scope.showCompletions = false;
             scope.model = transcludedScope[scope.modelName];
+            scope.results = [];
 
             scope.$watch(function(scope){
                 return input.val();
@@ -437,21 +468,51 @@ app.directive('autoComplete', [function(){
             });
 
             scope.$watch('model', function(value){
+                var start = input[0].selectionStart;
+                var oldValue = input.val();
                 input.val(value);
+                input[0].selectionStart = start;
+                input[0].selectionEnd = value.length;
             });
 
+            scope.fillOutCompletion = function(value){
+                scope.model = value;
+            };
+
+            scope.show = function(show){
+                scope.showCompletions = show;
+            };
+
             input.on('keyup', function(event){
-                console.log(scope);
-                scope.$apply(function(){
-                    scope.results = scope.view.action(attrs.autoComplete, {partial: input.val()}, false);
-                });
+                if (to)
+                    $timeout.cancel(to);
+                if (event.keyCode == 8 || event.keyCode == 46 || event.keyCode == 9)
+                {
+                    scope.showCompletions = false;
+                    scope.$apply();
+                    return;
+                }
+                scope.showCompletions = true;
+                to = $timeout(function(){
+                    var params = angular.extend({partial: input.val()}, scope.$eval(attrs.params || '{}'));
+                    scope.view.action(attrs.autoComplete, params, false).then(function(results){
+                        scope.results = results;
+                        if (results.length > 0 && boUtils.startsWith(results[0], scope.model))
+                            scope.model = results[0];
+                    });
+                }, 150);
+                scope.$apply();
+            });
+
+            input.on('blur', function(event){
+                scope.showCompletions = false;
+                scope.$apply();
             });
         },
         scope: {
             txt_no_results: '@noResultsText',
             view: '=viewObject',
-            model: '=',
-            modelName: '@'
+            model: '='
         },
         replace: false,
         transclude: true

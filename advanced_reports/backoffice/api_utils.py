@@ -20,7 +20,7 @@ def to_json(obj):
 
 
 def JSONResponse(obj):
-    return HttpResponse(to_json(obj), content_type='application/json')
+    return HttpResponse(to_json(obj), content_type='application/json;charset=UTF-8')
 
 
 class ViewRequestParameters(object):

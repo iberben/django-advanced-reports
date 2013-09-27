@@ -507,6 +507,17 @@ class AdvancedReport(object):
         '''
         return u''
 
+    def auto_complete(self, request, partial, params):
+        """
+        Implement this to support auto completion of certain fields.
+
+        :param request: the HTTPRequest asking for the completion
+        :param partial: the partial string that must be completed
+        :param params: optional parameters
+        :return: a list of possible completions. Keep this list short, all data returned will be displayed.
+        """
+        return []
+
     def enrich_list(self, items):
         '''
         Implement this to attach some extra information to each item of the given items list.
