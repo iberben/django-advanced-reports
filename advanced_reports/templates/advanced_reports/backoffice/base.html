@@ -108,11 +108,13 @@
             </div>
         {% endif %}
 
+        {% block content-override %}
         <!-- Switch between Django-rendered and AngularJS-rendered content -->
         <div class="page" ng-view ng-show="useView()"></div>
         <div class="page" ng-hide="useView()">
             {% block content %}{% endblock %}
         </div>
+        {% endblock %}
 
         <!-- Bootstrap core JavaScript
         ================================================== -->

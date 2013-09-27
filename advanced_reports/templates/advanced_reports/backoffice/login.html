@@ -5,8 +5,7 @@
 <link rel="stylesheet" type="text/css" href="{{ STATIC_URL }}advanced_reports/css/signin.css">
 {% endblock %}
 
-{% block content %}
-
+{% block content-override %}
 <form class="form-signin" action="{{ request.path }}" method="post" id="login-form">{% csrf_token %}
     <h1>{{ backoffice.title }}</h1>
     <h2 class="form-signin-heading">{% trans "Please sign in" %}</h2>
