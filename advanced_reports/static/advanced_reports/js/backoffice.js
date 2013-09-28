@@ -450,7 +450,7 @@ app.factory('idGenerator', function(){
     };
 });
 
-app.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', 'boUtils', function($timeout, $compile, idGenerator, boUtils){
+app.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', function($timeout, $compile, idGenerator){
     return {
         link: function(scope, element, attrs){
             // Generate a unique ID to connect the datalist to the field.
