@@ -440,7 +440,53 @@ app.directive('onFocus', ['$parse', function($parse){
     };
 }]);
 
-app.directive('autoComplete', ['$timeout', 'boUtils', function($timeout, boUtils){
+app.factory('idGenerator', function(){
+    return {
+        nextId: 0,
+        generate: function(){
+            this.nextId += 1;
+            return this.nextId;
+        }
+    };
+});
+
+app.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', 'boUtils', function($timeout, $compile, idGenerator, boUtils){
+    return {
+        link: function(scope, element, attrs){
+            // Generate a unique ID to connect the datalist to the field.
+            var elementId = 'autoComplete-' + idGenerator.generate();
+
+            // The datalist template that we will put after the field.
+            var datalistTemplate = '' +
+                '<datalist id="' + elementId + '">' +
+                '<option ng-repeat="option in options" value="{{ option }}"></option>' +
+                '</datalist>';
+
+            // Put the template after the field and connect it to newScope.
+            element.after(datalistTemplate);
+            var newScope = scope.$new();
+            $compile(element.next().contents())(newScope);
+            element.attr('list', elementId);
+
+            // Update the datalist on each keystroke with a throttling of 200 ms.
+            var to = null;
+            element.on('keyup', function(event){
+                if (to)
+                    $timeout.cancel(to);
+                to = $timeout(function(){
+                    var params = angular.extend({partial: element.val()}, scope.$eval(attrs.params || '{}'));
+                    scope.view.action(attrs.autoComplete, params, false).then(function(results){
+                        newScope.options = results;
+                    });
+                }, 200);
+                scope.$apply();
+            });
+        },
+        scope: false
+    };
+}]);
+
+app.directive('autoCompleteOld', ['$timeout', 'boUtils', function($timeout, boUtils){
     return {
         template: '' +
             '<span ng-transclude></span>' +
@@ -495,7 +541,7 @@ app.directive('autoComplete', ['$timeout', 'boUtils', function($timeout, boUtils
                 scope.showCompletions = true;
                 to = $timeout(function(){
                     var params = angular.extend({partial: input.val()}, scope.$eval(attrs.params || '{}'));
-                    scope.view.action(attrs.autoComplete, params, false).then(function(results){
+                    scope.view.action(attrs.autoCompleteOld, params, false).then(function(results){
                         scope.results = results;
                         if (results.length > 0 && boUtils.startsWith(results[0], scope.model))
                             scope.model = results[0];
