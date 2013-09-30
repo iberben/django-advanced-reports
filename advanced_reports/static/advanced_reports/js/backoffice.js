@@ -6,14 +6,14 @@ app.run(function ($http, $cookies){
 
 app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
     $routeProvider.
-        when('/', {controller: 'EmptyController', templateUrl: '/home.html', useView: false}).
-        when('/tab/:tab/', {controller: 'EmptyController', useView: false}).
+        when('/', {controller: 'EmptyController', templateUrl: '/home.html'}).
+        when('/tab/:tab/', {controller: 'EmptyController'}).
 
-        when('/search/:query', {controller: 'EmptyController', templateUrl: '/search.html', useView: true, reloadOnSearch: false}).
-        when('/search/:query/:model/', {controller: 'EmptyController', templateUrl: '/search.html', useView: true, reloadOnSearch: false}).
-        when('/:model/:id/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
-        when('/:model/:id/:tab/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
-        when('/:model/:id/:tab/:detail/', {templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
+        when('/search/:query', {controller: 'EmptyController', templateUrl: '/search.html', reloadOnSearch: false}).
+        when('/search/:query/:model/', {controller: 'EmptyController', templateUrl: '/search.html', reloadOnSearch: false}).
+        when('/:model/:id/', {controller: 'EmptyController', templateUrl: '/model.html', reloadOnSearch: false}).
+        when('/:model/:id/:tab/', {controller: 'EmptyController', templateUrl: '/model.html', reloadOnSearch: false}).
+        when('/:model/:id/:tab/:detail/', {templateUrl: '/model.html', reloadOnSearch: false}).
         otherwise({redirectTo: '/'});
     //$locationProvider.html5Mode(true);
 }]);
@@ -92,7 +92,6 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
     };
 }]);
 
-
 app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', 'boReverser', function($scope, $http, $location, boApi, $route, boReverser){
     $scope.params = {};
 
@@ -101,9 +100,8 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     };
 
     $scope.useView = function(){
-        if ($route && $route.current)
-            return $route.current.useView;
-        return false;
+        var p = $scope.path();
+        return !(p.substring(0, 5) == '/tab/' || p == '/');
     };
 
     $scope.setup = function(api_url, root_url){
