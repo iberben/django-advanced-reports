@@ -165,13 +165,13 @@ class BackOfficeBase(object):
 
     #: A mapping between Django models and ``BackOfficeModel`` implementation
     #: instances.
-    model_to_bo_model = {}
+    model_to_bo_model = None
 
     #: A mapping between the ``slug`` of a ``BackOfficeModel`` implementation
     #: and ``BackOfficeModel`` implementation instances.
     #: This is where slugs will be resolved to their actual ``BackOfficeModel``
     #: instance.
-    slug_to_bo_model = {}
+    slug_to_bo_model = None
 
     #: A mapping between Django models and lists of ``BackOfficeModel``
     #: instances that depend on the Django models for their ``search_index``.
@@ -216,6 +216,11 @@ class BackOfficeBase(object):
 
         :param bo_model: a ``BackOfficeModel`` implementation class
         """
+        if not self.model_to_bo_model:
+            self.model_to_bo_model = {}
+        if not self.slug_to_bo_model:
+            self.slug_to_bo_model = {}
+
         if not bo_model.slug in self.slug_to_bo_model:
             bo_model_instance = bo_model()
             self.slug_to_bo_model[bo_model.slug] = bo_model_instance
@@ -299,7 +304,7 @@ class BackOfficeBase(object):
     ######################################################################
     # View Registration
     ######################################################################
-    slug_to_bo_view = {}
+    slug_to_bo_view = None
 
     def register_view(self, bo_view):
         """
@@ -308,6 +313,9 @@ class BackOfficeBase(object):
 
         :param bo_view: a ``BackOfficeView`` implementation class
         """
+        if not self.slug_to_bo_view:
+            self.slug_to_bo_view = {}
+
         if not bo_view.slug in self.slug_to_bo_view:
             bo_view_instance = bo_view()
             self.slug_to_bo_view[bo_view.slug] = bo_view_instance
@@ -576,15 +584,15 @@ class BackOfficeModel(object):
     #: to represent kinds of children. This property will be automatically filled
     #: when you register your parent and child models with a BackOfficeBase
     #: implementation instance.
-    children = {}
-    child_to_accessor = {}
+    children = None
+    child_to_accessor = None
 
     #: A mapping of slugs to ``BackOfficeModel`` implementation instances
     #: to represent kinds of parents. This property will be automatically filled
     #: when you register your parent and child models with a BackOfficeBase
     #: implementation instance.
-    parents = {}
-    parent_to_accessor = {}
+    parents = None
+    parent_to_accessor = None
 
     #: Define a priority that will be used for displaying purposes.
     #: Can also be used as a way to sort models by kind, if used uniquely.
@@ -612,7 +620,14 @@ class BackOfficeModel(object):
     #: which knows how to find the parent object and a model type to make
     #: sure we are getting the right argument to our ``search_index``
     #: implementation.
-    search_index_dependencies = {}
+    search_index_dependencies = None
+
+    def __init__(self):
+        self.children = {}
+        self.child_to_accessor = {}
+        self.parents = {}
+        self.parent_to_accessor = {}
+        self.search_index_dependencies = {}
 
     def get_title(self, instance):
         """
@@ -697,10 +712,10 @@ class BackOfficeModel(object):
         return sum((self.get_serialized_children_by_model(instance, m) for m in child_models), [])
 
     def get_parents(self, instance):
-        if not self.parent_fields_list:
+        if not self.parents:
             return ()
         parent_models = sorted(self.parents.values(), key=lambda m: m.priority)
-        return [self.get_parent_by_model(parent_model) for parent_model in parent_models]
+        return [self.get_serialized_parent_by_model(instance, parent_model) for parent_model in parent_models]
 
     def reindex(self, instance, backoffice_instance):
         index_text = self.search_index(instance)
