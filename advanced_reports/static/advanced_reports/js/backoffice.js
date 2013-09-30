@@ -83,6 +83,9 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
             });
             return defer.promise;
         },
+        link: function(method, params){
+            return this.url + method + '/?' + boUtils.toQueryString(params);
+        },
         isLoading: function(){
             return this.requests > 0;
         }
@@ -272,13 +275,16 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
             var slug = attrs.view;
             var params = attrs.params && scope.$eval(attrs.params) || {};
             params.view_slug = slug;
-            var viewInstance = attrs.instance || params.slug;
+            var viewInstance = attrs.instance || slug;
+            var internalScope = scope.$new();
+            var viewToUpdateOnPost = attrs.viewToUpdateOnPost;
 
             var compile = function(data){
                 attachView(data, params);
                 element.html(data.content);
-                $compile(element.contents())(scope);
+                $compile(element.contents())(internalScope);
             };
+
             var showError = function(error){
                 attachView({}, params);
                 element.html(error);
@@ -290,7 +296,11 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
                     loadView(data.params);
                 };
                 data.post = function(post_data){
-                    boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(compile, showError);
+                    boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(function(data){
+                        compile(data);
+                        if (viewToUpdateOnPost){
+                            scope.$eval(viewToUpdateOnPost).fetch();}
+                    }, showError);
                 };
                 data.action = function(method, actionParams, reloadViewOnSuccess, url_suffix){
                     return boApi.post('view_action', {method: method, params: actionParams || {}, view_params: params
@@ -304,8 +314,12 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
                         return error;
                     });
                 };
-                scope.$parent[viewInstance] = data;
-                scope.view = data;
+                data.action_link = function(method, actionParams){
+                    var combinedParams = angular.extend({method: method}, params, actionParams);
+                    return boApi.link('view_view', combinedParams);
+                };
+                scope[viewInstance] = data;
+                internalScope.view = data;
             };
 
             var loadView = function(params){
@@ -314,7 +328,7 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
 
             loadView(params);
         },
-        scope: true
+        scope: false
     };
 }]);
 
@@ -352,6 +366,14 @@ app.factory('boUtils', function(){
            for(var p in obj)
                str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
            return str.join('&');
+       },
+       startsWith: function(str, prefix){
+           // http://stackoverflow.com/questions/646628/javascript-startswith
+           return str.indexOf(prefix) === 0;
+       },
+       endsWith: function(str, suffix){
+           // http://stackoverflow.com/questions/280634/endswith-in-javascript
+           return str.indexOf(suffix, str.length - suffix.length) !== -1;
        }
    };
 });
@@ -407,21 +429,94 @@ app.directive('focusOn', function() {
 </ul>
  */
 
-app.directive('autoComplete', [function(){
+app.directive('onFocus', ['$parse', function($parse){
+    return function(scope, element, attrs){
+        var fn = $parse(attrs.onFocus);
+        element.on('focus', function(event){
+            scope.$apply(function(){
+                fn(scope, {$event: event});
+            });
+        });
+    };
+}]);
+
+app.factory('idGenerator', function(){
     return {
-        template:  '' +
+        nextId: 0,
+        generate: function(){
+            this.nextId += 1;
+            return this.nextId;
+        }
+    };
+});
+
+app.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', function($timeout, $compile, idGenerator){
+    return {
+        link: function(scope, element, attrs){
+            // Generate a unique ID to connect the datalist to the field.
+            var elementId = 'autoComplete-' + idGenerator.generate();
+
+            // The datalist template that we will put after the field.
+            var datalistTemplate = '' +
+                '<datalist id="' + elementId + '">' +
+                '<option ng-repeat="option in options" value="{{ option }}"></option>' +
+                '</datalist>';
+
+            // Put the template after the field and connect it to newScope.
+            element.after(datalistTemplate);
+            var newScope = scope.$new();
+            $compile(element.next().contents())(newScope);
+            element.attr('list', elementId);
+
+            // Update the datalist on each keystroke with a throttling of 200 ms.
+            var to = null;
+            element.on('input', function(event){
+                if (to)
+                    $timeout.cancel(to);
+                to = $timeout(function(){
+                    var params = angular.extend({partial: element.val()}, scope.$eval(attrs.params || '{}'));
+                    scope.view.action(attrs.autoComplete, params, false).then(function(results){
+                        newScope.options = results;
+                        // If we have one or more results, prefill the first one in the field and select it
+                        // in a way that you can continue typing.
+                        if (results.length > 0){
+                            var idx = results[0].indexOf(element.val());
+                            if (idx > -1){
+                                var start = element.selectionStart;
+                                element.val(results[0].substring(0, idx + element.val().length));
+                                element.selectionStart = start;
+                                element.selectionEnd = element.val().length;
+                            }
+                        }
+                    });
+                }, 200);
+                scope.$apply();
+            });
+        },
+        scope: false
+    };
+}]);
+
+app.directive('autoCompleteOld', ['$timeout', 'boUtils', function($timeout, boUtils){
+    return {
+        template: '' +
             '<span ng-transclude></span>' +
-            '<ul class="always-visible dropdown-menu">' +
-            '    <li><a href="#">8940000000000000000</a></li>' +
-            '    <li class="disabled"><a>{{ txt_no_results }}</a></li>' +
+            '<ul class="always-visible dropdown-menu" ng-show="showCompletions">' +
+            '    <li ng-repeat="result in results">' +
+            '        <a href on-focus="fillOutCompletion(result)" ng-mouseenter="fillOutCompletion(result)" ng-click="fillOutCompletion(result); show(false)">{{ result }}</a>' +
+            '    </li>' +
+            '    <li ng-hide="results" class="disabled"><a>{{ txt_no_results }}</a></li>' +
             '</ul>' +
-            '<pre>{{ results|json }}</pre>' +
             '',
         link: function(scope, element, attrs){
             element.css('position', 'relative');
-            var input = element.find('input');
+            var to = null;
+            var input = element.find('input,textarea');
             var transcludedScope = scope.$$nextSibling;
+
+            scope.showCompletions = false;
             scope.model = transcludedScope[scope.modelName];
+            scope.results = [];
 
             scope.$watch(function(scope){
                 return input.val();
@@ -430,21 +525,51 @@ app.directive('autoComplete', [function(){
             });
 
             scope.$watch('model', function(value){
+                var start = input[0].selectionStart;
+                var oldValue = input.val();
                 input.val(value);
+                input[0].selectionStart = start;
+                input[0].selectionEnd = value.length;
             });
 
+            scope.fillOutCompletion = function(value){
+                scope.model = value;
+            };
+
+            scope.show = function(show){
+                scope.showCompletions = show;
+            };
+
             input.on('keyup', function(event){
-                console.log(scope);
-                scope.$apply(function(){
-                    scope.results = scope.view.action(attrs.autoComplete, {partial: input.val()}, false);
-                });
+                if (to)
+                    $timeout.cancel(to);
+                if (event.keyCode == 8 || event.keyCode == 46 || event.keyCode == 9)
+                {
+                    scope.showCompletions = false;
+                    scope.$apply();
+                    return;
+                }
+                scope.showCompletions = true;
+                to = $timeout(function(){
+                    var params = angular.extend({partial: input.val()}, scope.$eval(attrs.params || '{}'));
+                    scope.view.action(attrs.autoCompleteOld, params, false).then(function(results){
+                        scope.results = results;
+                        if (results.length > 0 && boUtils.startsWith(results[0], scope.model))
+                            scope.model = results[0];
+                    });
+                }, 150);
+                scope.$apply();
+            });
+
+            input.on('blur', function(event){
+                scope.showCompletions = false;
+                scope.$apply();
             });
         },
         scope: {
             txt_no_results: '@noResultsText',
             view: '=viewObject',
-            model: '=',
-            modelName: '@'
+            model: '='
         },
         replace: false,
         transclude: true

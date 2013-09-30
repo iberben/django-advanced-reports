@@ -147,6 +147,8 @@ class BackOfficeBase(object):
 
         request.view_params = ViewRequestParameters(request)
 
+        #import pdb; pdb.set_trace()
+
         fn = getattr(self, 'api_%s_%s' % (request.method.lower(), method), None)
         if fn is None:
             raise Http404
@@ -480,6 +482,23 @@ class BackOfficeBase(object):
             raise Http404(u'Cannot find method %s on view %s' % (method, bo_view.slug))
         return fn(request)
 
+    def api_get_view_view(self, request):
+        """
+        Calls a regular Django view on the given BackOffice view.
+
+        :param request: ``request.view_params with 'method' and 'view_slug'``
+        :return: the HttpResponse from the BackOffice method with the name inside 'method'
+        """
+        method = request.view_params.get('method')
+        view_slug = request.view_params.get('view_slug')
+
+        bo_view = self.get_view(view_slug)
+
+        fn = getattr(bo_view, method, None)
+        if not fn:
+            raise Http404(u'Cannot find method %s on view %s' % (method, bo_view.slug))
+        return fn(request)
+
 
 class BackOfficeTab(object):
     """
@@ -675,19 +694,23 @@ class BackOfficeModel(object):
 class BackOfficeView(object):
     slug = AutoSlug(remove_suffix='View')
 
-    def get_serialized(self, request):
-        serialized = {
+    def serialize(self, content):
+        return {
             'slug': self.slug,
-            'content': self.get(request)
+            'content': content
         }
-        return serialized
+
+    def get_serialized(self, request):
+        content = self.get(request)
+        if isinstance(content, HttpResponse):
+            content = content.content
+        return self.serialize(content)
 
     def get_serialized_post(self, request):
-        serialized = {
-            'slug': self.slug,
-            'content': self.post(request)
-        }
-        return serialized
+        content = self.post(request)
+        if isinstance(content, HttpResponse):
+            content = content.content
+        return self.serialize(content)
 
     def get(self, request):
         raise NotImplementedError

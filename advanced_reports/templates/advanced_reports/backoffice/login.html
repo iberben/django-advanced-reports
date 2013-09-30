@@ -3,13 +3,12 @@
 
 {% block header-title-wrapper %}{% endblock %}
 
-{% block content %}
-
+{% block content-override %}
 <form class="form-signin" role="form"
         action="{{ request.path }}" method="post" id="login-form">
 
     {% csrf_token %}
-    
+
     <h1>{{ backoffice.title }}</h1>
 
     <div class="container">

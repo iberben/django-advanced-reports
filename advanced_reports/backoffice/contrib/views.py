@@ -37,9 +37,27 @@ class AdvancedReportView(BackOfficeView):
         slug = request.view_params.get('slug')
         data = request.action_params.get('data')
         if data:
-            post = QueryDict(data)
+            # We have to do str(data) because otherwise QueryDict is too lazy to decode...
+            post = QueryDict(str(data), encoding='utf-8')
             request.POST = post
         return api_action(request, slug, method, int(pk))
+
+    def action_view(self, request):
+        report_slug = request.view_params.get('slug')
+        method = request.view_params.get('report_method')
+        pk = request.view_params.get('pk')
+
+        advreport = get_report_for_slug(report_slug)
+        item = advreport.get_item_for_id(pk)
+        advreport.enrich_object(item, request=request)
+        return getattr(advreport, method)(item)
+
+    def auto_complete(self, request):
+        partial = request.action_params.pop('partial')
+        report_slug = request.view_params.get('slug')
+
+        advreport = get_report_for_slug(report_slug)
+        return advreport.auto_complete(request, partial, request.action_params)
 
 
 class AdvancedReportActionView(BackOfficeView):

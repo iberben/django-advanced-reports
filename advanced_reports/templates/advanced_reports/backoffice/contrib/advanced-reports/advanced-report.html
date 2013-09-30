@@ -82,14 +82,14 @@
                 <tr ng-show="item.expanded">
                     <td colspan="{{ report.header.length }}">
                         <div class="btn-group">
-                            <a class="btn btn-default" href ng-click="execute_action(item, action)" ng-repeat="action in item.actions|filter:is_button_action">{{ action.verbose_name }}</a>
+                            <a class="btn btn-default" link-to="get_action_link(item, action)" ng-click="execute_action(item, action)" ng-repeat="action in item.actions|filter:is_button_action">{{ action.verbose_name }}</a>
                         </div>
                         <div ng-repeat="action in item.actions|filter:is_inline_form_action">
                             <form bo-element="action_form_element" ng-submit="execute_inline_form_action(item, action, action_form_element)">
                                 <div class="form-inline" role="form" compile="action.form"></div>
                             </form>
                         </div>
-                        <div compile="item.extra_information"></div>
+                        <div compile="item.extra_information" class="row extra_info"></div>
                     </td>
                 </tr>
                 {% endverbatim %}
@@ -98,17 +98,10 @@
     </div>
 
     <div ng-include="'/pagination.html'"></div>
-
-    <input ng-model="test">
-
-    <div auto-complete="autocomplete" no-results-text="{% trans "No results found" %}" view-object="view" model="test">
-        <input type="text">
-    </div>
-
 </div>
 
 <script type="text/javascript">
-function AdvancedReportCtrl($scope, $http, $location) {
+function AdvancedReportCtrl($scope, $http, $location, boUtils) {
     $scope.report = null;
     $scope.page_count = null;
     $scope.filters = {};
@@ -141,6 +134,8 @@ function AdvancedReportCtrl($scope, $http, $location) {
 
         $scope.view.action('fetch', {}, false, qs).then(function(data){
             $scope.report = data;
+            if (data.item_count == 1)
+                $scope.toggle_expand($scope.report.items[0]);
             $scope.page_count = Math.floor(data.item_count / data.items_per_page) + 1;
         }, function(error){
             $scope.error = error;
@@ -212,6 +207,9 @@ function AdvancedReportCtrl($scope, $http, $location) {
     };
 
     $scope.execute_action = function(item, action, force) {
+        if ($scope.is_link_action(action))
+            return;
+
         if (action.form){
             $scope.form = action;
             $scope.form.item = item;
@@ -298,6 +296,16 @@ function AdvancedReportCtrl($scope, $http, $location) {
 
     $scope.is_inline_form_action = function(action){
         return action.form && !action.form_via_ajax;
+    };
+
+    $scope.is_link_action = function(action){
+        return boUtils.endsWith(action.method, '_view');
+    };
+
+    $scope.get_action_link = function(item, action){
+        if ($scope.is_link_action(action))
+            return $scope.view.action_link('action_view', {report_method: action.method, pk: item.item_id});
+        return '';
     };
 }
 </script>
