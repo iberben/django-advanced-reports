@@ -470,13 +470,24 @@ app.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', function($
 
             // Update the datalist on each keystroke with a throttling of 200 ms.
             var to = null;
-            element.on('keyup', function(event){
+            element.on('input', function(event){
                 if (to)
                     $timeout.cancel(to);
                 to = $timeout(function(){
                     var params = angular.extend({partial: element.val()}, scope.$eval(attrs.params || '{}'));
                     scope.view.action(attrs.autoComplete, params, false).then(function(results){
                         newScope.options = results;
+                        // If we have one or more results, prefill the first one in the field and select it
+                        // in a way that you can continue typing.
+                        if (results.length > 0){
+                            var idx = results[0].indexOf(element.val());
+                            if (idx > -1){
+                                var start = element.selectionStart;
+                                element.val(results[0].substring(0, idx + element.val().length));
+                                element.selectionStart = start;
+                                element.selectionEnd = element.val().length;
+                            }
+                        }
                     });
                 }, 200);
                 scope.$apply();
