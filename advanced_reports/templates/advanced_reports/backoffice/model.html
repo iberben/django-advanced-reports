@@ -13,13 +13,12 @@
                 <li ng-class="{active: params.tab == tab.slug || model.tabs[params.tab].shadow == tab.slug}" ng-repeat="tab in model.meta.tabs|filter:isVisibleTab">
                     <a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a>
                 </li>
-                <li class="dropdown">
+                <li class="dropdown" ng-repeat="child_type in model.children">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                        SIM cards 
+                        {{ child_type.verbose_name_plural }}
                         <b class="caret"></b></a>
                     <ul class="dropdown-menu">
-                        <li><a href="#">+32 4567 23 45 23</a></li>
-                        <li><a href="#">+32 4567 23 45 23</a></li>
+                        <li ng-repeat="child in child_type.children"><a href="#{{ child.path }}">{{ child.title }}</a></li>
                     </ul>
                 </li>
             </nav>

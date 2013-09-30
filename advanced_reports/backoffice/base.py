@@ -280,15 +280,21 @@ class BackOfficeBase(object):
         :param bo_model: a child ``BackOfficeModel`` implementation instance
         that wants to link with its parent.
         """
-        if bo_model.parent_field:
-            parent_field = bo_model.model._meta.get_field(bo_model.parent_field)
-            parent_model = parent_field.rel.to
-            parent_bo_model = self.get_model(model=parent_model)
-            if parent_bo_model:
-                if parent_bo_model.children is None:
-                    parent_bo_model.children = {}
-                if not bo_model.slug in parent_bo_model.children:
-                    parent_bo_model.children[bo_model.slug] = bo_model
+        parent_fields = bo_model.parent_fields_list
+
+        if parent_fields:
+            for parent_field in parent_fields:
+                parent_django_field = bo_model.model._meta.get_field(parent_field)
+                parent_model = parent_django_field.rel.to
+                parent_bo_model = self.get_model(model=parent_model)
+                if parent_bo_model:
+                    if not bo_model.slug in parent_bo_model.children:
+                        parent_bo_model.children[bo_model.slug] = bo_model
+                        parent_bo_model.child_to_accessor[bo_model.slug] = parent_django_field.rel.related_name \
+                            or '%s_set' % bo_model.model.__name__.lower()
+                    if not parent_bo_model.slug in bo_model.parents:
+                        bo_model.parents[parent_bo_model.slug] = parent_bo_model
+                        bo_model.child_to_accessor[parent_bo_model.slug] = parent_field
 
     ######################################################################
     # View Registration
@@ -328,7 +334,6 @@ class BackOfficeBase(object):
         except ObjectDoesNotExist:
             return None
         serialized = bo_model.get_serialized(instance)
-        serialized['meta'] = bo_model.serialize_meta()
         return serialized
 
     def count_by_model(self, indices):
@@ -432,8 +437,7 @@ class BackOfficeBase(object):
         pk = request.view_params.get('pk')
         bo_model = self.get_model(slug=model_slug)
         obj = bo_model.model.objects.get(pk=pk)
-        serialized = bo_model.get_serialized_with_children(obj)
-        serialized['meta'] = bo_model.serialize_meta()
+        serialized = bo_model.get_serialized(obj, children=True, parents=True)
         return serialized
 
     def api_get_view(self, request):
@@ -559,6 +563,9 @@ class BackOfficeModel(object):
     #: a parent/child relation.
     parent_field = None
 
+    #: (optional) The plural version of parent_field.
+    parent_fields = None
+
     #: Verbose name for displaying purposes. Should be lowercase. E.g. 'user'
     verbose_name = None
 
@@ -566,8 +573,18 @@ class BackOfficeModel(object):
     verbose_name_plural = None
 
     #: A mapping of slugs to ``BackOfficeModel`` implementation instances
-    #: to represent kinds of children.
-    children = None
+    #: to represent kinds of children. This property will be automatically filled
+    #: when you register your parent and child models with a BackOfficeBase
+    #: implementation instance.
+    children = {}
+    child_to_accessor = {}
+
+    #: A mapping of slugs to ``BackOfficeModel`` implementation instances
+    #: to represent kinds of parents. This property will be automatically filled
+    #: when you register your parent and child models with a BackOfficeBase
+    #: implementation instance.
+    parents = {}
+    parent_to_accessor = {}
 
     #: Define a priority that will be used for displaying purposes.
     #: Can also be used as a way to sort models by kind, if used uniquely.
@@ -618,7 +635,7 @@ class BackOfficeModel(object):
             return render_to_string(self.header_template, context)
         return u''
 
-    def get_serialized(self, instance):
+    def get_serialized(self, instance, children=False, parents=False):
         serialized = {
             'id': instance.pk,
             'title': self.get_title(instance),
@@ -626,15 +643,24 @@ class BackOfficeModel(object):
             'path': '/%s/%d/' % (self.slug, instance.pk),
             'header_template': self.render_template(instance),
             'tabs': dict((t.slug, t.get_serialized(instance)) for t in self.tabs),
-            'is_object': True
+            'is_object': True,
+            'meta': self.serialize_meta()
         }
+
+        if children:
+            serialized['children'] = self.get_children(instance)
+        if parents:
+            serialized['parents'] = self.get_parents(instance)
+
         serialized.update(self.serialize(instance))
         return serialized
 
+    @property
+    def parent_fields_list(self):
+        return self.parent_fields or self.parent_field and [self.parent_field]
+
     def get_children_by_model(self, instance, bo_model):
-        child_field = bo_model.model._meta.get_field(bo_model.parent_field)
-        related_name = child_field.rel.related_name or ('%s_set' % bo_model.model.__name__.lower())
-        return getattr(instance, related_name).all()
+        return getattr(instance, self.child_to_accessor[bo_model.slug]).all()
 
     def get_serialized_children_by_model(self, instance, bo_model):
         children = self.get_children_by_model(instance, bo_model)
@@ -645,6 +671,13 @@ class BackOfficeModel(object):
             return [serialized]
         else:
             return serialized_children
+
+    def get_parent_by_model(self, instance, bo_model):
+        return getattr(instance, self.parent_to_accessor[bo_model.slug])
+
+    def get_serialized_parent_by_model(self, instance, bo_model):
+        parent = self.get_parent_by_model(instance, bo_model)
+        return bo_model.get_serialized(parent)
 
     def serialize_meta(self):
         return {
@@ -663,10 +696,11 @@ class BackOfficeModel(object):
         child_models = sorted(self.children.values(), key=lambda m: m.priority)
         return sum((self.get_serialized_children_by_model(instance, m) for m in child_models), [])
 
-    def get_serialized_with_children(self, instance):
-        serialized = self.get_serialized(instance)
-        serialized['children'] = self.get_children(instance)
-        return serialized
+    def get_parents(self, instance):
+        if not self.parent_fields_list:
+            return ()
+        parent_models = sorted(self.parents.values(), key=lambda m: m.priority)
+        return [self.get_parent_by_model(parent_model) for parent_model in parent_models]
 
     def reindex(self, instance, backoffice_instance):
         index_text = self.search_index(instance)
