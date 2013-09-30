@@ -294,7 +294,7 @@ class BackOfficeBase(object):
                             or '%s_set' % bo_model.model.__name__.lower()
                     if not parent_bo_model.slug in bo_model.parents:
                         bo_model.parents[parent_bo_model.slug] = parent_bo_model
-                        bo_model.child_to_accessor[parent_bo_model.slug] = parent_field
+                        bo_model.parent_to_accessor[parent_bo_model.slug] = parent_field
 
     ######################################################################
     # View Registration
