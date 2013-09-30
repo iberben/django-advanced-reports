@@ -25,7 +25,8 @@
                         {% verbatim %}
                     </ul>
                 </li>
-                <li class="dropdown pull-right">
+                <!-- Sibling support -->
+                <li class="dropdown pull-right" ng-show="model.siblings.length > 0">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                         {{ model.meta.verbose_name_plural }}
                         <b class="caret"></b></a>
