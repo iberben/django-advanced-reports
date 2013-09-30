@@ -445,7 +445,7 @@ class BackOfficeBase(object):
         pk = request.view_params.get('pk')
         bo_model = self.get_model(slug=model_slug)
         obj = bo_model.model.objects.get(pk=pk)
-        serialized = bo_model.get_serialized(obj, children=True, parents=True)
+        serialized = bo_model.get_serialized(obj, children=True, parents=True, siblings=True)
         return serialized
 
     def api_get_view(self, request):
@@ -594,6 +594,9 @@ class BackOfficeModel(object):
     parents = None
     parent_to_accessor = None
 
+    #: Include siblings of specified parent slug in serialization.
+    siblings = None
+
     #: Define a priority that will be used for displaying purposes.
     #: Can also be used as a way to sort models by kind, if used uniquely.
     priority = 999
@@ -650,7 +653,7 @@ class BackOfficeModel(object):
             return render_to_string(self.header_template, context)
         return u''
 
-    def get_serialized(self, instance, children=False, parents=False):
+    def get_serialized(self, instance, children=False, parents=False, siblings=False):
         serialized = {
             'id': instance.pk,
             'title': self.get_title(instance),
@@ -666,6 +669,10 @@ class BackOfficeModel(object):
             serialized['children'] = self.get_children(instance)
         if parents:
             serialized['parents'] = self.get_parents(instance)
+        if self.siblings and siblings:
+            parent_bo_model = self.parents[self.siblings]
+            parent = self.get_parent_by_model(instance, parent_bo_model)
+            serialized['siblings'] = parent_bo_model.get_serialized_children_by_model(parent, self, exclude_meta=True)
 
         serialized.update(self.serialize(instance))
         return serialized
@@ -677,10 +684,10 @@ class BackOfficeModel(object):
     def get_children_by_model(self, instance, bo_model):
         return getattr(instance, self.child_to_accessor[bo_model.slug]).all()
 
-    def get_serialized_children_by_model(self, instance, bo_model):
+    def get_serialized_children_by_model(self, instance, bo_model, exclude_meta=False):
         children = self.get_children_by_model(instance, bo_model)
         serialized_children = [bo_model.get_serialized(c) for c in children]
-        if bo_model.has_header:
+        if bo_model.has_header and not exclude_meta:
             serialized = bo_model.serialize_meta()
             serialized['children'] = serialized_children
             return [serialized]

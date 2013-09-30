@@ -25,6 +25,14 @@
                         {% verbatim %}
                     </ul>
                 </li>
+                <li class="dropdown pull-right">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        {{ model.meta.verbose_name_plural }}
+                        <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li ng-class="{active: model.id == sibling.id}" ng-repeat="sibling in model.siblings"><a href="#{{ sibling.path }}">{{ sibling.title }}</a></li>
+                    </ul>
+                </li>
             </nav>
         </div>
     </div>
