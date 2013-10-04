@@ -13,8 +13,6 @@ from advanced_reports.backoffice.api_utils import JSONResponse, ViewRequestParam
 from advanced_reports.backoffice.models import SearchIndex
 from advanced_reports.backoffice.search import convert_to_raw_tsquery
 
-from advanced_reports.defaults import action
-
 from .decorators import staff_member_required
 
 import json
@@ -750,23 +748,30 @@ class BackOfficeModel(object):
 class BackOfficeView(object):
     slug = AutoSlug(remove_suffix='View')
 
-    def serialize(self, content):
-        return {
+    def serialize(self, content, extra_context=None):
+        context = {
             'slug': self.slug,
-            'content': content
+            'content': content,
         }
+        if extra_context:
+            context.update(extra_context)
+        return context
+
+    def serialize_view_result(self, result):
+        content, extra_context = result, {}
+        if isinstance(result, tuple):
+            content, extra_context = result
+        if isinstance(content, HttpResponse):
+            if hasattr(content, 'render'):
+                content.render()
+            content = content.content
+        return self.serialize(content, extra_context)
 
     def get_serialized(self, request):
-        content = self.get(request)
-        if isinstance(content, HttpResponse):
-            content = content.content
-        return self.serialize(content)
+        return self.serialize_view_result(self.get(request))
 
     def get_serialized_post(self, request):
-        content = self.post(request)
-        if isinstance(content, HttpResponse):
-            content = content.content
-        return self.serialize(content)
+        return self.serialize_view_result(self.post(request))
 
     def get(self, request):
         raise NotImplementedError
