@@ -369,7 +369,9 @@ def api_action(request, slug, method, object_id):
                 return JSONResponse(context)
 
             elif a.form is None:
-                advreport.get_action_callable(a.method)(obj)
+                response = advreport.get_action_callable(a.method)(obj)
+                if response:
+                    return response
                 obj = advreport.get_item_for_id(object_id)
                 advreport.enrich_object(obj, request=request)
                 context = {'item': _item_values(obj, advreport), 'success': a.get_success_message()}

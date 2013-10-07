@@ -34,7 +34,7 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
                 that.requests -= 1;
             }).
             error(function (data, status){
-                defer.reject(status);
+                defer.reject(data, status);
                 that.requests -= 1;
             });
             return defer.promise;
@@ -47,7 +47,7 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
                 defer.resolve(data);
                 that.requests -= 1;
             }).error(function (data, status){
-                defer.reject(status);
+                defer.reject(data, status);
                 that.requests -= 1;
             });
             return defer.promise;
@@ -65,7 +65,7 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
                 defer.resolve(data);
                 that.requests -= 1;
             }).error(function (data, status){
-                defer.reject(status);
+                defer.reject(data, status);
                 that.requests -= 1;
             });
             return defer.promise;
@@ -78,7 +78,7 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
                 defer.resolve(data);
                 that.requests -= 1;
             }).error(function (data, status){
-                defer.reject(status);
+                defer.reject(data, status);
                 that.requests -= 1;
             });
             return defer.promise;
@@ -317,10 +317,10 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
                         if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
                             data.fetch();
                         return result;
-                    }, function(error){
+                    }, function(error, status){
                         if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
                             showError(error);
-                        return error;
+                        return $q.reject(error, status);
                     });
                 };
                 data.action_link = function(method, actionParams){

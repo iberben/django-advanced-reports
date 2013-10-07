@@ -56,6 +56,40 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="error_popup">
+        <div class="modal-dialog-extra-padding modal-dialog">
+            <div class="modal-content alert-danger">
+                <form>
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">{% trans "Error" %}</h4>
+                    </div>
+                    <div class="modal-body" ng-bind="error_message"></div>
+                    <div class="modal-footer">
+                        <button ng-disabled="isLoading()" type="button" class="btn btn-danger" ng-click="error_popup.modal('hide')">{% trans "Close" %}</button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="detail_popup">
+        <div class="modal-dialog-extra-padding modal-dialog">
+            <div class="modal-content">
+                <form>
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" ng-bind="detail_action.verbose_name"></h4>
+                    </div>
+                    <div class="modal-body" ng-bind-html-unsafe="detail_action_content"></div>
+                    <div class="modal-footer">
+                        <button ng-disabled="isLoading()" type="button" class="btn btn-primary" ng-click="detail_popup.modal('hide')">{% trans "Close" %}</button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
     <div ng-show="report.search_fields" class="well">
         <form class="form-inline" role="form" ng-submit="apply_filters()">
             <div class="form-group">
@@ -224,11 +258,18 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
             var execute = function(){
                 $scope.view.action('action', {method: action.method, pk: item.item_id}, false).then(function(data){
                     $scope.action_confirm_popup.modal('hide');
-                    $scope.update_item(item, data.item, action.next_on_success);
-                    $scope.show_success(data.success);
-                    console.log('execute_action success');
+                    if (data.item){
+                        $scope.update_item(item, data.item, action.next_on_success);
+                        $scope.show_success(data.success);
+                    } else {
+                        $scope.detail_action = action;
+                        $scope.detail_action_content = data;
+                        $scope.detail_popup.modal('show');
+                    }
+
                 }, function(error){
-                    alert(error);
+                    $scope.action_confirm_popup.modal('hide');
+                    $scope.show_error(error);
                 });
             };
 
@@ -249,6 +290,11 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
         }, 5000);
     };
 
+    $scope.show_error = function(error){
+        $scope.error_message = error;
+        $scope.error_popup.modal('show');
+    };
+
     $scope.submit_form = function(form) {
         var data = $scope.action_form_form.serialize();
         var item = form.item;
@@ -263,7 +309,8 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
                 $scope.form = form;
             }
         }, function(error){
-            alert(error);
+            $scope.action_form_popup.modal('hide');
+            $scope.show_error(error);
         });
     };
 
