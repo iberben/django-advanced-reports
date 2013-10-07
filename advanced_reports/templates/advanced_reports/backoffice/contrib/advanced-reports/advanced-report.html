@@ -10,8 +10,14 @@
     </p>
 </script>
 
-
 <div ng-controller="AdvancedReportCtrl">
+    <div class="alert alert-success alert-dismissable" ng-show="success">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        {% verbatim %}
+        {{ success }}
+        {% endverbatim %}
+    </div>
+
     <div class="modal fade" tabindex="-1" role="dialog" bo-element="action_form_popup">
         <div class="modal-dialog-extra-padding modal-dialog">
             <div class="modal-content">
@@ -101,7 +107,7 @@
 </div>
 
 <script type="text/javascript">
-function AdvancedReportCtrl($scope, $http, $location, boUtils) {
+function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
     $scope.report = null;
     $scope.page_count = null;
     $scope.filters = {};
@@ -219,6 +225,8 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils) {
                 $scope.view.action('action', {method: action.method, pk: item.item_id}, false).then(function(data){
                     $scope.action_confirm_popup.modal('hide');
                     $scope.update_item(item, data.item, action.next_on_success);
+                    $scope.show_success(data.success);
+                    console.log('execute_action success');
                 }, function(error){
                     alert(error);
                 });
@@ -232,6 +240,13 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils) {
                 execute();
             }
         }
+    };
+
+    $scope.show_success = function(success){
+        $scope.success = success;
+        $timeout(function(){
+            $scope.success = null;
+        }, 5000);
     };
 
     $scope.submit_form = function(form) {
