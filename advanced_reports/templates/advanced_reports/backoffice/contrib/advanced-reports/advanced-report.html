@@ -102,6 +102,21 @@
         </form>
     </div>
 
+    <div ng-show="report.filter_fields">
+        <form class="form-inline" role="form" ng-submit="apply_filters()">
+            <div class="form-group" ng-repeat="field in report.filter_fields">
+                <select class="form-control" ng-model="$parent.filters[field]">
+                  <option value="not_requested">test1</option>
+                  <option value="donor_contacted">test2</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+            <div class="checkbox">
+                <label><a href ng-show="has_applied_filters()" ng-click="remove_filters()">{% trans "show all" %}</a></label>
+            </div>
+        </form>
+    </div>
+
     <div ng-include="'/pagination.html'"></div>
 
     <div class="tablecontainer" ng-show="report">
