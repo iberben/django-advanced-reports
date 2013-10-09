@@ -90,33 +90,25 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
-    <div ng-show="report.search_fields" class="well">
+    <div ng-show="report.show_action_bar" class="well">
         <form class="form-inline" role="form" ng-submit="apply_filters()">
-            <div class="form-group">
+            <div class="form-group" ng-show="report.search_fields">
                 <input type="text" class="form-control" ng-model="filters.q" title="{% templatetag openvariable %}report.searchable_columns{% templatetag closevariable %}">
             </div>
-            <button type="submit" class="btn btn-primary">Search</button>
-            <div class="checkbox">
-                <label><a href ng-show="has_applied_filters()" ng-click="remove_filters()">{% trans "show all" %}</a></label>
-            </div>
-        </form>
-    </div>
-
-    <div ng-show="report.filter_fields">
-        <form class="form-inline" role="form" ng-submit="apply_filters()">
-            <div class="form-group" ng-repeat="field in report.filter_fields">
+            {% verbatim %}
+            <div class="form-group" ng-repeat="field in report.filter_fields" ng-show="report.filter_fields">
                 <select class="form-control" ng-model="$parent.filters[field]">
-                  <option value="not_requested">test1</option>
-                  <option value="donor_contacted">test2</option>
+                  <option ng-repeat="(value, name) in report.filter_values[field]" value="{{value}}">{{name}}</option>
                 </select>
             </div>
+            {% endverbatim %}
             <button type="submit" class="btn btn-primary">Search</button>
             <div class="checkbox">
                 <label><a href ng-show="has_applied_filters()" ng-click="remove_filters()">{% trans "show all" %}</a></label>
             </div>
         </form>
     </div>
-
+    
     <div ng-include="'/pagination.html'"></div>
 
     <div class="tablecontainer" ng-show="report">

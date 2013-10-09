@@ -326,8 +326,10 @@ def api_list(request, slug, ids=None):
             'items_per_page': advreport.items_per_page,
             'item_count': len(object_list),
             'searchable_columns': advreport.searchable_columns,
+            'show_action_bar': advreport.search_fields or advreport.filter_fields,
             'search_fields': advreport.search_fields,
-            'filter_fields': advreport.filter_fields
+            'filter_fields': advreport.filter_fields,
+            'filter_values': advreport.filter_values
         }
         return JSONResponse(report)
 
