@@ -15,7 +15,7 @@
                     <a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a>
                 </li>
                 <!-- Children support -->
-                <li class="dropdown pull-right" ng-repeat="child_type in model.children">
+                <li class="dropdown pull-right" ng-repeat="child_type in model.children|filter:{show_in_parent: true}">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                         {{ child_type.verbose_name_plural }}
                         <b class="caret"></b></a>
@@ -32,7 +32,7 @@
                         {{ model.meta.verbose_name_plural }}
                         <b class="caret"></b></a>
                     <ul class="dropdown-menu">
-                        <li ng-class="{active: model.id == sibling.id}" ng-repeat="sibling in model.siblings"><a href="#{{ sibling.path }}">{{ sibling.title }}</a></li>
+                        <li ng-class="{active: model.id == sibling.id}" ng-repeat="sibling in model.siblings"><a href="#{{ sibling.path }}{{ params.tab }}/">{{ sibling.title }}</a></li>
                     </ul>
                 </li>
                 <!-- Parent support -->

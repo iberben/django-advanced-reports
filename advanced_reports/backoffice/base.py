@@ -287,17 +287,19 @@ class BackOfficeBase(object):
 
         if parent_fields:
             for parent_field in parent_fields:
-                parent_django_field = bo_model.model._meta.get_field(parent_field)
-                parent_model = parent_django_field.rel.to
-                parent_bo_model = self.get_model(model=parent_model)
+                parent_model_slug = bo_model.get_parent_model_slug_for_field(parent_field)
+                if parent_model_slug:
+                    parent_bo_model = self.get_model(slug=parent_model_slug)
+                else:
+                    parent_model = bo_model.model._meta.get_field(parent_field).rel.to
+                    parent_bo_model = self.get_model(model=parent_model)
                 if parent_bo_model:
                     if not bo_model.slug in parent_bo_model.children:
                         parent_bo_model.children[bo_model.slug] = bo_model
-                        parent_bo_model.child_to_accessor[bo_model.slug] = parent_django_field.rel.related_name \
-                            or '%s_set' % bo_model.model.__name__.lower()
+                        parent_bo_model.child_to_accessor[bo_model.slug] = bo_model.get_parent_accessor_to_myself(parent_field)
                     if not parent_bo_model.slug in bo_model.parents:
                         bo_model.parents[parent_bo_model.slug] = parent_bo_model
-                        bo_model.parent_to_accessor[parent_bo_model.slug] = parent_field
+                        bo_model.parent_to_accessor[parent_bo_model.slug] = bo_model.get_parent_accessor_from_myself(parent_field)
 
     ######################################################################
     # View Registration
@@ -400,6 +402,12 @@ class BackOfficeBase(object):
             'results': self.serialize_search_results(indices),
             'model_counts': model_counts
         }
+
+    def reindex_all_models(self):
+        SearchIndex.objects.all().delete()
+        for bo_model in self.slug_to_bo_model.values():
+            for obj in bo_model.model.objects.all():
+                bo_model.reindex(obj, self.name)
 
     ######################################################################
     # Internal JSON API
@@ -605,6 +613,9 @@ class BackOfficeModel(object):
     #: For displaying purposes. Will probably change, so leave alone.
     collapsed = True
 
+    #: Whether we want to appear as a menu of children in the parent view
+    show_in_parent = False
+
     #: An optional template path to render a header for a model instance
     #: above the tabs.
     header_template = None
@@ -651,6 +662,17 @@ class BackOfficeModel(object):
             return render_to_string(self.header_template, context)
         return u''
 
+    def get_parent_model_slug_for_field(self, parent_field):
+        return None
+
+    def get_parent_accessor_to_myself(self, parent_field):
+        parent_django_field = self.model._meta.get_field(parent_field)
+        return parent_django_field.rel.related_name \
+            or '%s_set' % self.model.__name__.lower()
+
+    def get_parent_accessor_from_myself(self, parent_field):
+        return parent_field
+
     def get_serialized(self, instance, children=False, parents=False, siblings=False):
         serialized = {
             'id': instance.pk,
@@ -693,11 +715,16 @@ class BackOfficeModel(object):
             return serialized_children
 
     def get_parent_by_model(self, instance, bo_model):
-        return getattr(instance, self.parent_to_accessor[bo_model.slug])
+        parent = getattr(instance, self.parent_to_accessor[bo_model.slug])
+        if parent is None:
+            return None
+        if not isinstance(parent, bo_model.model):
+            return None
+        return parent
 
     def get_serialized_parent_by_model(self, instance, bo_model):
         parent = self.get_parent_by_model(instance, bo_model)
-        return bo_model.get_serialized(parent)
+        return bo_model.get_serialized(parent) if parent else None
 
     def serialize_meta(self):
         return {
@@ -706,6 +733,7 @@ class BackOfficeModel(object):
             'verbose_name_plural': self.verbose_name_plural,
             'has_header': self.has_header,
             'collapsed': self.collapsed,
+            'show_in_parent': self.show_in_parent,
             'tabs': [t.get_serialized_meta() for t in self.tabs],
             'is_meta': True
         }
@@ -720,7 +748,8 @@ class BackOfficeModel(object):
         if not self.parents:
             return ()
         parent_models = sorted(self.parents.values(), key=lambda m: m.priority)
-        return [self.get_serialized_parent_by_model(instance, parent_model) for parent_model in parent_models]
+        parents = (self.get_serialized_parent_by_model(instance, parent_model) for parent_model in parent_models)
+        return [parent for parent in parents if parent]
 
     def reindex(self, instance, backoffice_instance):
         index_text = self.search_index(instance)
