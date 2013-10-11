@@ -6,14 +6,14 @@ app.run(function ($http, $cookies){
 
 app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
     $routeProvider.
-        when('/', {controller: 'EmptyController', templateUrl: '/home.html', useView: false}).
-        when('/tab/:tab/', {controller: 'EmptyController', useView: false}).
+        when('/', {controller: 'EmptyController', templateUrl: '/home.html'}).
+        when('/tab/:tab/', {controller: 'EmptyController'}).
 
-        when('/search/:query', {controller: 'EmptyController', templateUrl: '/search.html', useView: true, reloadOnSearch: false}).
-        when('/search/:query/:model/', {controller: 'EmptyController', templateUrl: '/search.html', useView: true, reloadOnSearch: false}).
-        when('/:model/:id/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
-        when('/:model/:id/:tab/', {controller: 'EmptyController', templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
-        when('/:model/:id/:tab/:detail/', {templateUrl: '/model.html', useView: true, reloadOnSearch: false}).
+        when('/search/:query', {controller: 'EmptyController', templateUrl: '/search.html', reloadOnSearch: false}).
+        when('/search/:query/:model/', {controller: 'EmptyController', templateUrl: '/search.html', reloadOnSearch: false}).
+        when('/:model/:id/', {controller: 'EmptyController', templateUrl: '/model.html', reloadOnSearch: false}).
+        when('/:model/:id/:tab/', {controller: 'EmptyController', templateUrl: '/model.html', reloadOnSearch: false}).
+        when('/:model/:id/:tab/:detail/', {templateUrl: '/model.html', reloadOnSearch: false}).
         otherwise({redirectTo: '/'});
     //$locationProvider.html5Mode(true);
 }]);
@@ -92,7 +92,6 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
     };
 }]);
 
-
 app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', 'boReverser', function($scope, $http, $location, boApi, $route, boReverser){
     $scope.params = {};
 
@@ -101,9 +100,8 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     };
 
     $scope.useView = function(){
-        if ($route && $route.current)
-            return $route.current.useView;
-        return false;
+        var p = $scope.path();
+        return !(p.substring(0, 5) == '/tab/' || p == '/');
     };
 
     $scope.setup = function(api_url, root_url){
@@ -269,7 +267,7 @@ app.directive('compile', ['$compile', function ($compile){
     };
 }]);
 
-app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, $q, boApi, boUtils){
+app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', function($compile, $q, boApi, boUtils, $timeout){
     return {
         link: function(scope, element, attrs){
             var slug = attrs.view;
@@ -295,12 +293,23 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
                 data.fetch = function(){
                     loadView(data.params);
                 };
-                data.post = function(post_data){
-                    boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(function(data){
-                        compile(data);
-                        if (viewToUpdateOnPost){
-                            scope.$eval(viewToUpdateOnPost).fetch();}
-                    }, showError);
+                data.post = function(post_data, closeModalFirst){
+                    var actual_post = function(){
+                        boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(function(data){
+                            compile(data);
+                            if (viewToUpdateOnPost){
+                                scope.$eval(viewToUpdateOnPost).fetch();}
+                            if (!data.success){
+                                $timeout(function(){
+                                    scope.$parent.$broadcast('boValidationError');
+                                }, 100);
+                            }
+                        }, showError);
+                    };
+                    if (closeModalFirst){
+                        scope.$parent.$broadcast('boRequestCloseModal', actual_post);}
+                    else {
+                        actual_post();}
                 };
                 data.action = function(method, actionParams, reloadViewOnSuccess, url_suffix){
                     return boApi.post('view_action', {method: method, params: actionParams || {}, view_params: params
@@ -334,9 +343,10 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', function($compile, 
 
 app.directive('postToView', function(){
     return function(scope, element, attrs){
+        var closeModalFirst = scope.$eval(attrs.closeModalFirst);
         element.on('submit', function(e){
             scope.$apply(function(){
-                scope.view.post(element.serialize());
+                scope.view.post(element.serialize(), closeModalFirst);
             });
         });
     };
@@ -582,4 +592,37 @@ app.directive('linkTo', function(){
        var url = scope.$eval(attrs.linkTo);
        element.attr('href', url);
    };
+});
+
+
+app.directive('boModal', function(){
+    return {
+        templateUrl: '/modal.html',
+        scope: {
+            boModal: '=',
+            modalTitle: '@',
+            onYes: '&'
+        },
+        transclude: true,
+        link: function(scope, element, attrs){
+            scope.boModal.on('hidden.bs.modal', function(event){
+                scope.$apply(function(){
+                    if (scope.fnToExecute){
+                        scope.fnToExecute();
+                        scope.fnToExecute = null;
+                    }
+                });
+            });
+
+
+            scope.$parent.$on('boRequestCloseModal', function(e, fnToExecute){
+
+                scope.fnToExecute = fnToExecute;
+                scope.boModal.modal('hide');
+            });
+            scope.$parent.$on('boValidationError', function(){
+                scope.boModal.modal('show');
+            });
+        }
+    };
 });

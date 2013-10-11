@@ -34,6 +34,7 @@
         {% include "advanced_reports/backoffice/model.html" %}
         {% include "advanced_reports/backoffice/tab.html" %}
         {% include "advanced_reports/backoffice/search.html" %}
+        {% include "advanced_reports/backoffice/modal.html" %}
 
         {% if request.user.is_authenticated %}
             <div class="navbar navbar-default navbar-fixed-top">
@@ -110,13 +111,7 @@
         <!-- Switch between Django-rendered and AngularJS-rendered content -->
         <div class="page" ng-view ng-show="useView()"></div>
         <div class="page" ng-hide="useView()">
-            {% block header-title-wrapper %}
-            <header class="main-header">
-                <div class="container">
-                    <h1>{% block header-title %}Header Title{% endblock %}</h1>
-                </div>
-            </header>
-            {% endblock %}
+            {% block header-title-wrapper %}{% endblock %}
             <section class="content" role="main">
                 {% block content %}
                 <div class="container">

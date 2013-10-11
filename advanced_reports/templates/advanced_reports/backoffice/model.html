@@ -14,7 +14,8 @@
                 <li ng-class="{active: params.tab == tab.slug || model.tabs[params.tab].shadow == tab.slug}" ng-repeat="tab in model.meta.tabs|filter:isVisibleTab">
                     <a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a>
                 </li>
-                <li class="dropdown" ng-repeat="child_type in model.children">
+                <!-- Children support -->
+                <li class="dropdown pull-right" ng-repeat="child_type in model.children">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">
                         {{ child_type.verbose_name_plural }}
                         <b class="caret"></b></a>
@@ -34,6 +35,13 @@
                         <li ng-class="{active: model.id == sibling.id}" ng-repeat="sibling in model.siblings"><a href="#{{ sibling.path }}">{{ sibling.title }}</a></li>
                     </ul>
                 </li>
+                <!-- Parent support -->
+                <li class="pull-right" ng-show="model.parents.length == 1">
+                    <a href="#{{ model.parents[0].path }}">&lsaquo;
+                    {% endverbatim %}
+                    {% trans "Back to {{ model.parents[0].title }}" %}</a>
+                    {% verbatim %}
+                </li>
             </nav>
         </div>
     </div>
@@ -43,7 +51,7 @@
     <div compile="model.tabs[params.tab].template"></div>
 </div>
 
-<div class="row" ng-show="model">
+<div class="row" ng-show="false">
     <div class="col-xs-5 col-md-3 col-lg-2">
         <div class="panel panel-default" ng-show="false">
             <div class="panel-heading">
