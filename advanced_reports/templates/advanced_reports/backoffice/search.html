@@ -50,7 +50,7 @@
 
                     <div class="content">
                         <div class="btn-group">
-                            <a ng-repeat="tab in result.meta.tabs" href="{{ root_url }}#{{ result.path }}{{ tab.slug }}" class="btn btn-default" >{{ tab.title }}</a>
+                            <a ng-repeat="tab in result.meta.tabs|filter:isVisibleTab" href="{{ root_url }}#{{ result.path }}{{ tab.slug }}" class="btn btn-default" >{{ tab.title }}</a>
                         </div>
                     </div>
                 </div>
