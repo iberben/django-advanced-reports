@@ -1,13 +1,13 @@
 {% load i18n %}
 
 <script type="text/ng-template" id="/pagination.html">
-    <p ng-show="report">
-        <span ng-show="search.page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></span>
-        <span ng-show="search.page > 1"><a href ng-click="change_page(search.page-1)">&lt;</a></span>
-        {% trans "Page {{ search.page }} of {{ page_count }}" %}
-        <span ng-show="search.page < page_count"><a href ng-click="change_page(search.page+1)">&gt;</a></span>
-        <span ng-show="search.page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></span>
-    </p>
+    <ul class="pagination" ng-show="report">
+        <li ng-show="search.page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></li>
+        <li ng-show="search.page > 1"><a href ng-click="change_page(search.page-1)">&lt;</a></li>
+        <li>{% trans "Page {{ search.page }} of {{ page_count }}" %}</li>
+        <li ng-show="search.page < page_count"><a href ng-click="change_page(search.page+1)">&gt;</a></li>
+        <li ng-show="search.page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></li>
+    </ul>
 </script>
 
 
@@ -65,14 +65,16 @@
     <div ng-include="'/pagination.html'"></div>
 
     <div class="tablecontainer" ng-show="report">
-        <table class="data table table-hover">
-            <tr>
-                <th ng-repeat="column in report.header" ng-style="column.style">
-                    <span ng-bind="column.verbose_name" ng-show="!column.sortable"></span>
-                    <a href ng-bind="column.verbose_name" ng-show="column.sortable" ng-click="change_order(column.order_by)"></a>
-                    <span ng-show="report.extra.order_field==column.name" ng-bind="{true:'&darr;', false:'&uarr;'}[report.extra.ascending]"></span>
-                </th>
-            </tr>
+        <table class="data table table-hover table-striped">
+            <thead>
+                <tr>
+                    <th ng-repeat="column in report.header" ng-style="column.style">
+                        <span ng-bind="column.verbose_name" ng-show="!column.sortable"></span>
+                        <a href ng-bind="column.verbose_name" ng-show="column.sortable" ng-click="change_order(column.order_by)"></a>
+                        <span ng-show="report.extra.order_field==column.name" ng-bind="{true:'&darr;', false:'&uarr;'}[report.extra.ascending]"></span>
+                    </th>
+                </tr>
+            </thead>
 
             <tbody ng-repeat="item in report.items">
                 <tr ng-click="toggle_expand(item)">
@@ -93,6 +95,16 @@
                     </td>
                 </tr>
                 {% endverbatim %}
+            </tbody>
+
+            <tbody ng-show="report.items.length==0">
+                <tr>
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length }}">
+                    {% endverbatim %}
+                        <small>{% blocktrans with advreport.verbose_name_plural as items_name %}No {{ items_name }} to show...{% endblocktrans %}</small>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>

@@ -3,8 +3,9 @@ body {
     font-family: 'Open Sans', $font;
     line-height: $baseLine;
     font-size: $baseFont;
-    /*background: #f0f0f0;*/
-    background: $white;
+    background: #f9f9f9;
+    /*background: $white;*/
+    /*background: #e7ebf2;*/
 }
 
 /* TITLES
@@ -29,7 +30,7 @@ h1, h2, h3 {
     }
 }
 
-/* links
+/* LINKS
 ==========================*/
 .active {
     a {
@@ -37,8 +38,157 @@ h1, h2, h3 {
     }
 }
 
+form {
+    border: 1px solid lighten($grayLighter, 12%);
+    overflow: hidden;
+    padding-top: 16px;
+    @include border-radius(3px);
+
+    .form-group {
+        padding: 0 16px 16px 16px;
+        border-bottom: 1px solid lighten($grayLighter, 12%);
+
+        label {
+            text-align: left;
+            text-transform: uppercase;
+            font-weight: 200;
+        }
+
+        &.last {
+            margin-bottom: 0;
+            border-bottom: 0;
+        }
+    }
+
+    .form-controls {
+        padding: 16px;
+        text-align: right;
+        border-top: 1px solid lighten($grayLighter, 12%);
+        @include box-shadow(inset 0px 0px 1px $white);
+        background: lighten($grayLighter, 15%);
+        margin-bottom: 0;
+    }
+
+    &.form-horizontal {
+        .control-label {
+            text-align: left;
+        }
+    }
+}
+
+/* TABLE
+==========================*/
+th {
+    font-weight: 700;
+
+    a {
+        font-weight: 700;
+    }
+}
+
+table.data-table {
+    td, th {
+        background: rgba(0, 0, 0, 0.05);
+        font-size: 1.141em;
+
+        .title {
+            display: block;
+            font-weight: 200;
+            font-size: 0.775em;
+        }
+    }
+}
+
+table.grid {
+    td, th {
+        border-left: 1px solid $grayLighter;
+
+        &.first {
+            border-left: 0;
+        }
+    }
+}
+
+table.numbers {
+    td, th {
+        font-size: 1.231em;
+        text-align: center;
+    }
+}
+
+/* PANEL
+==========================*/
+.panel {
+    .alert {
+        @include border-radius(0);
+        margin-bottom: 0;
+        padding: 10px 10px 10px 25px;
+        font-weight: 600;
+    }
+}
+
+/* MODAL
+==========================*/
+.modal-footer {
+    margin: 0;
+    background: lighten($grayLighter, 10%);
+}
+
+.modal-content {
+    form {
+        margin-bottom: 0;
+
+        .form-group {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        label {
+            text-align: left !important;
+        }
+    }
+}
+
+/* COMMENT
+==========================*/
+.comments {
+    ul {
+        li {
+            position: relative;
+            line-height: 1.5em;
+
+            header {
+                color: $grayLight;
+                margin-bottom: 10px;
+                font-size: 0.875em;
+
+                strong {
+                    color: $black;
+                    font-size: 1.231em;
+                    display: block;
+                }
+            }
+
+            a.delete {
+                position: absolute;
+                right: 10px;
+                top: 10px;
+            }
+        }
+    }
+
+    form {
+        border: 0;
+        margin-bottom: 0;
+    }
+}
+
 /* ELEMENTS
 ==========================*/
+.delete {
+    color: $errorColor;
+}
+
 .panel {
     @include border-radius(0);
 }
@@ -55,6 +205,7 @@ ul {
     header {
         &.main-header {
             margin-top: 52px;
+            /*background: $highlightColor url('../img/poland.jpg') no-repeat 0 -350px;*/
             background: $highlightColor;
             padding: 3em 0;
             color: $white;
@@ -76,7 +227,7 @@ ul {
 }
 
 .content {
-    margin-top: 10px;
+    /*padding-top: 10px;*/
 }
 
 .sidebar-left {
@@ -115,4 +266,10 @@ aside.sidebar {
 /*    nav {
         margin-top: 10px;
     }*/
+}
+
+footer {
+    background: lighten($grayLighter, 10%);
+    padding: 32px 0;
+    color: $gray;
 }
