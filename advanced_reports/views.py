@@ -326,7 +326,10 @@ def api_list(request, slug, ids=None):
             'items_per_page': advreport.items_per_page,
             'item_count': len(object_list),
             'searchable_columns': advreport.searchable_columns,
-            'search_fields': advreport.search_fields
+            'show_action_bar': advreport.search_fields or advreport.filter_fields,
+            'search_fields': advreport.search_fields,
+            'filter_fields': advreport.filter_fields,
+            'filter_values': advreport.filter_values
         }
         return JSONResponse(report)
 
@@ -369,7 +372,9 @@ def api_action(request, slug, method, object_id):
                 return JSONResponse(context)
 
             elif a.form is None:
-                advreport.get_action_callable(a.method)(obj)
+                response = advreport.get_action_callable(a.method)(obj)
+                if response:
+                    return response
                 obj = advreport.get_item_for_id(object_id)
                 advreport.enrich_object(obj, request=request)
                 context = {'item': _item_values(obj, advreport), 'success': a.get_success_message()}

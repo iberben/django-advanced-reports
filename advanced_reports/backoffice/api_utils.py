@@ -9,6 +9,8 @@ _proxy_type = type(make_proxy('ignore this'))
 def _json_object_encoder(obj):
     if isinstance(obj, _proxy_type):
         return u'%s' % obj
+    elif hasattr(obj, 'isoformat'):
+        return obj.isoformat()
     else:
         return None
 

@@ -231,6 +231,16 @@ class AdvancedReport(object):
     Optional. A tuple of fields that can be searched.
     '''
 
+    filter_fields = ()
+    '''
+    Optional. A tuple of fields that can be filtered.
+    '''
+
+    filter_values = {}
+    '''
+    Optional. A mapping of filter fields to their list of values.
+    '''
+
     item_actions = ()
     '''
     Optional. A tuple of available actions for your report.
