@@ -228,7 +228,8 @@ class BackOfficeBase(object):
             # Connect signals to listen for changes to this model and their
             # ``search_index_dependencies``.
             post_save.connect(self._reindex_model_signal_handler, sender=bo_model.model)
-            pre_delete.connect(self._delete_index_signal_handler, sender=bo_model.model)
+            post_delete.connect(self._delete_index_signal_handler, sender=bo_model.model)
+
             for dependency in bo_model_instance.search_index_dependencies:
                 self.search_index_dependency_to_dependants[dependency].append(bo_model_instance)
                 post_save.connect(self._reindex_model_signal_handler, sender=dependency)
@@ -632,14 +633,13 @@ class BackOfficeModel(object):
     #: which knows how to find the parent object and a model type to make
     #: sure we are getting the right argument to our ``search_index``
     #: implementation.
-    search_index_dependencies = None
+    search_index_dependencies = {}
 
     def __init__(self):
         self.children = {}
         self.child_to_accessor = {}
         self.parents = {}
         self.parent_to_accessor = {}
-        self.search_index_dependencies = {}
 
     def get_title(self, instance):
         """
