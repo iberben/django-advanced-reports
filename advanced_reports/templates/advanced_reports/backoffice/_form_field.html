@@ -1,0 +1,9 @@
+{% if not nolabel %}
+<label for="{{ field.auto_id }}">
+    {{ field.label }}{% if field.field.required or force_required %}<em>*</em>{% endif %}
+    {% if field.help_text %}
+    <span class="help-tip" rel="tooltip" title="{{ field.help_text }}">?</span>
+    {% endif %}
+</label>
+{% endif %}
+{{ field }}
