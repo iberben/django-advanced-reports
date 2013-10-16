@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.db.models.query import QuerySet
 from django.http import Http404
 from django.template.defaultfilters import capfirst
 from django.template.loader import render_to_string
@@ -679,13 +680,12 @@ class AdvancedReport(object):
                     else:
                         return v
 
-                try:
+                if self.models:
                     fieldnames = [f.name for f in self.models[0]._meta.fields]
                     lookup = dict((k, convert_value(k, v)) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
                     if lookup:
                         qs = qs.filter(**lookup)
-                except:
-                    return self.models[0].objects.none()
+
             return qs
         else:
             return self.queryset()
@@ -993,9 +993,9 @@ class EnrichedQueryset(object):
         return self.queryset.__iter__()
 
     def __len__(self):
-        if type(self.queryset) in (list, tuple):
-            return len(self.queryset)
-        return self.queryset.count()
+        if isinstance(self.queryset, QuerySet):
+            return self.queryset.count()
+        return len(self.queryset)
 
     def _enrich_list(self, l):
         # We run enrich_list on all items in one pass.
