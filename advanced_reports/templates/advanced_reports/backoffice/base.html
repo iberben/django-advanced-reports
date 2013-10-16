@@ -36,8 +36,8 @@
         {% include "advanced_reports/backoffice/search.html" %}
         {% include "advanced_reports/backoffice/modal.html" %}
 
-        {% if request.user.is_authenticated %}
-            <div class="navbar navbar-default navbar-fixed-top">
+        
+            <div class="navbar navbar-inverse navbar-fixed-top">
                 <div class="container">
                     <div class="navbar-header">
                         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -47,7 +47,8 @@
                         </button>
                         <a class="navbar-brand" href="{% url 'backoffice:home' %}">{% block head-title %}{{ backoffice.title }}{% endblock %}</a>
                     </div>
-
+                    
+                    {% if request.user.is_authenticated %}
                     <div class="navbar-collapse collapse">
                         <form class="navbar-form navbar-left" ng-submit="goto_search()">
                             <div class="form-group dropdown">
@@ -103,9 +104,9 @@
                             {% blocktrans with request.user.first_name as first_name %}Hi, <strong>{{ first_name }}</strong>{% endblocktrans %}
                         </p>
                     </div><!--/.navbar-collapse -->
+                    {% endif %}
                 </div><!-- /.container -->
             </div>
-        {% endif %}
 
         {% block content-override %}
         <!-- Switch between Django-rendered and AngularJS-rendered content -->
@@ -124,7 +125,10 @@
 
         <footer>
             <div class="container">
-                Nothing else to show..
+                {% block footer %}Nothing else to show...{% endblock %}
+            </div>
+            <div class="container">
+                &copy; VikingCo | All rights reserved
             </div>
         </footer>
 

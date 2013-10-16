@@ -626,3 +626,24 @@ app.directive('boModal', function(){
         }
     };
 });
+
+
+app.directive('boParallax', function(){
+    return function(scope, element, attrs){
+        scope.$watch(function(scope){
+            return element.innerHeight();
+        }, function(height){
+            var offsetTop = $('body').offset().top,
+                scrollTop = $(window).scrollTop(),
+                orgHeight = element.innerHeight();
+
+            $(window).unbind('scroll').bind('scroll', function(){
+                scrollTop = $(window).scrollTop();
+                
+                if (offsetTop >= scrollTop) {
+                    element.css('height', (orgHeight + Math.abs(scrollTop)) + 'px');
+                }
+            });
+        });
+    };
+});

@@ -7,7 +7,7 @@
 /* FONTS
 =====================================*/
 $font: 					Helvetica, arial, sans-serif;
-$baseFont: 				14px;
+$baseFont: 				13px;
 $baseLine: 				1.5em;
 
 /* GRAYS
@@ -29,6 +29,7 @@ $bgContent:             $bgColor;
 $baseColor: 			$grayDark;
 
 $linkColor:             #0b4f95;
+/*$linkColor:             #4bb8d1;*/
 $linkHoverColor:        lighten($linkColor, 10%);
 
 $highlightColor:		#666;
