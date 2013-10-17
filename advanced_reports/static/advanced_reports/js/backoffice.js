@@ -28,7 +28,7 @@ app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, 
             if (this.requests == 0 && delta > 0){
                 this.to = $timeout(function(){
                     that.slow = true;
-                }, 500);
+                }, 1000);
             }
             this.requests += delta;
             if (this.requests == 0 && delta < 0){
