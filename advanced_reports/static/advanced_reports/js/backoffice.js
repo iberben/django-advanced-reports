@@ -212,6 +212,12 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         $scope.fetchModel(false);
     });
 
+    $scope.$watch(function(){
+        return $route && $route.current && $route.current.params;
+    }, function(params){
+        $scope.params = params;
+    });
+
     $scope.get_url = function(url_params){
         return boReverser.reverse(url_params);
     };

@@ -1,7 +1,7 @@
 {% load i18n %}
 
 <script type="text/ng-template" id="/pagination.html">
-    <ul class="pagination" ng-show="report">
+    <ul class="pagination" ng-show="report && report.page_count > 1">
         <li ng-show="search.page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></li>
         <li ng-show="search.page > 1"><a href ng-click="change_page(search.page-1)">&lt;</a></li>
         <li>{% trans "Page {{ search.page }} of {{ page_count }}" %}</li>
