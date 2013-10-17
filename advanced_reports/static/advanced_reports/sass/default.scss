@@ -49,6 +49,16 @@ a {
     }
 }
 
+.modal {
+    form {
+        .form-group {
+            /*overflow: hidden;*/
+            padding: 0 16px 16px 16px;
+            border-bottom: 1px solid lighten($grayLighter, 12%);
+        }
+    }
+}
+
 form {
     /*border: 1px solid lighten($grayLighter, 12%);*/
     /*overflow: hidden;*/
@@ -56,9 +66,7 @@ form {
     /*@include border-radius(3px);*/
 
     .form-group {
-        overflow: hidden;
-        padding: 0 16px 16px 16px;
-        border-bottom: 1px solid lighten($grayLighter, 12%);
+        /*overflow: hidden;*/
 
         label {
             text-align: left;
@@ -210,6 +218,26 @@ table.numbers {
 
 /* ELEMENTS
 ==========================*/
+.overlay-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /*background: rgba(0, 0, 0, 0.6);*/
+    background: rgba(255, 255, 255, 0.7);
+    z-index: 3000;
+
+    div {
+        /*color: $white;*/
+        font-weight: 700;
+        font-size: 1.231em;
+        position: absolute;
+        display: block;
+        top: 50%;
+        left: 50%;
+    }
+}
 .delete {
     color: $errorColor;
 }
@@ -245,11 +273,20 @@ table.numbers {
 
 ul {
     margin-left: 0;
+
+    &.pagination {
+        margin: 2em 1em;
+    }
 }
 
 .introduction {
     font-size: 1.141em;
     margin-bottom: 1.5em;
+}
+
+.action-bar {
+    border-bottom: 1px solid $grayLighter;
+    padding: 0 1em 1em;
 }
 
 .page {
