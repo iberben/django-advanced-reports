@@ -183,6 +183,16 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
                 delete $scope.search[j];
         }
 
+        $scope.filters = {};
+        for (var m in $scope.search){
+            if ($scope.search.hasOwnProperty(m)){
+                if (['page', 'order'].indexOf(m) === -1)
+                {
+                    $scope.filters[m] = $scope.search[m];
+                }
+            }
+        }
+
         if ($scope.view.params.updateLocation)
             $location.search($scope.search);
 
@@ -242,8 +252,7 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
     $scope.remove_filters = function() {
         $scope.loader='search';
         $scope.filter = {};
-        $scope.search = {order: $scope.search.order};
-        $scope.search.page = 1;
+        $scope.search = {order: $scope.search.order, page: 1};
         $scope.fetch_report();
     };
 
