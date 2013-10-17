@@ -90,7 +90,7 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
-    <div ng-show="report.show_action_bar" class="well">
+    <div ng-show="report.show_action_bar" class="action-bar">
         <form class="form-inline" role="form" ng-submit="apply_filters()">
             <div class="form-group" ng-show="report.search_fields">
                 <input type="text" class="form-control" ng-model="filters.q" title="{% templatetag openvariable %}report.searchable_columns{% templatetag closevariable %}">
