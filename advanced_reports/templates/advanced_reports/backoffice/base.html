@@ -36,6 +36,11 @@
         {% include "advanced_reports/backoffice/search.html" %}
         {% include "advanced_reports/backoffice/modal.html" %}
 
+        <div class="overlay-loading" ng-show="isLoadingSlow()">
+            <div>
+                {% trans "Loading.. One moment.." %}
+            </div>
+        </div>
         
             <div class="navbar navbar-inverse navbar-fixed-top">
                 <div class="container">
