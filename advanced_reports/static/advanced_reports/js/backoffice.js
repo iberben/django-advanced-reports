@@ -18,44 +18,59 @@ app.config(['$routeProvider', '$locationProvider', function($routeProvider, $loc
     //$locationProvider.html5Mode(true);
 }]);
 
-app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
+app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, boUtils, $timeout){
     return {
         requests: 0,
+        slow: false,
+        to: null,
+        updateRequests: function(delta){
+            var that = this;
+            if (this.requests == 0 && delta > 0){
+                this.to = $timeout(function(){
+                    that.slow = true;
+                }, 500);
+            }
+            this.requests += delta;
+            if (this.requests == 0 && delta < 0){
+                $timeout.cancel(this.to);
+                this.slow = false;
+            }
+        },
         configure: function(url){
             this.url = url;
         },
         get: function(method, params){
             var that = this;
             var defer = $q.defer();
-            this.requests += 1;
+            this.updateRequests(1);
             $http.get(this.url + method + '/?' + boUtils.toQueryString(params)).
             success(function (data, status){
                 defer.resolve(data);
-                that.requests -= 1;
+                that.updateRequests(-1);
             }).
             error(function (data, status){
                 defer.reject(data, status);
-                that.requests -= 1;
+                that.updateRequests(-1);
             });
             return defer.promise;
         },
         post: function(method, data, url_suffix){
             var that = this;
             var defer = $q.defer();
-            this.requests += 1;
+            this.updateRequests(1);
             $http.post(this.url + method + '/' + (url_suffix || ''), data).success(function (data, status){
                 defer.resolve(data);
-                that.requests -= 1;
+                that.updateRequests(-1);
             }).error(function (data, status){
                 defer.reject(data, status);
-                that.requests -= 1;
+                that.updateRequests(-1);
             });
             return defer.promise;
         },
         post_form: function(method, data){
             var that = this;
             var defer = $q.defer();
-            this.requests += 1;
+            this.updateRequests(1);
             $http({
                 method: 'POST',
                 url: this.url + method + '/',
@@ -63,23 +78,23 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'}
             }).success(function (data, status){
                 defer.resolve(data);
-                that.requests -= 1;
+                that.updateRequests(-1);
             }).error(function (data, status){
                 defer.reject(data, status);
-                that.requests -= 1;
+                that.updateRequests(-1);
             });
             return defer.promise;
         },
         put: function(method, data){
             var that = this;
             var defer = $q.defer();
-            this.requests += 1;
+            this.updateRequests(1);
             $http.put(this.url + method + '/', data).success(function (data, status){
                 defer.resolve(data);
-                that.requests -= 1;
+                that.updateRequests(-1);
             }).error(function (data, status){
                 defer.reject(data, status);
-                that.requests -= 1;
+                that.updateRequests(-1);
             });
             return defer.promise;
         },
@@ -88,6 +103,9 @@ app.factory('boApi', ['$http', '$q', 'boUtils', function($http, $q, boUtils){
         },
         isLoading: function(){
             return this.requests > 0;
+        },
+        isLoadingSlow: function(){
+            return this.requests > 0 && this.slow;
         }
     };
 }]);
@@ -114,6 +132,10 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
 
     $scope.isLoading = function(){
         return boApi.isLoading();
+    };
+
+    $scope.isLoadingSlow = function(){
+        return boApi.isLoadingSlow();
     };
 
     $scope.search_results_preview_visible = false;
