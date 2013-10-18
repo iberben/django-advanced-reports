@@ -144,7 +144,16 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     };
 
     $scope.getMessages = function(){
-        return boApi.messages;
+        var msgs = boApi.messages;
+        return msgs;
+    };
+
+    $scope.showMessage = function(params){
+        frontend.notification.show(params);
+    };
+
+    $scope.clearMessages = function(){
+        boApi.messages = [];
     };
 
     $scope.search_results_preview_visible = false;
