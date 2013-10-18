@@ -49,16 +49,6 @@ a {
     }
 }
 
-.modal {
-    form {
-        .form-group {
-            /*overflow: hidden;*/
-            padding: 0 16px 16px 16px;
-            border-bottom: 1px solid lighten($grayLighter, 12%);
-        }
-    }
-}
-
 form {
     /*border: 1px solid lighten($grayLighter, 12%);*/
     /*overflow: hidden;*/
@@ -158,26 +148,28 @@ table.numbers {
 
 /* MODAL
 ==========================*/
-.modal-footer {
-    margin: 0;
-    background: lighten($grayLighter, 10%);
-}
+.modal {
+    .modal-footer {
+        margin: 0;
+        background: lighten($grayLighter, 10%);
+    }
 
-.modal-body {
-    padding: 0;
-}
+    .modal-body {
+        padding: 15px;
+    }
 
-.modal-content {
-    form {
-        margin-bottom: 0;
+    .modal-content {
+        form {
+            margin-bottom: 0;
 
-        .form-group {
-            padding-left: 0;
-            padding-right: 0;
-        }
+            .form-group {
+                padding-bottom: 16px;
+                border-bottom: 1px solid lighten($grayLighter, 12%);
+            }
 
-        label {
-            text-align: left !important;
+            label {
+                text-align: left !important;
+            }
         }
     }
 }
