@@ -41,6 +41,8 @@
                 {% trans "Loading.. One moment.." %}
             </div>
         </div>
+
+        <div id="notification"></div>
         
             <div class="navbar navbar-inverse navbar-fixed-top">
                 <div class="container">
@@ -141,5 +143,29 @@
         ================================================== -->
         <!-- Placed at the end of the document so the pages load faster -->
         <script src="{{ STATIC_URL }}advanced_reports/js/bootstrap.js"></script>
+        <script src="{{ STATIC_URL }}advanced_reports/js/core.js"></script>
+        <script src="{{ STATIC_URL }}advanced_reports/js/modules/notification.js"></script>
+
+        <script>
+            frontend.notification.init();
+        </script>
+
+        {% if messages %}
+        <script>
+            $(function(){
+                {% for msg in messages %}
+                    {% if forloop.last %}
+                var params = {
+                    message: "{{ msg|safe }}",
+                    type: "{{ msg.tags }}",
+                    isAutoHide: {% if msg.tags == 'error' or msg.tags == 'warning' %}false{% else %}true{% endif %}
+                };
+                    {% endif %}
+                {% endfor %}
+
+                frontend.notification.show(params);
+            });
+        </script>
+        {% endif %}
     </body>
 </html>
