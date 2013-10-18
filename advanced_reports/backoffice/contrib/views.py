@@ -29,7 +29,9 @@ class AdvancedReportView(BackOfficeView):
         return render_to_string(self.template, context, context_instance=RequestContext(request))
 
     def fetch(self, request):
-        return api_list(request, request.view_params.get('slug'))
+        obj_id = request.view_params.get('id', None)
+        ids = [obj_id] if obj_id else None
+        return api_list(request, request.view_params.get('slug'), ids=ids)
 
     def action(self, request):
         method = request.action_params.get('method')
@@ -61,7 +63,7 @@ class AdvancedReportView(BackOfficeView):
 
 
 class AdvancedReportActionView(BackOfficeView):
-    slug = 'actionview'
+    slug = 'advanced_report_action'
 
     def get(self, request):
         report_slug = request.view_params.get('slug')
