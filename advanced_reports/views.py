@@ -315,7 +315,7 @@ def api_list(request, slug, ids=None):
     advreport.set_request(request)
 
     def inner(request, slug, ids):
-        object_list, extra_context = advreport.get_object_list(request)
+        object_list, extra_context = advreport.get_object_list(request, ids=ids)
 
         paginated = paginate(request, object_list, num_per_page=advreport.items_per_page, use_get_parameters=True)
 
@@ -329,7 +329,8 @@ def api_list(request, slug, ids=None):
             'show_action_bar': advreport.search_fields or advreport.filter_fields,
             'search_fields': advreport.search_fields,
             'filter_fields': advreport.filter_fields,
-            'filter_values': advreport.filter_values
+            'filter_values': advreport.filter_values,
+            'report_header_visible': advreport.report_header_visible
         }
         return JSONResponse(report)
 

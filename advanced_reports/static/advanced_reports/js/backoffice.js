@@ -309,7 +309,19 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
         link: function(scope, element, attrs){
             var slug = attrs.view;
             var params = attrs.params && scope.$eval(attrs.params) || {};
+            delete attrs['view'];
+            delete attrs['params'];
             params.view_slug = slug;
+            for (var k in attrs){
+                if (attrs.hasOwnProperty(k)){
+                    if (boUtils.startsWith(k, 'eval')){
+                        var new_k = k.substring(4).toLowerCase();
+                        params[new_k] = scope.$eval(attrs[k]);
+                    } else {
+                        params[k] = attrs[k];
+                    }
+                }
+            }
             var viewInstance = attrs.instance || slug;
             var internalScope = scope.$new();
             var viewToUpdateOnPost = attrs.viewToUpdateOnPost;
@@ -336,7 +348,7 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
                             compile(data);
                             if (viewToUpdateOnPost){
                                 scope.$eval(viewToUpdateOnPost).fetch();}
-                            if (!data.success){
+                            if (!data.success && closeModalFirst){
                                 $timeout(function(){
                                     scope.$parent.$broadcast('boValidationError');
                                 }, 100);
@@ -457,24 +469,6 @@ app.directive('focusOn', function() {
         });
     };
 });
-
-/*
-<ul class="always-visible dropdown-menu" ng-show="is_search_results_preview_visible()">
-    {% verbatim %}
-    <li ng-repeat="result in search_results_preview.results">
-        <a href="{{ root_url }}#{{ result.path }}">
-            <small>{{ result.verbose_name }}</small> {{ result.title }}
-        </a>
-    </li>
-    {% endverbatim %}
-    <li ng-show="!search_results_preview" class="disabled">
-        <a><img src="{{ STATIC_URL }}advanced_reports/img/modybox/loading.gif"></a>
-    </li>
-    <li ng-show="search_results_preview.results.length == 0" class="disabled">
-        <a>{% trans "No results found" %}</a>
-    </li>
-</ul>
- */
 
 app.directive('onFocus', ['$parse', function($parse){
     return function(scope, element, attrs){
@@ -638,22 +632,31 @@ app.directive('boModal', function(){
         scope: {
             boModal: '=',
             modalTitle: '@',
-            onYes: '&'
+            action: '&'
         },
         transclude: true,
         link: function(scope, element, attrs){
+            scope.executeAction = false;
+
+            scope.boModal.closeAndAction = function(){
+                scope.executeAction = true;
+                scope.boModal.modal('hide');
+            };
+
             scope.boModal.on('hidden.bs.modal', function(event){
                 scope.$apply(function(){
                     if (scope.fnToExecute){
                         scope.fnToExecute();
                         scope.fnToExecute = null;
                     }
+                    if (scope.executeAction){
+                        scope.action(scope);
+                        scope.executeAction = false;
+                    }
                 });
             });
 
-
             scope.$parent.$on('boRequestCloseModal', function(e, fnToExecute){
-
                 scope.fnToExecute = fnToExecute;
                 scope.boModal.modal('hide');
             });
@@ -667,7 +670,7 @@ app.directive('boModal', function(){
 
 app.directive('boParallax', function(){
     return function(scope, element, attrs){
-        scope.$watch(function(scope){
+        scope.$watch(function(){
             return element.innerHeight();
         }, function(height){
             var offsetTop = $('body').offset().top,
