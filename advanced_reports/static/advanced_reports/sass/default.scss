@@ -306,46 +306,13 @@ ul {
     }
 }
 
-.content {
-    /*padding-top: 10px;*/
-}
-
-.sidebar-left {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-}
-
 .main-content {
-    background: $white;
+    /*background: $white;*/
+    padding-top: 20px;
 
-    &.with-sidebar {
-        border: 1px solid $grayLighter;
+    &.with-nav-bar {
+        padding-top: 0;
     }
-}
-
-aside.sidebar {
-    /*margin-top: 30px;
-    border: 1px solid $grayLighter;*/
-
-    padding: 0;
-
-    header {
-        font-size: 1.5em;
-        font-weight: 200;
-        padding: 20px;
-        background: $grayLighter;
-
-        small {
-            display: block;
-            font-size: 0.65em;
-            margin-top: 5px;
-            color: $grayLight;
-        }
-    }
-
-/*    nav {
-        margin-top: 10px;
-    }*/
 }
 
 footer {
