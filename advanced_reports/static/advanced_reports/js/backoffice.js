@@ -23,6 +23,7 @@ app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, 
         requests: 0,
         slow: false,
         to: null,
+        messages: [],
         updateRequests: function(delta){
             var that = this;
             if (this.requests == 0 && delta > 0){
@@ -45,7 +46,8 @@ app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, 
             this.updateRequests(1);
             $http.get(this.url + method + '/?' + boUtils.toQueryString(params)).
             success(function (data, status){
-                defer.resolve(data);
+                that.messages = that.messages.concat(data.messages || []);
+                defer.resolve(data.response_data || data);
                 that.updateRequests(-1);
             }).
             error(function (data, status){
@@ -59,7 +61,8 @@ app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, 
             var defer = $q.defer();
             this.updateRequests(1);
             $http.post(this.url + method + '/' + (url_suffix || ''), data).success(function (data, status){
-                defer.resolve(data);
+                that.messages = that.messages.concat(data.messages || []);
+                defer.resolve(data.response_data || data);
                 that.updateRequests(-1);
             }).error(function (data, status){
                 defer.reject(data, status);
@@ -77,7 +80,8 @@ app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, 
                 data: data,
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'}
             }).success(function (data, status){
-                defer.resolve(data);
+                that.messages = that.messages.concat(data.messages || []);
+                defer.resolve(data.response_data || data);
                 that.updateRequests(-1);
             }).error(function (data, status){
                 defer.reject(data, status);
@@ -90,7 +94,8 @@ app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, 
             var defer = $q.defer();
             this.updateRequests(1);
             $http.put(this.url + method + '/', data).success(function (data, status){
-                defer.resolve(data);
+                that.messages = that.messages.concat(data.messages || []);
+                defer.resolve(data.response_data || data);
                 that.updateRequests(-1);
             }).error(function (data, status){
                 defer.reject(data, status);
@@ -136,6 +141,10 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
 
     $scope.isLoadingSlow = function(){
         return boApi.isLoadingSlow();
+    };
+
+    $scope.getMessages = function(){
+        return boApi.messages;
     };
 
     $scope.search_results_preview_visible = false;

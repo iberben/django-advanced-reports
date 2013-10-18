@@ -1,5 +1,6 @@
 from collections import defaultdict
 from django.conf.urls import patterns, url
+from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models.signals import post_save, post_delete, pre_delete
@@ -155,7 +156,9 @@ class BackOfficeBase(object):
 
         if isinstance(response, HttpResponse):
             return response
-        return JSONResponse(response)
+
+        msgs = [m.__dict__ for m in messages.get_messages(request)]
+        return JSONResponse({'messages': msgs, 'response_data': response})
 
     ######################################################################
     # Model Registration
