@@ -4,7 +4,7 @@
     <ul class="pagination" ng-show="report">
         <li ng-show="search.page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></li>
         <li ng-show="search.page > 1"><a href ng-click="change_page(search.page-1)">&lt;</a></li>
-        <li>{% trans "Page {{ search.page }} of {{ page_count }}" %}</li>
+        <li><a href>{% trans "Page {{ search.page }} of {{ page_count }}" %}</a></li>
         <li ng-show="search.page < page_count"><a href ng-click="change_page(search.page+1)">&gt;</a></li>
         <li ng-show="search.page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></li>
     </ul>
