@@ -254,8 +254,12 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         $scope.fetch_report();
     };
 
+    $scope.has_expanded_content = function(item){
+        return (item.extra_information.length > 0 || item.actions.length > 0);
+    };
+
     $scope.toggle_expand = function(item) {
-        if (!item.expanded && (item.extra_information.length > 0 || item.actions.length > 0)) {
+        if (!item.expanded && $scope.has_expanded_content(item)) {
             item.expanded = true;
             $scope.$broadcast('item_expanded', item.item_id);
             $scope.fetch_lazy_divs(item);
