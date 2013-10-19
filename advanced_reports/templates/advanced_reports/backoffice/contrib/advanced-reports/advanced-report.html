@@ -456,6 +456,9 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
     };
 
     $scope.is_single_action = function(action){
+        if (!$scope.single_action){
+            return false;
+        }
         return $scope.single_action.split(',').indexOf(action.method) > -1;
     };
 
