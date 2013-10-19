@@ -150,8 +150,8 @@
             frontend.notification.init();
         </script>
 
-        <span ng-repeat="message in getMessages()" ng-init="showMessage({message: message.message, type: {25: 'success', 30: 'warning', 40: 'error'}[message.level], isAutoHide: message.level <= 25})"></span>
-        <span ng-repeat="message in getMessages()" ng-init="clearMessages()"></span>
+{#        <span ng-repeat="message in getMessages()" ng-init="showMessage(message)"></span>#}
+{#        <span ng-repeat="message in getMessages()" ng-init="clearMessages()"></span>#}
         {% if messages %}
         <script>
             $(function(){

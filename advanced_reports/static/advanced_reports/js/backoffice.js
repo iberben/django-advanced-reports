@@ -143,18 +143,20 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         return boApi.isLoadingSlow();
     };
 
-    $scope.getMessages = function(){
-        var msgs = boApi.messages;
-        return msgs;
-    };
-
-    $scope.showMessage = function(params){
-        frontend.notification.show(params);
-    };
-
-    $scope.clearMessages = function(){
+    // Watch for messages
+    $scope.$watch(function(){
+        return boApi.messages;
+    }, function(messages){
+        angular.forEach(messages, function(message){
+            var params = {
+                message: message.message,
+                type: {10: 'debug', 20: 'info', 25: 'success', 30: 'warning', 40: 'error'}[message.level],
+                isAutoHide: message.level <= 25
+            };
+            frontend.notification.show(params);
+        });
         boApi.messages = [];
-    };
+    }, true);
 
     $scope.search_results_preview_visible = false;
     $scope.search_reset_results_preview = function(){
@@ -293,20 +295,18 @@ app.controller('EmptyController', ['$scope', function($scope){}]);
 // http://stackoverflow.com/questions/17417607/angular-ng-bind-html-unsafe-and-directive-within-it
 app.directive('compile', ['$compile', function ($compile){
     return {
-        link: function(scope, element, attrs) {
+        link: function(scope, element, attrs){
             scope.$watch(function(scope){
-                // watch the 'compile' expression for changes
                 return scope.$eval(attrs.compile);
             }, function(value){
-                // when the 'compile' expression changes
-                // assign it into the current DOM
                 element.html(value);
-
-                // compile the new DOM and link it to the current
-                // scope.
-                // NOTE: we only compile .childNodes so that
-                // we don't get into infinite loop compiling ourselves
                 $compile(element.contents())(scope);
+
+                // Remove any modal backdrop, but only if we are not inside a model ourselves...
+                var modals = element.parents('.modal');
+                if (modals.length == 0){
+                    angular.element('.modal-backdrop').remove();
+                }
             });
         },
         scope: true
@@ -339,6 +339,12 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
                 attachView(data, params);
                 element.html(data.content);
                 $compile(element.contents())(internalScope);
+
+                // Remove any modal backdrop, but only if we are not inside a model ourselves...
+                var modals = element.parents('.modal');
+                if (modals.length == 0){
+                    angular.element('.modal-backdrop').remove();
+                }
             };
 
             var showError = function(error){
