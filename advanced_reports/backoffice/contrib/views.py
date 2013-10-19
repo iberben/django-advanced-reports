@@ -63,7 +63,7 @@ class AdvancedReportView(BackOfficeView):
 
 
 class AdvancedReportActionView(BackOfficeView):
-    slug = 'advanced_report_action'
+    slug = 'actionview'
 
     def get(self, request):
         report_slug = request.view_params.get('slug')
