@@ -330,7 +330,8 @@ def api_list(request, slug, ids=None):
             'search_fields': advreport.search_fields,
             'filter_fields': advreport.filter_fields,
             'filter_values': advreport.filter_values,
-            'report_header_visible': advreport.report_header_visible
+            'report_header_visible': advreport.report_header_visible,
+            'multiple_actions': advreport.multiple_actions,
         }
         return JSONResponse(report)
 

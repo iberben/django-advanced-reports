@@ -106,28 +106,56 @@
             </div>
         </form>
     </div>
-    
+
+    {% verbatim %}
+    <form ng-submit="">
+        <select ng-model="multiple_action">
+            <option ng-repeat=""></option>
+        </select>
+    </form>
+    {% endverbatim %}
+
     <div ng-include="'/pagination.html'"></div>
 
     <div class="tablecontainer" ng-show="report && !single_action">
-        <table class="data table table-hover table-striped">
+        <table class="data table table-striped">
             <thead>
+                <tr ng-show="report.all_selected && report.item_count > report.items_per_page">
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}">
+                        {% endverbatim %}
+                        {% trans "Only {{ report.items_per_page }} selected. Select all {{ report.item_count }}?" %}
+                        <a href ng-hide="report.all_selected_global" ng-click="report.all_selected_global=true">{% trans "Yes" %}</a>
+                        <strong ng-show="report.all_selected_global">{% trans "Yes" %}</strong>
+                        <a href ng-show="report.all_selected_global" ng-click="report.all_selected_global=false;report.all_selected=false;selected={}">{% trans "Clear selection" %}</a>
+                        {% verbatim %}
+                    </td>
+                    {% endverbatim %}
+                </tr>
                 <tr>
+                    <th><input type="checkbox" ng-model="report.all_selected" ng-click="update_selected()" ng-show="report.multiple_actions"></th>
                     <th ng-repeat="column in report.header" ng-style="column.style">
                         <span ng-bind="column.verbose_name" ng-show="!column.sortable"></span>
                         <a href ng-bind="column.verbose_name" ng-show="column.sortable" ng-click="change_order(column.order_by)"></a>
                         <span ng-show="report.extra.order_field==column.name" ng-bind="{true:'&darr;', false:'&uarr;'}[report.extra.ascending]"></span>
                     </th>
+                    <th></th>
                 </tr>
             </thead>
 
             <tbody ng-repeat="item in report.items">
                 <tr ng-click="toggle_expand(item)">
+                    <td><input type="checkbox" ng-model="selected[item.item_id]" ng-click="update_all_selected();$event.stopPropagation()" ng-show="report.multiple_actions"></td>
                     <td ng-repeat="value in item.values" ng-bind-html-unsafe="value.html" ng-style="value.style" ng-class="value.class"></td>
+                    <td ng-show="has_expanded_content(item)">
+                        <a ng-show="item.expanded" href>{% trans "hide details" %}</a>
+                        <a ng-hide="item.expanded" href>{% trans "show details" %}</a>
+                    </td>
                 </tr>
-                {% verbatim %}
+
                 <tr ng-show="item.expanded">
-                    <td colspan="{{ report.header.length }}">
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}">
                         <div class="btn-group">
                             <a class="btn btn-default" link-to="get_action_link(item, action)" ng-click="execute_action(item, action)" ng-repeat="action in item.actions|filter:is_button_action">{{ action.verbose_name }}</a>
                         </div>
@@ -138,14 +166,14 @@
                         </div>
                         <div compile="item.extra_information" class="row extra_info"></div>
                     </td>
+                    {% endverbatim %}
                 </tr>
-                {% endverbatim %}
             </tbody>
 
             <tbody ng-show="report.items.length==0">
                 <tr>
                     {% verbatim %}
-                    <td colspan="{{ report.header.length }}">
+                    <td colspan="{{ report.header.length + 2 }}">
                     {% endverbatim %}
                         <small>{% blocktrans with advreport.verbose_name_plural as items_name %}No {{ items_name }} to show...{% endblocktrans %}</small>
                     </td>
@@ -156,24 +184,25 @@
 
     <div ng-include="'/pagination.html'"></div>
 
-    <span ng-show="single_action">
+    <div class="btn-group" ng-show="single_action">
         <a
          class="btn btn-default"
          link-to="get_action_link(report.items[0], action)"
          ng-click="execute_action(report.items[0], action)"
          ng-repeat="action in report.items[0].actions|filter:is_single_action"
          ng-bind="action.verbose_name"></a>
-    </span>
+    </div>
 </div>
 
 <script type="text/javascript">
-function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
+function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) {
     $scope.report = null;
     $scope.page_count = null;
     $scope.filters = {};
     $scope.applied_filters = {};
     $scope.search = $location.search() || {};
     $scope.single_action = $scope.view.params.action || null;
+    $scope.selected = {};
 
     $scope.$watch(function(){
         return $location.search();
@@ -214,6 +243,7 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
             if (data.item_count == 1)
                 $scope.toggle_expand($scope.report.items[0]);
             $scope.page_count = Math.floor(data.item_count / data.items_per_page) + 1;
+            $scope.selected = {};
         }, function(error){
             $scope.error = error;
         });
@@ -231,6 +261,18 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout) {
             $scope.fetch_lazy_divs(item);
         } else {
             item.expanded = false;
+        }
+    };
+
+    $scope.update_selected = function(){
+        angular.forEach($scope.report.items, function(item){
+            $scope.selected[item.item_id] = $scope.report.all_selected;
+        });
+    };
+
+    $scope.update_all_selected = function(selected){
+        if (!selected){
+            $scope.report.all_selected = false;
         }
     };
 
