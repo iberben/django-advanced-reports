@@ -29,7 +29,7 @@ class AdvancedReportView(BackOfficeView):
         return render_to_string(self.template, context, context_instance=RequestContext(request))
 
     def fetch(self, request):
-        obj_id = request.view_params.get('id', None)
+        obj_id = request.view_params.get('pk', None)
         ids = [obj_id] if obj_id else None
         return api_list(request, request.view_params.get('slug'), ids=ids)
 
