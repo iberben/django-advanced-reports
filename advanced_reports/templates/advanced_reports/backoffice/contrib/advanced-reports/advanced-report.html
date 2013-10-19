@@ -343,6 +343,7 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
                     if (data.item){
                         $scope.update_item(item, data.item, action.next_on_success);
                         $scope.show_success(data.success);
+                        $scope.trigger_success_attr(action);
                     } else {
                         $scope.detail_action = action;
                         $scope.detail_action_content = data;
@@ -365,11 +366,15 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         }
     };
 
+    $scope.trigger_success_attr = function(action){
+        var success_attr = $scope.$eval($scope.view.params.success);
+        if (success_attr && success_attr[action.method]){
+            $scope.$eval(success_attr[action.method]);
+        }
+    };
+
     $scope.show_success = function(success){
-        $scope.success = success;
-        $timeout(function(){
-            $scope.success = null;
-        }, 5000);
+        boApi.messages.push({message: success, level: 25});
     };
 
     $scope.show_error = function(error){
@@ -384,6 +389,8 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         $scope.view.action('action', {method: form.method, pk: item.item_id, data: data}, false).then(function(result){
             if (result.success){
                 $scope.update_item(item, result.item, form.next_on_success);
+                $scope.show_success(result.success);
+                $scope.trigger_success_attr(form);
                 $scope.form = null;
                 $scope.action_form_popup.modal('hide');
             }else{
@@ -401,6 +408,8 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         $scope.view.action('action', {method: action.method, pk: item.item_id, data: data}, false).then(function(result){
             if (result.success){
                 $scope.update_item(item, result.item, action.next_on_success);
+                $scope.show_success(result.success);
+                $scope.trigger_success_attr(action);
             }else{
                 action.form = result.response_form;
             }
