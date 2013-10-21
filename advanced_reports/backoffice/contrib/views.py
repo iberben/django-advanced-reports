@@ -1,9 +1,12 @@
+from django.contrib import messages
 from django.http.request import QueryDict
+from django.http.response import HttpResponseBase
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
-from django.template.response import TemplateResponse
+from django.utils.translation import ugettext as _
 from advanced_reports.backoffice.base import BackOfficeView
 from advanced_reports import get_report_for_slug
+from advanced_reports.defaults import ActionException
 from advanced_reports.views import api_list, api_action
 
 
@@ -53,6 +56,49 @@ class AdvancedReportView(BackOfficeView):
         item = advreport.get_item_for_id(pk)
         advreport.enrich_object(item, request=request)
         return getattr(advreport, method)(item)
+
+    def multiple_action(self, request):
+        report_slug = request.view_params.get('slug')
+        method = request.action_params.get('report_method')
+        items = request.action_params.get('items').split(',')
+        global_select = request.action_params.get('global')
+        advreport = get_report_for_slug(report_slug)
+
+        if global_select:
+            items, context = advreport.get_object_list(request)
+        else:
+            items = [advreport.get_item_for_id(pk) for pk in items]
+        if hasattr(advreport, '%s_multiple' % method):
+            return getattr(advreport, '%s_multiple' % method)(items)
+        else:
+            succeeded, failed = {}, {}
+            for item in items:
+                try:
+                    action = advreport.find_object_action(item, method)
+                    if action:
+                        result = getattr(advreport, method)(item)
+                        if isinstance(result, HttpResponseBase) and result.status_code == 200:
+                            messages.warning(request, _(u'This action does not support batch operations.'))
+                        else:
+                            succeeded[advreport.get_item_id(item)] = action.get_success_message()
+                    else:
+                        failed[advreport.get_item_id(item)] = _(u'This action is not applicable to this item.')
+                except ActionException, e:
+                    failed[advreport.get_item_id(item)] = e.msg
+            return {'succeeded': succeeded, 'failed': failed}
+
+    def multiple_action_view(self, request):
+        report_slug = request.view_params.get('slug')
+        method = request.view_params.get('report_method')
+        items = request.view_params.get('items').split(',')
+        global_select = request.view_params.get('global')
+        advreport = get_report_for_slug(report_slug)
+
+        if global_select == 'true':
+            items = advreport.get_object_list(request)
+        else:
+            items = [advreport.get_item_for_id(pk) for pk in items]
+        return getattr(advreport, '%s_multiple' % method)(items)
 
     def auto_complete(self, request):
         partial = request.action_params.pop('partial')

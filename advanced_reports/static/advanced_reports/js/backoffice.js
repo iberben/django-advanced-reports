@@ -434,22 +434,38 @@ app.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
 }]);
 
 app.factory('boUtils', function(){
-   return {
-       toQueryString: function(obj){
-           var str = [];
-           for(var p in obj)
-               str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
-           return str.join('&');
-       },
-       startsWith: function(str, prefix){
-           // http://stackoverflow.com/questions/646628/javascript-startswith
-           return str.indexOf(prefix) === 0;
-       },
-       endsWith: function(str, suffix){
-           // http://stackoverflow.com/questions/280634/endswith-in-javascript
-           return str.indexOf(suffix, str.length - suffix.length) !== -1;
-       }
-   };
+    return {
+        toQueryString: function(obj){
+            var str = [];
+            for(var p in obj)
+                str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
+            return str.join('&');
+        },
+        startsWith: function(str, prefix){
+            // http://stackoverflow.com/questions/646628/javascript-startswith
+            return str.indexOf(prefix) === 0;
+        },
+        endsWith: function(str, suffix){
+            // http://stackoverflow.com/questions/280634/endswith-in-javascript
+            return str.indexOf(suffix, str.length - suffix.length) !== -1;
+        },
+        isEmpty: function(obj){
+            // http://stackoverflow.com/questions/679915/how-do-i-test-for-an-empty-javascript-object-from-json
+            for(var prop in obj){
+                if(obj.hasOwnProperty(prop))
+                    return false;
+            }
+            return true;
+        },
+        keyCount: function(obj){
+            var count = 0;
+            for(var prop in obj){
+                if(obj.hasOwnProperty(prop))
+                    count += 1;
+            }
+            return count;
+        }
+    };
 });
 
 app.filter('capitalize', function(){

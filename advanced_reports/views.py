@@ -17,7 +17,6 @@ from advanced_reports import get_report_or_404
 from advanced_reports.backoffice.api_utils import JSONResponse
 from advanced_reports.defaults import ActionException, Resolver
 
-import json
 
 def _get_redirect(advreport, next=None, querystring=None):
     if next:
@@ -332,6 +331,7 @@ def api_list(request, slug, ids=None):
             'filter_values': advreport.filter_values,
             'report_header_visible': advreport.report_header_visible,
             'multiple_actions': advreport.multiple_actions,
+            'multiple_action_list': [a.attrs_dict for a in advreport.item_actions if not a.hidden and not a.form and a.multiple_display]
         }
         return JSONResponse(report)
 

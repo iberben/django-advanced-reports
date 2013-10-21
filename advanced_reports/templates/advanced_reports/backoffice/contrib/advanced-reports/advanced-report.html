@@ -2,11 +2,11 @@
 
 <script type="text/ng-template" id="/pagination.html">
     <ul class="pagination" ng-show="page_count > 1">
-        <li ng-show="search.page > 1"><a href ng-click="change_page(1)">&lt;&lt;</a></li>
-        <li ng-show="search.page > 1"><a href ng-click="change_page(search.page-1)">&lt;</a></li>
+        <li ng-class="{disabled: search.page <= 1}"><a href ng-click="change_page(1)">&laquo;</a></li>
+        <li ng-class="{disabled: search.page <= 1}"><a href ng-click="change_page(search.page-1)">&lt;</a></li>
         <li><a href>{% trans "Page {{ search.page }} of {{ page_count }}" %}</a></li>
-        <li ng-show="search.page < page_count"><a href ng-click="change_page(search.page+1)">&gt;</a></li>
-        <li ng-show="search.page < page_count"><a href ng-click="change_page(page_count)">&gt;&gt;</a></li>
+        <li ng-class="{disabled: search.page >= page_count}"><a href ng-click="change_page(search.page+1)">&gt;</a></li>
+        <li ng-class="{disabled: search.page >= page_count}"><a href ng-click="change_page(page_count)">&raquo;</a></li>
     </ul>
 </script>
 
@@ -88,8 +88,8 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
-    <div ng-show="report.report_header_visible && !single_action" class="action-bar">
-        <form class="form-inline" role="form" ng-submit="apply_filters()">
+    <div ng-show="report.report_header_visible && !single_action" class="action-bar clearfix">
+        <form class="form-inline col-lg-9 col-md-8 col-sm-7" role="form" ng-submit="apply_filters()">
             <div class="form-group" ng-show="report.search_fields">
                 <input type="text" class="form-control" ng-model="filters.q" title="{% templatetag openvariable %}report.searchable_columns{% templatetag closevariable %}">
             </div>
@@ -100,31 +100,36 @@
                 </select>
             </div>
             {% endverbatim %}
-            <button type="submit" class="btn btn-primary">Search</button>
+            <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
             <div class="checkbox">
                 <label><a href ng-show="has_applied_filters()" ng-click="remove_filters()">{% trans "show all" %}</a></label>
             </div>
         </form>
-    </div>
 
-    {% verbatim %}
-    <form ng-submit="">
-        <select ng-model="multiple_action">
-            <option ng-repeat=""></option>
-        </select>
-    </form>
-    {% endverbatim %}
+        <form ng-submit="execute_multiple_action(multiple_action)" class="form-inline col-lg-3 col-md-4 col-sm-5 align-right" role="form" ng-show="show_action_select()">
+            <div class="form-group">
+                <select ng-model="multiple_action" class="form-control">
+                    <option value="" disabled>{% trans "With selected:" %}</option>
+                    {% verbatim %}
+                    <option ng-repeat="action in report.multiple_action_list" value="{{ action.method }}">{{ action.verbose_name }}</option>
+                    {% endverbatim %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-success">{% trans "Execute" %}</button>
+        </form>
+    </div>
 
     <div ng-include="'/pagination.html'"></div>
 
     <div class="tablecontainer" ng-show="report && !single_action">
         <table class="data table table-striped">
             <thead>
-                <tr ng-show="report.all_selected && report.item_count > report.items_per_page">
+                <tr ng-show="report.all_selected && report.item_count > report.items_per_page" ng-class="{warning: !report.all_selected_global, success: report.all_selected_global}">
                     {% verbatim %}
                     <td colspan="{{ report.header.length + 2 }}">
                         {% endverbatim %}
-                        {% trans "Only {{ report.items_per_page }} selected. Select all {{ report.item_count }}?" %}
+                        {% trans "Only {{ selected_count() }} selected. Select all {{ report.item_count }}?" %}
                         <a href ng-hide="report.all_selected_global" ng-click="report.all_selected_global=true">{% trans "Yes" %}</a>
                         <strong ng-show="report.all_selected_global">{% trans "Yes" %}</strong>
                         <a href ng-show="report.all_selected_global" ng-click="report.all_selected_global=false;report.all_selected=false;selected={}">{% trans "Clear selection" %}</a>
@@ -133,7 +138,11 @@
                     {% endverbatim %}
                 </tr>
                 <tr>
-                    <th><input type="checkbox" ng-model="report.all_selected" ng-click="update_selected()" ng-show="report.multiple_actions"></th>
+                    {% verbatim %}
+                    <th ng-style="{width: {true: '24px', false: '0'}[report.multiple_actions]}">
+                        <input type="checkbox" ng-model="report.all_selected" ng-click="update_selected()" ng-show="report.multiple_actions">
+                    </th>
+                    {% endverbatim %}
                     <th ng-repeat="column in report.header" ng-style="column.style">
                         <span ng-bind="column.verbose_name" ng-show="!column.sortable"></span>
                         <a href ng-bind="column.verbose_name" ng-show="column.sortable" ng-click="change_order(column.order_by)"></a>
@@ -144,13 +153,23 @@
             </thead>
 
             <tbody ng-repeat="item in report.items">
-                <tr ng-click="toggle_expand(item)">
+                <tr ng-click="toggle_expand(item)" ng-class="{success: multiple_succeeded[item.item_id], danger: multiple_failed[item.item_id]}">
                     <td><input type="checkbox" ng-model="selected[item.item_id]" ng-click="update_all_selected();$event.stopPropagation()" ng-show="report.multiple_actions"></td>
                     <td ng-repeat="value in item.values" ng-bind-html-unsafe="value.html" ng-style="value.style" ng-class="value.class"></td>
                     <td ng-show="has_expanded_content(item)">
                         <a ng-show="item.expanded" href>{% trans "hide details" %}</a>
                         <a ng-hide="item.expanded" href>{% trans "show details" %}</a>
                     </td>
+                </tr>
+                <tr ng-show="multiple_succeeded[item.item_id] && item.expanded" class="success">
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}" ng-bind="multiple_succeeded[item.item_id]"></td>
+                    {% endverbatim %}
+                </tr>
+                <tr ng-show="multiple_failed[item.item_id] && item.expanded" class="danger">
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}" ng-bind="multiple_failed[item.item_id]"></td>
+                    {% endverbatim %}
                 </tr>
 
                 <tr ng-show="item.expanded">
@@ -214,6 +233,8 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
     $scope.fetch_report = function() {
         if (!$scope.search.page)
             $scope.search.page = 1;
+        else
+            $scope.search.page = parseInt($scope.search.page);
 
         for (var j in $scope.search){
             if (typeof $scope.search[j] === 'undefined')
@@ -244,12 +265,18 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
                 $scope.toggle_expand($scope.report.items[0]);
             $scope.page_count = Math.floor(data.item_count / data.items_per_page) + 1;
             $scope.selected = {};
+            $scope.multiple_action_dict = {};
+            angular.forEach($scope.report.multiple_action_list, function(value){
+                $scope.multiple_action_dict[value.method] = value;
+            });
         }, function(error){
             $scope.error = error;
         });
     };
 
-    $scope.change_page = function(page) {
+    $scope.change_page = function(page){
+        if (page < 1 || page > $scope.page_count || $scope.search.page == page)
+            return;
         $scope.search.page = page;
         $scope.fetch_report();
     };
@@ -268,16 +295,33 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         }
     };
 
+    $scope.show_action_select = function(){
+        return $scope.report && $scope.report.multiple_actions && !boUtils.isEmpty($scope.selected);
+    };
+
     $scope.update_selected = function(){
-        angular.forEach($scope.report.items, function(item){
-            $scope.selected[item.item_id] = $scope.report.all_selected;
-        });
+        if ($scope.report.all_selected){
+            angular.forEach($scope.report.items, function(item){
+                $scope.selected[item.item_id] = true;
+            });
+        }else{
+            $scope.selected = {};
+        }
     };
 
     $scope.update_all_selected = function(selected){
         if (!selected){
             $scope.report.all_selected = false;
         }
+        angular.forEach($scope.selected, function(value, key){
+            if (!value){
+                delete $scope.selected[key];
+            }
+        });
+    };
+
+    $scope.selected_count = function(){
+        return boUtils.keyCount($scope.selected);
     };
 
     $scope.change_order = function(order_by) {
@@ -326,6 +370,41 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         }
 
         $scope.fetch_lazy_divs(item);
+    };
+
+    $scope.execute_multiple_action = function(){
+        if (!$scope.multiple_action || $scope.multiple_action == ''){
+            return;
+        }
+        var action = $scope.multiple_action_dict[$scope.multiple_action];
+        $scope.multiple_action = '';
+        var id_list = [];
+        angular.forEach($scope.selected, function(value, key){
+            if (value){
+                id_list.push(key.toString());
+            }
+        });
+
+        if ($scope.is_link_action(action)){
+            var link_params = {
+                report_method: action.method,
+                items: id_list.join(','),
+                global: $scope.report.all_selected_global
+            };
+            var url = $scope.view.action_link('multiple_action_view', link_params);
+            window.location.href = url;
+        }else{
+            var action_params = {
+                report_method: action.method,
+                items: id_list.join(','),
+                global: $scope.report.all_selected_global
+            };
+            $scope.view.action('multiple_action', action_params, false).then(function(data){
+                $scope.multiple_succeeded = data.succeeded;
+                $scope.multiple_failed = data.failed;
+                $scope.fetch_report();
+            });
+        }
     };
 
     $scope.execute_action = function(item, action, force) {
