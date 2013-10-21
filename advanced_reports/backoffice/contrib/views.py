@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.http.request import QueryDict
 from django.http.response import HttpResponseBase
+from django.shortcuts import redirect
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
@@ -85,6 +86,12 @@ class AdvancedReportView(BackOfficeView):
                         failed[advreport.get_item_id(item)] = _(u'This action is not applicable to this item.')
                 except ActionException, e:
                     failed[advreport.get_item_id(item)] = e.msg
+            if succeeded and not failed:
+                messages.success(request, _(u'Successfully executed action on all selected items.'))
+            elif succeeded and failed:
+                messages.warning(request, _(u'Some actions were successful, but some were also failed.'))
+            else:
+                messages.error(request, _(u'No action on the selected items was successful.'))
             return {'succeeded': succeeded, 'failed': failed}
 
     def multiple_action_view(self, request):
@@ -98,7 +105,12 @@ class AdvancedReportView(BackOfficeView):
             items = advreport.get_object_list(request)
         else:
             items = [advreport.get_item_for_id(pk) for pk in items]
-        return getattr(advreport, '%s_multiple' % method)(items)
+
+        items = [item for item in items if advreport.find_object_action(item, method)]
+        if items:
+            return getattr(advreport, '%s_multiple' % method)(items)
+        messages.error(request, _(u'No items were applicable for this action.'))
+        return redirect(request.META['HTTP_REFERER'])
 
     def auto_complete(self, request):
         partial = request.action_params.pop('partial')
