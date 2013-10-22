@@ -480,6 +480,12 @@ app.filter('uriencode', function(){
     return encodeURIComponent;
 });
 
+app.filter('default', function(){
+    return function(value, fallback){
+        return value || fallback;
+    };
+});
+
 app.directive('boElement', ['$parse', function($parse){
     return function(scope, element, attrs){
         var obj = $parse(attrs.boElement);

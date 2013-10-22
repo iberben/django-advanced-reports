@@ -196,7 +196,8 @@
                     {% verbatim %}
                     <td colspan="{{ report.header.length + 2 }}">
                         <div class="btn-group">
-                            <a class="btn btn-default" link-to="get_action_link(item, action)" ng-click="execute_action(item, action)" ng-repeat="action in item.actions|filter:is_button_action">{{ action.verbose_name }}</a>
+
+                            <a class="btn {{ action.css_class|default:'btn-default' }}" link-to="get_action_link(item, action)" ng-click="execute_action(item, action)" ng-repeat="action in item.actions|filter:is_button_action">{{ action.verbose_name }}</a>
                         </div>
                         <div ng-repeat="action in item.actions|filter:is_inline_form_action">
                             <form bo-element="action_form_element" ng-submit="execute_inline_form_action(item, action, action_form_element)">
@@ -224,12 +225,14 @@
     <div ng-include="'/pagination.html'"></div>
 
     <div class="btn-group" ng-show="single_action">
+        {% verbatim %}
         <a
-         class="btn btn-default"
+         class="btn {{ action.css_class|default:'btn-default' }}"
          link-to="get_action_link(report.items[0], action)"
          ng-click="execute_action(report.items[0], action)"
          ng-repeat="action in report.items[0].actions|filter:is_single_action"
          ng-bind="action.verbose_name"></a>
+        {% endverbatim %}
     </div>
 </div>
 
@@ -570,6 +573,9 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
     $scope.is_single_action = function(action){
         if (!$scope.single_action){
             return false;
+        }
+        if ($scope.single_action == '*'){
+            return true;
         }
         return $scope.single_action.split(',').indexOf(action.method) > -1;
     };
