@@ -108,7 +108,7 @@
         </div><!-- /.modal-dialog -->
     </div><!-- /.modal -->
 
-    <div ng-show="report.report_header_visible && !single_action" class="action-bar clearfix">
+    <div ng-show="show_header()" class="action-bar clearfix">
         <form class="form-inline col-lg-8 col-md-7 col-sm-6" role="form" ng-submit="apply_filters()">
             <div class="form-group" ng-show="report.search_fields">
                 <input type="text" class="form-control" ng-model="filters.q" title="{% templatetag openvariable %}report.searchable_columns{% templatetag closevariable %}">
@@ -295,6 +295,12 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         }, function(error){
             $scope.error = error;
         });
+    };
+
+    $scope.show_header = function(){
+        return $scope.report.report_header_visible
+                && !$scope.single_action
+                && ($scope.filter_fields || $scope.search_fields || $scope.report.multiple_actions);
     };
 
     $scope.change_page = function(page){
