@@ -571,7 +571,7 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
     };
 
     $scope.is_single_action = function(action){
-        if (!$scope.single_action){
+        if (!$scope.single_action || (action.form && !action.form_via_ajax)){
             return false;
         }
         if ($scope.single_action == '*'){
