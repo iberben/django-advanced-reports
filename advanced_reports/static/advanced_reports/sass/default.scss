@@ -137,6 +137,12 @@ table.numbers {
 .panel {
     table {
         margin-bottom: 0;
+
+        &.data {
+            td, th {
+                padding: 9px 14px;
+            }
+        }
     }
 
     .alert {
@@ -278,6 +284,10 @@ ul {
 
     &.pagination {
         margin: 1em;
+
+        * {
+            @include border-radius(0 !important);
+        }
     }
 }
 

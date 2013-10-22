@@ -39,16 +39,14 @@
             {% verbatim %}
             <div class="panel panel-default" ng-repeat="result in search_results.results">
 
-                <div class="panel-body">
-                    <header>
-                        <h2><a href="{{ root_url }}#{{ result.path }}">{{ result.title }}</a></h2>
-                        <span>{{ result.meta.verbose_name }}</span>
-                    </header>
+                <div class="panel-heading">
+                    <h2><a href="{{ root_url }}#{{ result.path }}">{{ result.title }}</a></h2>
+                    <span>{{ result.meta.verbose_name }}</span>
+                </div>
 
-                    <div class="content">
-                        <div class="btn-group">
-                            <a ng-repeat="tab in result.meta.tabs|filter:isVisibleTab" href="{{ root_url }}#{{ result.path }}{{ tab.slug }}" class="btn btn-default" >{{ tab.title }}</a>
-                        </div>
+                <div class="panel-body">
+                    <div class="btn-group">
+                        <a ng-repeat="tab in result.meta.tabs|filter:isVisibleTab" href="{{ root_url }}#{{ result.path }}{{ tab.slug }}" class="btn btn-default" >{{ tab.title }}</a>
                     </div>
                 </div>
             </div>
