@@ -298,7 +298,8 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
     };
 
     $scope.show_header = function(){
-        return $scope.report.report_header_visible
+        return $scope.report
+                && $scope.report.report_header_visible
                 && !$scope.single_action
                 && ($scope.filter_fields || $scope.search_fields || $scope.report.multiple_actions);
     };

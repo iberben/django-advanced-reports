@@ -331,6 +331,7 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
                     }
                 }
             }
+            var success = attrs.success && scope.$eval(attrs.success) || {};
             var viewInstance = attrs.instance || slug;
             var internalScope = scope.$new();
             var viewToUpdateOnPost = attrs.viewToUpdateOnPost;
@@ -361,12 +362,14 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
                     var actual_post = function(){
                         boApi.post_form('view', post_data + '&' + boUtils.toQueryString(params)).then(function(data){
                             compile(data);
-                            if (viewToUpdateOnPost){
-                                scope.$eval(viewToUpdateOnPost).fetch();}
+
                             if (!data.success && closeModalFirst){
                                 $timeout(function(){
                                     scope.$parent.$broadcast('boValidationError');
                                 }, 100);
+                            }else{
+                                if (viewToUpdateOnPost){
+                                    scope.$eval(viewToUpdateOnPost).fetch();}
                             }
                         }, showError);
                     };
@@ -380,6 +383,7 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
                     }, url_suffix).then(function(result){
                         if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
                             data.fetch();
+                        scope.$eval(success[method]);
                         return result;
                     }, function(error, status){
                         if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
