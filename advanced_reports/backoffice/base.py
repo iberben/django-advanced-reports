@@ -20,6 +20,20 @@ from advanced_reports.backoffice.search import convert_to_raw_tsquery
 from .decorators import staff_member_required
 
 
+def check_permission(request, permission):
+    """
+    Checks whether the current request has access to the given permission.
+    If the ``permission`` argument is ``None``, and the request is of a logged in user, we return ``True``.
+
+    :param request HttpRequest: The current request
+    :param permission str: The permission as a string of '<app name>.<permission codename>'.
+    :return bool: True if the request has access to the given permission.
+    """
+    if not request.user.is_authenticated():
+        return False
+    if permission is None:
+        return True
+    return request.user.has_perm(permission)
 
 
 class AutoSlug(object):
@@ -275,7 +289,7 @@ class BackOfficeBase(object):
         else:
             return self.model_to_bo_model.get(model, None)
 
-    def serialize_model_instance(self, instance, include_children=False):
+    def serialize_model_instance(self, request, instance, include_children=False):
         """
         Serializes an Django model instance that is registered with this
         backoffice using their ``BackOfficeModel`` implementation.
@@ -286,12 +300,14 @@ class BackOfficeBase(object):
         :return: a simple Python object that is JSON serializable
         """
         bo_model = self.get_model(model=type(instance))
+        if not check_permission(request, bo_model.permission):
+            return None
         if include_children:
-            return bo_model.get_serialized(instance)
+            return bo_model.get_serialized(request, instance, children=True)
         else:
-            return bo_model.get_serialized_with_children(instance)
+            return bo_model.get_serialized(request, instance)
 
-    def serialize_model_instances(self, instances, include_children=False):
+    def serialize_model_instances(self, request, instances, include_children=False):
         """
         Serializes multiple Django model instances using
         ``serialize_model_instance``.
@@ -302,7 +318,9 @@ class BackOfficeBase(object):
         serialization
         :return: a list of simple Python objects that are JSON serializable.
         """
-        return [self.serialize_model_instance(i) for i in instances]
+        unfiltered = (self.serialize_model_instance(request, i, include_children=include_children) \
+                      for i in instances)
+        return [s for s in unfiltered if s]
 
     def link_relationship(self, bo_model):
         """
@@ -360,22 +378,22 @@ class BackOfficeBase(object):
     ######################################################################
     # Search
     ######################################################################
-    def serialize_search_result(self, index):
+    def serialize_search_result(self, request, index):
         """
         Transforms a ``SearchIndex`` instance to a serialized ``BackOfficeModel``
         including metadata.
         """
         bo_model = self.get_model(slug=index.model_slug)
-        if bo_model is None:
+        if bo_model is None or not check_permission(request, bo_model.permission):
             return None
         try:
             instance = bo_model.model.objects.get(pk=index.model_id)
         except ObjectDoesNotExist:
             return None
-        serialized = bo_model.get_serialized(instance)
+        serialized = bo_model.get_serialized(request, instance)
         return serialized
 
-    def count_by_model(self, indices):
+    def count_by_model(self, request, indices):
         """
         Given an iterable of ``SearchIndex`` instances, return a report of
         counts by ``model_slug``, and their serialized ``BackOfficeModel``
@@ -390,20 +408,23 @@ class BackOfficeBase(object):
         model_counts = [[self.get_model(mc[0]), mc[1]] for mc in model_counts.items()]
         model_counts = [mc for mc in model_counts if mc[0] is not None]
         model_counts.sort(key=lambda x: x[0].priority)
-        model_counts = [{'meta': mc[0].serialize_meta(),
+        model_counts = [{'meta': mc[0].serialize_meta(request),
                          'count': mc[1]
-                        } for mc in model_counts]
+                        } for mc in model_counts if check_permission(request, mc[0].permission)]
         return model_counts
 
-    def serialize_search_results(self, indices):
+    def serialize_search_results(self, request, indices):
         """
         Transforms ``SearchIndex`` instances to a list of serialized
         ``BackOfficeModel`` including metadata.
         """
-        return [self.serialize_search_result(i) for i in indices if i.model_slug in self.slug_to_bo_model]
+        serialized = (self.serialize_search_result(request, i) \
+                      for i in indices \
+                      if i.model_slug in self.slug_to_bo_model)
+        return [s for s in serialized if s]
 
 
-    def search(self, query, filter_on_model_slug=None, page=1, page_size=20, include_counts=True):
+    def search(self, request, query, filter_on_model_slug=None, page=1, page_size=20, include_counts=True):
         """
         Performs a search on Django models registered with this backoffice.
 
@@ -422,7 +443,7 @@ class BackOfficeBase(object):
         ts_query = convert_to_raw_tsquery(query)
         all_indices = SearchIndex.objects.search(ts_query, raw=True).filter(backoffice_instance=self.name)
 
-        model_counts = self.count_by_model(all_indices) if include_counts else []
+        model_counts = self.count_by_model(request, all_indices) if include_counts else []
 
         if filter_on_model_slug:
             all_indices = all_indices.filter(model_slug=filter_on_model_slug)
@@ -430,7 +451,7 @@ class BackOfficeBase(object):
         indices = all_indices[(page-1)*page_size:page*page_size]
 
         return {
-            'results': self.serialize_search_results(indices),
+            'results': self.serialize_search_results(request, indices),
             'model_counts': model_counts
         }
 
@@ -454,7 +475,7 @@ class BackOfficeBase(object):
         page = int(request.view_params.get('page', '1'))
         filter_model = request.view_params.get('filter_model')
         q = request.view_params.get('q')
-        return self.search(q, page=page, filter_on_model_slug=filter_model)
+        return self.search(request, q, page=page, filter_on_model_slug=filter_model)
 
     def api_get_search_preview(self, request):
         """
@@ -466,7 +487,7 @@ class BackOfficeBase(object):
         """
         filter_model = request.view_params.get('filter_model')
         q = request.view_params.get('q')
-        return self.search(q, page_size=5, filter_on_model_slug=filter_model,
+        return self.search(request, q, page_size=5, filter_on_model_slug=filter_model,
                            include_counts=False)
 
     def api_get_model(self, request):
@@ -481,8 +502,10 @@ class BackOfficeBase(object):
         model_slug = request.view_params.get('model_slug')
         pk = request.view_params.get('pk')
         bo_model = self.get_model(slug=model_slug)
+        if not check_permission(request, bo_model.permission):
+            return HttpResponse(u'You are not allowed to view this page.', status=403)
         obj = bo_model.model.objects.get(pk=pk)
-        serialized = bo_model.get_serialized(obj, children=True, parents=True, siblings=True)
+        serialized = bo_model.get_serialized(request, obj, children=True, parents=True, siblings=True)
         return serialized
 
     def api_get_view(self, request):
@@ -495,6 +518,11 @@ class BackOfficeBase(object):
         :return: a serialized view content
         """
         bo_view = self.get_view(request.view_params.get('view_slug'))
+
+        # Just hide the view if the viewing of it is not permitted
+        if not check_permission(request, bo_view.permission):
+            return {'content': u''}
+
         return bo_view.get_serialized(request)
 
     def api_post_view(self, request):
@@ -507,6 +535,11 @@ class BackOfficeBase(object):
         :return: a serialized view content
         """
         bo_view = self.get_view(request.view_params.get('view_slug'))
+
+        # Prevent posting to this view if not allowed to access this view
+        if not check_permission(request, bo_view.permission):
+            return HttpResponse(u'You are not allowed to post data to the view "%s".' % bo_view.slug, status=403)
+
         return bo_view.get_serialized_post(request)
 
     def api_post_view_action(self, request):
@@ -526,6 +559,10 @@ class BackOfficeBase(object):
 
         bo_view = self.get_view(view_params.get('view_slug'))
 
+        # Prevent posting to this view if not allowed to access this view
+        if not check_permission(request, bo_view.permission):
+            return HttpResponse(u'You are not allowed to post data to the view "%s".' % bo_view.slug, status=403)
+
         fn = getattr(bo_view, method, None)
         if not fn:
             raise Http404(u'Cannot find method %s on view %s' % (method, bo_view.slug))
@@ -542,6 +579,10 @@ class BackOfficeBase(object):
         view_slug = request.view_params.get('view_slug')
 
         bo_view = self.get_view(view_slug)
+
+        # Prevent accessing this view if not allowed
+        if not check_permission(request, bo_view.permission):
+            return HttpResponse(u'You are not allowed to view data from the view "%s".' % bo_view.slug, status=403)
 
         fn = getattr(bo_view, method, None)
         if not fn:
@@ -565,12 +606,14 @@ class BackOfficeTab(object):
     slug = AutoSlug(remove_suffix='Tab')
     title = None
     template = None
+    permission = None
 
-    def __init__(self, slug, title, template, shadow=None):
+    def __init__(self, slug, title, template, permission=None, shadow=None):
         self.slug = slug
         self.title = title
         self.template = template
         self.shadow = shadow
+        self.permission = permission
 
     def get_serialized_meta(self):
         return {
@@ -579,16 +622,18 @@ class BackOfficeTab(object):
             'shadow': self.shadow
         }
 
-    def get_serialized(self, instance):
+    def get_serialized(self, request, instance):
         return {
             'slug': self.slug,
             'title': self.title,
-            'template': render_to_string(self.template, {'instance': instance}),
+            'template': render_to_string(self.template, {'instance': instance},
+                                         context_instance=RequestContext(request)),
             'shadow': self.shadow
         }
 
     def __repr__(self):
-        return 'BackOfficeTab(%r, %r, %r, shadow=%r)' % (self.slug, self.title, self.template, self.shadow)
+        return 'BackOfficeTab(%r, %r, %r, permission=%r, shadow=%r)' \
+               % (self.slug, self.title, self.template, self.permission, self.shadow)
 
 
 class BackOfficeModel(object):
@@ -665,6 +710,12 @@ class BackOfficeModel(object):
     #: implementation.
     search_index_dependencies = {}
 
+    #: An optional string containing a permission which has to be checked
+    #: against the request that queries this model. If the permission is
+    #: not satisfied, the model will not show up in search results and
+    #: will never display.
+    permission = None
+
     def __init__(self):
         self.children = {}
         self.child_to_accessor = {}
@@ -684,12 +735,13 @@ class BackOfficeModel(object):
         """
         return {}
 
-    def render_template(self, instance):
+    def render_template(self, request, instance):
         if self.header_template:
             context = {
                 'instance': instance
             }
-            return render_to_string(self.header_template, context)
+            return render_to_string(self.header_template, context,
+                                    context_instance=RequestContext(request))
         return u''
 
     def get_parent_model_slug_for_field(self, parent_field):
@@ -703,26 +755,28 @@ class BackOfficeModel(object):
     def get_parent_accessor_from_myself(self, parent_field):
         return parent_field
 
-    def get_serialized(self, instance, children=False, parents=False, siblings=False):
+    def get_serialized(self, request, instance, children=False, parents=False, siblings=False):
         serialized = {
             'id': instance.pk,
             'title': self.get_title(instance),
             'model': self.slug,
             'path': '/%s/%d/' % (self.slug, instance.pk),
-            'header_template': self.render_template(instance),
-            'tabs': dict((t.slug, t.get_serialized(instance)) for t in self.tabs),
+            'header_template': self.render_template(request, instance),
+            'tabs': dict((t.slug, t.get_serialized(request, instance)) \
+                         for t in self.tabs \
+                         if check_permission(request, t.permission)),
             'is_object': True,
-            'meta': self.serialize_meta()
+            'meta': self.serialize_meta(request)
         }
 
         if children:
-            serialized['children'] = self.get_children(instance)
+            serialized['children'] = self.get_children(request, instance)
         if parents:
-            serialized['parents'] = self.get_parents(instance)
+            serialized['parents'] = self.get_parents(request, instance)
         if self.siblings and siblings:
             parent_bo_model = self.parents[self.siblings]
-            parent = self.get_parent_by_model(instance, parent_bo_model)
-            serialized['siblings'] = parent_bo_model.get_serialized_children_by_model(parent, self, exclude_meta=True)
+            parent = self.get_parent_by_model(request, instance, parent_bo_model)
+            serialized['siblings'] = parent_bo_model.get_serialized_children_by_model(request, parent, self, exclude_meta=True)
 
         serialized.update(self.serialize(instance))
         return serialized
@@ -731,20 +785,26 @@ class BackOfficeModel(object):
     def parent_fields_list(self):
         return self.parent_fields or self.parent_field and [self.parent_field]
 
-    def get_children_by_model(self, instance, bo_model):
+    def get_children_by_model(self, request, instance, bo_model):
+        if not instance or not check_permission(request, bo_model.permission):
+            return []
         return getattr(instance, self.child_to_accessor[bo_model.slug]).all()
 
-    def get_serialized_children_by_model(self, instance, bo_model, exclude_meta=False):
-        children = self.get_children_by_model(instance, bo_model)
-        serialized_children = [bo_model.get_serialized(c) for c in children]
+    def get_serialized_children_by_model(self, request, instance, bo_model, exclude_meta=False):
+        if not check_permission(request, bo_model.permission):
+            return []
+        children = self.get_children_by_model(request, instance, bo_model)
+        serialized_children = [bo_model.get_serialized(request, c) for c in children]
         if bo_model.has_header and not exclude_meta:
-            serialized = bo_model.serialize_meta()
+            serialized = bo_model.serialize_meta(request)
             serialized['children'] = serialized_children
             return [serialized]
         else:
             return serialized_children
 
-    def get_parent_by_model(self, instance, bo_model):
+    def get_parent_by_model(self, request, instance, bo_model):
+        if not check_permission(request, bo_model.permission):
+            return None
         parent = getattr(instance, self.parent_to_accessor[bo_model.slug])
         if parent is None:
             return None
@@ -752,11 +812,13 @@ class BackOfficeModel(object):
             return None
         return parent
 
-    def get_serialized_parent_by_model(self, instance, bo_model):
-        parent = self.get_parent_by_model(instance, bo_model)
-        return bo_model.get_serialized(parent) if parent else None
+    def get_serialized_parent_by_model(self, request, instance, bo_model):
+        if not check_permission(request, bo_model.permission):
+            return None
+        parent = self.get_parent_by_model(request, instance, bo_model)
+        return bo_model.get_serialized(request, parent) if parent else None
 
-    def serialize_meta(self):
+    def serialize_meta(self, request):
         return {
             'slug': self.slug,
             'verbose_name': self.verbose_name,
@@ -764,21 +826,21 @@ class BackOfficeModel(object):
             'has_header': self.has_header,
             'collapsed': self.collapsed,
             'show_in_parent': self.show_in_parent,
-            'tabs': [t.get_serialized_meta() for t in self.tabs],
+            'tabs': [t.get_serialized_meta() for t in self.tabs if check_permission(request, t.permission)],
             'is_meta': True
         }
 
-    def get_children(self, instance):
+    def get_children(self, request, instance):
         if not self.children:
             return ()
         child_models = sorted(self.children.values(), key=lambda m: m.priority)
-        return sum((self.get_serialized_children_by_model(instance, m) for m in child_models), [])
+        return sum((self.get_serialized_children_by_model(request, instance, m) for m in child_models), [])
 
-    def get_parents(self, instance):
+    def get_parents(self, request, instance):
         if not self.parents:
             return ()
         parent_models = sorted(self.parents.values(), key=lambda m: m.priority)
-        parents = (self.get_serialized_parent_by_model(instance, parent_model) for parent_model in parent_models)
+        parents = (self.get_serialized_parent_by_model(request, instance, parent_model) for parent_model in parent_models)
         return [parent for parent in parents if parent]
 
     def reindex(self, instance, backoffice_instance):
@@ -807,6 +869,8 @@ class BackOfficeModel(object):
 class BackOfficeView(object):
     slug = AutoSlug(remove_suffix='View')
 
+    permission = None
+
     def serialize(self, content, extra_context=None):
         context = {
             'slug': self.slug,
@@ -816,7 +880,7 @@ class BackOfficeView(object):
             context.update(extra_context)
         return context
 
-    def serialize_view_result(self, result):
+    def serialize_view_result(self, request, result):
         content, extra_context = result, {}
         if isinstance(result, tuple):
             content, extra_context = result
@@ -827,10 +891,10 @@ class BackOfficeView(object):
         return self.serialize(content, extra_context)
 
     def get_serialized(self, request):
-        return self.serialize_view_result(self.get(request))
+        return self.serialize_view_result(request, self.get(request))
 
     def get_serialized_post(self, request):
-        return self.serialize_view_result(self.post(request))
+        return self.serialize_view_result(request, self.post(request))
 
     def get(self, request):
         raise NotImplementedError

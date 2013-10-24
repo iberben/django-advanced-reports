@@ -222,6 +222,8 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
                     $scope.model = data;
                     if (!params.tab)
                         $route.current.params.tab = $scope.model.meta.tabs[0].slug;
+                }, function(error){
+                    alert(error);
                 });
             }
         }
