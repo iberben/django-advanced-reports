@@ -1,12 +1,15 @@
 from collections import defaultdict
 from django.conf.urls import patterns, url
+from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth import login
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
-from django.db.models.signals import post_save, post_delete, pre_delete
+from django.db.models.signals import post_save, post_delete
 from django.http import Http404
 from django.http.response import HttpResponse
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.views.decorators.cache import never_cache
@@ -16,7 +19,7 @@ from advanced_reports.backoffice.search import convert_to_raw_tsquery
 
 from .decorators import staff_member_required
 
-import json
+
 
 
 class AutoSlug(object):
@@ -85,6 +88,8 @@ class BackOfficeBase(object):
                         url(r'^logout/$', self.logout, name='logout'),
                         url(r'^api/(?P<method>[^/]+)/$', self.decorate(self.api), name='api'),
                         url(r'^api/$', self.decorate(self.api), name='api_home'),
+                        url(r'^login/as/(?P<user_id>\d+)/$', self.decorate(self.login_as), name='login_as'),
+                        url(r'^end/login/as/$', self.end_login_as, name='end_login_as'),
                         *self.define_urls()
         ), self.app_name, self.name
 
@@ -127,6 +132,28 @@ class BackOfficeBase(object):
         return render_to_response(self.model_template,
                                   self.default_context(),
                                   context_instance=RequestContext(request))
+
+    # Impersonation
+    def login_as(self, request, user_id):
+        me_id = request.session.get('impersonation_original_user', None)
+        me = User.objects.get(pk=me_id) if me_id else request.user
+        user = get_object_or_404(User, pk=user_id)
+        user.backend = 'django.contrib.auth.backends.ModelBackend'
+        login(request, user)
+        request.session['impersonation_original_user'] = me.pk
+        request.session['impersonating'] = True
+        return redirect(settings.LOGIN_REDIRECT_URL)
+
+    def end_login_as(self, request):
+        if 'impersonation_original_user' in request.session:
+            me_id = request.session['impersonation_original_user']
+            me = get_object_or_404(User, pk=me_id)
+            me.backend = 'django.contrib.auth.backends.ModelBackend'
+            del request.session['impersonation_original_user']
+            del request.session['impersonating']
+            login(request, me)
+            return redirect(reverse('backoffice:home', current_app=self.name))
+        return redirect(settings.LOGIN_REDIRECT_URL)
 
     def api(self, request, method=None):
         """
