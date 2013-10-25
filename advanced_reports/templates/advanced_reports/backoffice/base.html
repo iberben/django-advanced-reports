@@ -145,13 +145,12 @@
         <script src="{{ STATIC_URL }}advanced_reports/js/bootstrap.js"></script>
         <script src="{{ STATIC_URL }}advanced_reports/js/core.js"></script>
         <script src="{{ STATIC_URL }}advanced_reports/js/modules/notification.js"></script>
+        <script src="{{ STATIC_URL }}admin/js/admin/RelatedObjectLookups.js"></script>
 
         <script>
             frontend.notification.init();
         </script>
 
-{#        <span ng-repeat="message in getMessages()" ng-init="showMessage(message)"></span>#}
-{#        <span ng-repeat="message in getMessages()" ng-init="clearMessages()"></span>#}
         {% if messages %}
         <script>
             $(function(){

@@ -118,7 +118,7 @@ class action(object):
     hidden = False
     '''
     Optional. If True, your action will not be displayed on the report. Use this when you want to move your action link
-    to another place. Use the css class "action-link" and do a {% url advanced_reports_action "my_slug" "my_action_method", "my item id" %}.
+    to another place. Use the css class "action-link" and do a {% url 'advanced_reports_action' my_slug my_action_method, my item id %}.
     Also use this when defining a view action for your lazy divs.
     '''
 
