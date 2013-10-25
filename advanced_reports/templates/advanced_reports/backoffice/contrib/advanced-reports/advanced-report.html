@@ -490,8 +490,13 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
 
     $scope.trigger_success_attr = function(action){
         var success_attr = $scope.$eval($scope.view.params.success);
-        if (success_attr && success_attr[action.method]){
-            $scope.$eval(success_attr[action.method]);
+        if (success_attr){
+            if (success_attr[action.method]){
+                $scope.$eval(success_attr[action.method]);
+            }
+            if (success_attr['__all__']){
+                $scope.$eval(success_attr['__all__'])
+            }
         }
     };
 
