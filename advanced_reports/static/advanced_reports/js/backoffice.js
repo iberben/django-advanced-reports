@@ -315,7 +315,7 @@ app.directive('compile', ['$compile', function ($compile){
     };
 }]);
 
-app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', function($compile, $q, boApi, boUtils, $timeout){
+app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', '$parse', function($compile, $q, boApi, boUtils, $timeout, $parse){
     return {
         link: function(scope, element, attrs){
             var slug = attrs.view;
@@ -372,6 +372,9 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
                             }else{
                                 if (viewToUpdateOnPost){
                                     scope.$eval(viewToUpdateOnPost).fetch();}
+                                if (success.post){
+                                    $parse(success.post)(scope);
+                                }
                             }
                         }, showError);
                     };
@@ -385,7 +388,9 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', functio
                     }, url_suffix).then(function(result){
                         if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
                             data.fetch();
-                        scope.$eval(success[method]);
+                        if (success[method]){
+                            $parse(success[method])(scope);
+                        }
                         return result;
                     }, function(error, status){
                         if (angular.isUndefined(reloadViewOnSuccess) || reloadViewOnSuccess)
