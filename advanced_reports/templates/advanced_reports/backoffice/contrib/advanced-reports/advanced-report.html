@@ -120,7 +120,7 @@
                 </select>
             </div>
             {% endverbatim %}
-            <button type="submit" class="btn btn-primary">{% trans "Search" %}</button>
+            <button type="submit" class="btn btn-default" ng-show="show_search()">{% trans "Search" %}</button>
             <div class="checkbox">
                 <label><a href ng-show="has_applied_filters()" ng-click="remove_filters()">{% trans "show all" %}</a></label>
             </div>
@@ -301,7 +301,13 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         return $scope.report
                 && $scope.report.report_header_visible
                 && !$scope.single_action
-                && ($scope.filter_fields || $scope.search_fields || $scope.report.multiple_actions);
+                && ($scope.show_search() || $scope.show_action_select());
+    };
+
+    $scope.show_search = function(){
+        return $scope.report && (
+                $scope.report.filter_fields && $scope.report.filter_fields.length > 0 ||
+                $scope.report.search_fields && $scope.report.search_fields.length > 0);
     };
 
     $scope.change_page = function(page){
@@ -366,7 +372,7 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
         for (var key in $scope.search)
             if (key != 'order' && key != 'page')
                 count += 1;
-        return count > 0;
+        return count > 0 && $scope.show_search();
     };
 
     $scope.apply_filters = function() {
