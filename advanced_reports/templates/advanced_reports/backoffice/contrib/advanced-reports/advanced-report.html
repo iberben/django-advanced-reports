@@ -160,7 +160,7 @@
                 <tr>
                     {% verbatim %}
                     <th ng-style="{width: {true: '24px', false: '0'}[report.multiple_actions]}">
-                        <input type="checkbox" ng-model="report.all_selected" ng-click="update_selected()" ng-show="report.multiple_actions">
+                        <input type="checkbox" ng-model="report.all_selected" ng-click="update_selected()" ng-show="report.multiple_actions && !select_mode()">
                     </th>
                     {% endverbatim %}
                     <th ng-repeat="column in report.header" ng-style="column.style">
@@ -174,11 +174,14 @@
 
             <tbody ng-repeat="item in report.items">
                 <tr ng-click="toggle_expand(item)" ng-class="{success: multiple_succeeded[item.item_id], danger: multiple_failed[item.item_id]}">
-                    <td><input type="checkbox" ng-model="selected[item.item_id]" ng-click="update_all_selected();$event.stopPropagation()" ng-show="report.multiple_actions"></td>
+                    <td>
+                        <input type="checkbox" ng-model="selected[item.item_id]" ng-click="update_all_selected();$event.stopPropagation()" ng-show="report.multiple_actions && !select_mode()">
+                        <a ng-show="select_mode()" href ng-click="view.selected_item=item;trigger_success_attr({method: 'select'})">{% trans "select" %}</a>
+                    </td>
                     <td ng-repeat="value in item.values" ng-bind-html-unsafe="value.html" ng-style="value.style" ng-class="value.class"></td>
                     <td ng-show="has_expanded_content(item)">
-                        <a ng-show="item.expanded" href>{% trans "hide details" %}</a>
-                        <a ng-hide="item.expanded" href>{% trans "show details" %}</a>
+                        <a ng-show="item.expanded && !select_mode()" href>{% trans "hide details" %}</a>
+                        <a ng-hide="item.expanded || select_mode()" href>{% trans "show details" %}</a>
                     </td>
                 </tr>
                 <tr ng-show="multiple_succeeded[item.item_id] && item.expanded" class="success">
@@ -196,7 +199,6 @@
                     {% verbatim %}
                     <td colspan="{{ report.header.length + 2 }}">
                         <div class="btn-group">
-
                             <a class="btn {{ action.css_class|default:'btn-default' }}" link-to="get_action_link(item, action)" ng-click="execute_action(item, action)" ng-repeat="action in item.actions|filter:is_button_action">{{ action.verbose_name }}</a>
                         </div>
                         <div ng-repeat="action in item.actions|filter:is_inline_form_action">
@@ -322,6 +324,9 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
     };
 
     $scope.toggle_expand = function(item) {
+        if ($scope.select_mode()){
+            return;
+        }
         if (!item.expanded && $scope.has_expanded_content(item)) {
             item.expanded = true;
             $scope.$broadcast('item_expanded', item.item_id);
@@ -603,5 +608,9 @@ function AdvancedReportCtrl($scope, $http, $location, boUtils, $timeout, boApi) 
             return $scope.view.action_link('action_view', {report_method: action.method, pk: item.item_id});
         return '';
     };
+
+    $scope.select_mode = function(){
+        return $scope.view.params.selectMode == 'true';
+    }
 }
 </script>
