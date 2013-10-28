@@ -402,6 +402,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
                     var combinedParams = angular.extend({method: method}, params, actionParams);
                     return boApi.link('view_view', combinedParams);
                 };
+                data.trigger_success = function(method, param){
+                    $parse(success[method])(scope, {param: param});
+                };
                 scope[viewInstance] = data;
                 internalScope.view = data;
             };
