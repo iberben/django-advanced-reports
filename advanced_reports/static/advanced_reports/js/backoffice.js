@@ -1,10 +1,10 @@
-var app = angular.module('BackOfficeApp', ['ngCookies']);
+angular.module('BackOfficeApp', ['ngCookies'])
 
-app.run(function ($http, $cookies){
+.run(function ($http, $cookies){
     $http.defaults.headers.common['X-CSRFToken'] = $cookies['csrftoken'];
-});
+})
 
-app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
+.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
     $routeProvider.
         when('/', {controller: 'EmptyController', templateUrl: '/home.html'}).
         when('/tab/:tab/', {controller: 'EmptyController'}).
@@ -16,9 +16,9 @@ app.config(['$routeProvider', '$locationProvider', function($routeProvider, $loc
         when('/:model/:id/:tab/:detail/', {templateUrl: '/model.html', reloadOnSearch: false}).
         otherwise({redirectTo: '/'});
     //$locationProvider.html5Mode(true);
-}]);
+}])
 
-app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, boUtils, $timeout){
+.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, boUtils, $timeout){
     return {
         requests: 0,
         slow: false,
@@ -113,9 +113,9 @@ app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, 
             return this.requests > 0 && this.slow;
         }
     };
-}]);
+}])
 
-app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', 'boReverser', function($scope, $http, $location, boApi, $route, boReverser){
+.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', 'boReverser', function($scope, $http, $location, boApi, $route, boReverser){
     $scope.params = {};
 
     $scope.path = function(){
@@ -247,9 +247,9 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     $scope.isVisibleTab = function(tab){
         return !tab.shadow;
     };
-}]);
+}])
 
-app.factory('boReverser', ['$route', 'boUtils', function($route, boUtils){
+.factory('boReverser', ['$route', 'boUtils', function($route, boUtils){
     return {
         configure: function(hierarchy, prefix){
             this.hierarchy = hierarchy;
@@ -290,12 +290,12 @@ app.factory('boReverser', ['$route', 'boUtils', function($route, boUtils){
             return url;
         }
     };
-}]);
+}])
 
-app.controller('EmptyController', ['$scope', function($scope){}]);
+.controller('EmptyController', ['$scope', function($scope){}])
 
 // http://stackoverflow.com/questions/17417607/angular-ng-bind-html-unsafe-and-directive-within-it
-app.directive('compile', ['$compile', function ($compile){
+.directive('compile', ['$compile', function ($compile){
     return {
         link: function(scope, element, attrs){
             scope.$watch(function(scope){
@@ -313,9 +313,9 @@ app.directive('compile', ['$compile', function ($compile){
         },
         scope: true
     };
-}]);
+}])
 
-app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', '$parse', function($compile, $q, boApi, boUtils, $timeout, $parse){
+.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', '$parse', function($compile, $q, boApi, boUtils, $timeout, $parse){
     return {
         link: function(scope, element, attrs){
             var slug = attrs.view;
@@ -414,9 +414,9 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', '$parse
         },
         scope: false
     };
-}]);
+}])
 
-app.directive('postToView', function(){
+.directive('postToView', function(){
     return function(scope, element, attrs){
         var closeModalFirst = scope.$eval(attrs.closeModalFirst);
         element.on('submit', function(e){
@@ -425,9 +425,9 @@ app.directive('postToView', function(){
             });
         });
     };
-});
+})
 
-app.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
+.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
     return function(scope, element, attrs){
         var to = null;
         var fn = $parse(attrs.keyupDelay);
@@ -442,9 +442,9 @@ app.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
             });
         });
     };
-}]);
+}])
 
-app.factory('boUtils', function(){
+.factory('boUtils', function(){
     return {
         toQueryString: function(obj){
             var str = [];
@@ -477,34 +477,34 @@ app.factory('boUtils', function(){
             return count;
         }
     };
-});
+})
 
-app.filter('capitalize', function(){
+.filter('capitalize', function(){
     return function(input){
         if (input.length > 0)
             return input.charAt(0).toUpperCase() + input.slice(1);
         return '';
    };
-});
+})
 
-app.filter('uriencode', function(){
+.filter('uriencode', function(){
     return encodeURIComponent;
-});
+})
 
-app.filter('default', function(){
+.filter('default', function(){
     return function(value, fallback){
         return value || fallback;
     };
-});
+})
 
-app.directive('boElement', ['$parse', function($parse){
+.directive('boElement', ['$parse', function($parse){
     return function(scope, element, attrs){
         var obj = $parse(attrs.boElement);
         obj.assign(scope, element);
     };
-}]);
+}])
 
-app.directive('focusOn', function() {
+.directive('focusOn', function() {
     return function(scope, elem, attr) {
         scope.$on(attr.focusOn, function(e, event_attr) {
             if (!event_attr || attr.focusAttr == '' + event_attr)
@@ -516,9 +516,9 @@ app.directive('focusOn', function() {
             }
         });
     };
-});
+})
 
-app.directive('onFocus', ['$parse', function($parse){
+.directive('onFocus', ['$parse', function($parse){
     return function(scope, element, attrs){
         var fn = $parse(attrs.onFocus);
         element.on('focus', function(event){
@@ -527,9 +527,9 @@ app.directive('onFocus', ['$parse', function($parse){
             });
         });
     };
-}]);
+}])
 
-app.factory('idGenerator', function(){
+.factory('idGenerator', function(){
     return {
         nextId: 0,
         generate: function(){
@@ -537,9 +537,9 @@ app.factory('idGenerator', function(){
             return this.nextId;
         }
     };
-});
+})
 
-app.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', function($timeout, $compile, idGenerator){
+.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', function($timeout, $compile, idGenerator){
     return {
         link: function(scope, element, attrs){
             // Generate a unique ID to connect the datalist to the field.
@@ -584,9 +584,9 @@ app.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', function($
         },
         scope: false
     };
-}]);
+}])
 
-app.directive('autoCompleteOld', ['$timeout', 'boUtils', function($timeout, boUtils){
+.directive('autoCompleteOld', ['$timeout', 'boUtils', function($timeout, boUtils){
     return {
         template: '' +
             '<span ng-transclude></span>' +
@@ -663,18 +663,16 @@ app.directive('autoCompleteOld', ['$timeout', 'boUtils', function($timeout, boUt
         replace: false,
         transclude: true
     };
-}]);
+}])
 
-
-app.directive('linkTo', function(){
+.directive('linkTo', function(){
    return function(scope, element, attrs){
        var url = scope.$eval(attrs.linkTo);
        element.attr('href', url);
    };
-});
+})
 
-
-app.directive('boModal', function(){
+.directive('boModal', function(){
     return {
         templateUrl: '/modal.html',
         scope: {
@@ -713,10 +711,9 @@ app.directive('boModal', function(){
             });
         }
     };
-});
+})
 
-
-app.directive('boParallax', function(){
+.directive('boParallax', function(){
     return function(scope, element, attrs){
         scope.$watch(function(){
             return element.innerHeight();
