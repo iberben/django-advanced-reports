@@ -517,7 +517,11 @@ class BackOfficeBase(object):
         :param request: ``request.view_params with 'view_slug'``
         :return: a serialized view content
         """
-        bo_view = self.get_view(request.view_params.get('view_slug'))
+        slug = request.view_params.get('view_slug')
+        bo_view = self.get_view(slug)
+
+        if not bo_view:
+            return {'content': u'<span class="text-danger">View with slug "%s" does not exist. Are you sure you have registered it?</span>' % slug}
 
         # Just hide the view if the viewing of it is not permitted
         if not check_permission(request, bo_view.permission):
