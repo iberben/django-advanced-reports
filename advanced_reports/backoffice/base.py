@@ -593,6 +593,12 @@ class BackOfficeBase(object):
             raise Http404(u'Cannot find method %s on view %s' % (method, bo_view.slug))
         return fn(request)
 
+    def api_post_view_view(self, request):
+        """
+        Alias to ``api_get_view_view`` to support POST requests as well.
+        """
+        return self.api_get_view_view(request)
+
 
 class BackOfficeTab(object):
     """

@@ -405,6 +405,11 @@ angular.module('BackOfficeApp', ['ngCookies'])
                 data.trigger_success = function(method, param){
                     $parse(success[method])(scope, {param: param});
                 };
+
+                data.replace_contents = function(contents){
+                    compile({content: contents});
+                };
+
                 scope[viewInstance] = data;
                 internalScope.view = data;
             };

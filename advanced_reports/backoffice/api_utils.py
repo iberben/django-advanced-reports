@@ -29,8 +29,11 @@ class ViewRequestParameters(object):
     def __init__(self, request):
         self.GET = request.GET
         self.POST = request.POST
-        self.body = request.body
-        self.json_dict = json.loads(self.body) if 'application/json' in request.META['CONTENT_TYPE'] else {}
+        try:
+            self.body = request.body
+            self.json_dict = json.loads(self.body) if 'application/json' in request.META['CONTENT_TYPE'] else {}
+        except:
+            self.json_dict = {}
 
         self.fallbacks = (self.GET, self.POST, self.json_dict)
         self.list_fallbacks = (self.GET, self.POST)
