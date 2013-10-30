@@ -267,7 +267,6 @@ class BackOfficeBase(object):
             bo_model_instance = bo_model()
             self.slug_to_bo_model[bo_model.slug] = bo_model_instance
             self.model_to_bo_model[bo_model.model] = bo_model_instance
-            self.link_relationship(bo_model_instance)
 
             # Connect signals to listen for changes to this model and their
             # ``search_index_dependencies``.
@@ -278,6 +277,9 @@ class BackOfficeBase(object):
                 self.search_index_dependency_to_dependants[dependency].append(bo_model_instance)
                 post_save.connect(self._reindex_model_signal_handler, sender=dependency)
                 post_delete.connect(self._reindex_model_signal_handler, sender=dependency)
+
+        for bo_model_instance in self.model_to_bo_model.values():
+            self.link_relationship(bo_model_instance)
 
     def get_model(self, slug=None, model=None):
         """
@@ -765,16 +767,19 @@ class BackOfficeModel(object):
     def get_parent_accessor_from_myself(self, parent_field):
         return parent_field
 
+    def get_route(self, instance):
+        return {'model': self.slug, 'id': instance.pk}
+
     def get_serialized(self, request, instance, children=False, parents=False, siblings=False):
         serialized = {
             'id': instance.pk,
             'title': self.get_title(instance),
             'model': self.slug,
-            'path': '/%s/%d/' % (self.slug, instance.pk),
             'header_template': self.render_template(request, instance),
             'tabs': dict((t.slug, t.get_serialized(request, instance)) \
                          for t in self.tabs \
                          if check_permission(request, t.permission)),
+            'route': self.get_route(instance),
             'is_object': True,
             'meta': self.serialize_meta(request)
         }

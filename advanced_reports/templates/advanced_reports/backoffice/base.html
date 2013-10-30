@@ -70,7 +70,7 @@
                                 <ul class="always-visible dropdown-menu" ng-show="is_search_results_preview_visible()">
                                     {% verbatim %}
                                     <li ng-repeat="result in search_results_preview.results">
-                                        <a href="{{ root_url }}#{{ result.path }}">
+                                        <a href="{{ root_url }}{{ get_url(result.route) }}">
                                             <small>{{ result.verbose_name }}</small> {{ result.title }}
                                         </a>
                                     </li>

@@ -41,13 +41,13 @@
 
                 <div class="panel-body">
                     <header>
-                        <h2><a href="{{ root_url }}#{{ result.path }}">{{ result.title }}</a></h2>
+                        <h2><a href="{{ root_url }}{{ get_url(result.route) }}">{{ result.title }}</a></h2>
                         <span>{{ result.meta.verbose_name }}</span>
                     </header>
 
                     <div class="content">
                         <div class="btn-group">
-                            <a ng-repeat="tab in result.meta.tabs|filter:isVisibleTab" href="{{ root_url }}#{{ result.path }}{{ tab.slug }}" class="btn btn-default" >{{ tab.title }}</a>
+                            <a ng-repeat="tab in result.meta.tabs|filter:isVisibleTab" href="{{ root_url }}{{ get_url(result.route, {tab: tab.slug}) }}" class="btn btn-default" >{{ tab.title }}</a>
                         </div>
                     </div>
                 </div>

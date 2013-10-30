@@ -240,8 +240,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
         $scope.params = params;
     });
 
-    $scope.get_url = function(url_params){
-        return boReverser.reverse(url_params);
+    $scope.get_url = function(url_params, extend){
+        var extended = angular.extend(url_params || {}, extend || {});
+        return boReverser.reverse(extended);
     };
 
     $scope.isVisibleTab = function(tab){
@@ -427,6 +428,7 @@ angular.module('BackOfficeApp', ['ngCookies'])
 .directive('postToView', function(){
     return function(scope, element, attrs){
         var closeModalFirst = scope.$eval(attrs.closeModalFirst);
+
         element.on('submit', function(e){
             scope.$apply(function(){
                 scope.view.post(element.serialize(), closeModalFirst);
