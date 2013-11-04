@@ -577,7 +577,7 @@ class AdvancedReport(object):
         '''
         return {}
 
-    def get_filtered_items(self, queryset, params):
+    def get_filtered_items(self, queryset, params, request=None):
         filter_query = None
         date_range_query = None
         fake_fields = []
@@ -659,12 +659,12 @@ class AdvancedReport(object):
                     filter_query = Q(pk__in=fake_found)
 
             if filter_query:
-                return EnrichedQueryset(queryset.filter(filter_query), self)
+                return EnrichedQueryset(queryset.filter(filter_query), self, request=request)
             else:
                 # When no filter parameter is found then we don't apply the filter_query
-                return EnrichedQueryset(queryset, self)
+                return EnrichedQueryset(queryset, self, request=request)
         else:
-            return EnrichedQueryset(fake_found, self)
+            return EnrichedQueryset(fake_found, self, request=request)
 
     def _queryset(self, request):
         if hasattr(self, 'queryset_request'):
@@ -718,7 +718,7 @@ class AdvancedReport(object):
         # Filter
         if ids is not None:
             queryset = queryset.filter(pk__in=ids)
-        object_list = self.get_filtered_items(queryset, request.GET)
+        object_list = self.get_filtered_items(queryset, request.GET, request=request)
 
         return object_list, context
 
@@ -849,12 +849,13 @@ class AdvancedReport(object):
         if list:
             self.enrich_list([o])
 
+        self.assign_attr(o, 'advreport_request', request)
         self.assign_attr(o, 'advreport_column_values', [v for v in self.get_column_values(o)])
         self.assign_attr(o, 'advreport_actions', self.get_object_actions(o))
         self.assign_attr(o, 'advreport_object_id', self.get_item_id(o))
         self.assign_attr(o, 'advreport_class', self.get_item_class(o))
         self.assign_attr(o, 'advreport_extra_information', self.get_extra_information(o) % Resolver({'item': o}))
-        self.assign_attr(o, 'advreport_request', request)
+
 
     def enrich_generic_relation(self, items, our_model, foreign_model, attr_name, fallback):
         '''
@@ -979,9 +980,10 @@ class AdvancedReport(object):
         return lambda h: u'<a href="%(l)s">%(h)s</a>' % {'l': reverse(urlname, kwargs=kwargs), 'h': h}
 
 class EnrichedQueryset(object):
-    def __init__(self, queryset, advreport):
+    def __init__(self, queryset, advreport, request=None):
         self.queryset = queryset
         self.advreport = advreport
+        self.request = request
 
     def __getitem__(self, k):
         if isinstance(k, slice):
@@ -1003,12 +1005,12 @@ class EnrichedQueryset(object):
 
         for o in l:
             # We pass list=False to prevent running enrich_list from enrich_object.
-            self.advreport.enrich_object(o, list=False)
+            self.advreport.enrich_object(o, list=False, request=self.request)
 
         return l
 
     def _enrich(self, o):
-        self.advreport.enrich_object(o)
+        self.advreport.enrich_object(o, self.request)
         return o
 
 class Resolver(object):

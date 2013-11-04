@@ -178,7 +178,7 @@
                         <input type="checkbox" ng-model="selected[item.item_id]" ng-click="update_all_selected();$event.stopPropagation()" ng-show="report.multiple_actions && !select_mode()">
                         <a ng-show="select_mode()" href ng-click="view.selected_item=item;trigger_success_attr({method: 'select'})">{% trans "select" %}</a>
                     </td>
-                    <td ng-repeat="value in item.values" ng-bind-html-unsafe="value.html" ng-style="value.style" ng-class="value.class"></td>
+                    <td ng-repeat="value in item.values" compile="value.html" ng-style="value.style" ng-class="value.class"></td>
                     <td ng-show="has_expanded_content(item)">
                         <a ng-show="item.expanded && !select_mode()" href>{% trans "hide details" %}</a>
                         <a ng-hide="item.expanded || select_mode()" href>{% trans "show details" %}</a>
