@@ -11,6 +11,12 @@ body {
     color: #2d3947;
 }
 
+
+section.content[role='main'] {
+    padding-bottom: 50px;
+    min-height: 400px;
+}
+
 /* TITLES
 ==========================*/
 h1, h2, h3 {
