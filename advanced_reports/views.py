@@ -368,9 +368,11 @@ def api_action(request, slug, method, object_id):
                     context.update({'response_method': method, 'response_form': unicode(form)})
                     if a.form_template:
                         context.update({'response_form': render_to_string(a.form_template, {'form': form, 'item': obj})})
-
-                advreport.enrich_object(obj, request=request)
-                context.update({'item': _item_values(obj, advreport)})
+                if obj:
+                    advreport.enrich_object(obj, request=request)
+                    context.update({'item': _item_values(obj, advreport)})
+                else:
+                    context.update({'item': None, 'removed_item_id': object_id})
                 return JSONResponse(context)
 
             elif a.form is None:
@@ -378,8 +380,11 @@ def api_action(request, slug, method, object_id):
                 if response:
                     return response
                 obj = advreport.get_item_for_id(object_id)
-                advreport.enrich_object(obj, request=request)
-                context = {'item': _item_values(obj, advreport), 'success': a.get_success_message()}
+                if obj:
+                    advreport.enrich_object(obj, request=request)
+                    context = {'item': _item_values(obj, advreport), 'success': a.get_success_message()}
+                else:
+                    context = {'item': None, 'success': a.get_success_message(), 'removed_item_id': object_id}
                 return JSONResponse(context)
 
         except ActionException, e:

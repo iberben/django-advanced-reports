@@ -442,11 +442,13 @@ class AdvancedReport(object):
         '''
         Advanced Reports also expects each item to be found by its unique ID. By default it does
         a lookup of the primary key of a model.
+
+        Returns None if the item does not exist.
         '''
         try:
             return self._queryset(request=None).get(pk=item_id)
         except ObjectDoesNotExist, e:
-            raise Http404(u'%s' % e)
+            return None
 
     def get_decorator(self):
         '''
@@ -738,7 +740,7 @@ class AdvancedReport(object):
 
     def handle_multiple_actions(self, method, selected_object_ids, request=None):
         action = self.find_action(method)
-        objects = [self.get_item_for_id(item_id) for item_id in selected_object_ids]
+        objects = [o for o in (self.get_item_for_id(item_id) for item_id in selected_object_ids) if o]
         self.enrich_list(objects)
         for o in objects:
             self.enrich_object(o, list=False, request=request)
@@ -846,6 +848,9 @@ class AdvancedReport(object):
         If supplied, the request will be attached to the item so that you can use this
         in your actions.
         '''
+        if not o:
+            return
+
         if list:
             self.enrich_list([o])
 

@@ -155,22 +155,35 @@ angular.module('BackOfficeApp')
         $scope.fetch_report();
     };
 
-    $scope.update_item = function(item, new_item, expand_next) {
-        for (var key in new_item) {
-            if (new_item.hasOwnProperty(key))
-                item[key] = new_item[key];
-        }
-        if (expand_next)
-        {
-            var this_item_id = $scope.report.items.indexOf(item);
-            if (this_item_id < $scope.report.items.length - 1)
-            {
-                $scope.toggle_expand(item);
-                $scope.toggle_expand($scope.report.items[this_item_id+1]);
+    $scope.update_item = function(item, data, expand_next) {
+        if (!!data.item){
+            // We successfully got an item back
+            var new_item = data.new_item;
+            for (var key in new_item) {
+                if (new_item.hasOwnProperty(key))
+                    item[key] = new_item[key];
             }
-        }
+            if (expand_next)
+            {
+                var this_item_id = $scope.report.items.indexOf(item);
+                if (this_item_id < $scope.report.items.length - 1)
+                {
+                    $scope.toggle_expand(item);
+                    $scope.toggle_expand($scope.report.items[this_item_id+1]);
+                }
+            }
 
-        $scope.fetch_lazy_divs(item);
+            $scope.fetch_lazy_divs(item);
+        } else {
+            var item_to_remove = $scope.report.items.indexOf(item);
+            if (expand_next){
+                if (item_to_remove < $scope.report.items.length - 1)
+                {
+                    $scope.toggle_expand($scope.report.items[item_to_remove+1]);
+                }
+            }
+            $scope.report.items.splice(item_to_remove, 1);
+        }
     };
 
     $scope.execute_multiple_action = function(){
@@ -233,8 +246,8 @@ angular.module('BackOfficeApp')
             var execute = function(){
                 $scope.view.action('action', {method: action.method, pk: item.item_id}, false).then(function(data){
                     $scope.action_confirm_popup.modal('hide');
-                    if (data.item){
-                        $scope.update_item(item, data.item, action.next_on_success);
+                    if (data.item || data.removed_item_id){
+                        $scope.update_item(item, data, action.next_on_success);
                         $scope.show_success(data.success);
                         $scope.trigger_success_attr(action);
                     } else {
@@ -286,7 +299,7 @@ angular.module('BackOfficeApp')
 
         $scope.view.action('action', {method: form.method, pk: item.item_id, data: data}, false).then(function(result){
             if (result.success){
-                $scope.update_item(item, result.item, form.next_on_success);
+                $scope.update_item(item, result, form.next_on_success);
                 $scope.show_success(result.success);
                 $scope.trigger_success_attr(form);
                 $scope.form = null;
@@ -305,7 +318,7 @@ angular.module('BackOfficeApp')
         var data = action_form_element.serialize();
         $scope.view.action('action', {method: action.method, pk: item.item_id, data: data}, false).then(function(result){
             if (result.success){
-                $scope.update_item(item, result.item, action.next_on_success);
+                $scope.update_item(item, result, action.next_on_success);
                 $scope.show_success(result.success);
                 $scope.trigger_success_attr(action);
             }else{
