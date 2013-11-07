@@ -425,11 +425,11 @@ class AdvancedReport(object):
         '''
         self.request = request
 
-    '''
-    The following two functions work both in tandem for naming and finding items.
-    It is recommended to override get_item_for_id as the default implementation may be a little
-    bit inefficient.
-    '''
+    #
+    # The following two functions work both in tandem for naming and finding items.
+    # It is recommended to override get_item_for_id as the default implementation may be a little
+    # bit inefficient.
+    #
 
     def get_item_id(self, item):
         '''
