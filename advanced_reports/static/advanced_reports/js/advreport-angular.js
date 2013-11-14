@@ -158,7 +158,7 @@ angular.module('BackOfficeApp')
     $scope.update_item = function(item, data, expand_next) {
         if (!!data.item){
             // We successfully got an item back
-            var new_item = data.new_item;
+            var new_item = data.item;
             for (var key in new_item) {
                 if (new_item.hasOwnProperty(key))
                     item[key] = new_item[key];
