@@ -142,6 +142,11 @@ class action(object):
     If the form of the action has a file upload, set it to true. enctype='multipart/form-data' will be added to the form.
     '''
 
+    permission = None
+    '''
+    Optional. The permission required for this action.
+    '''
+
 
     def __init__(self, **kwargs):
         '''
@@ -186,6 +191,10 @@ class action(object):
             return self.form_instance(instance, *args, **kwargs) if callable(self.form_instance) else form_instance
         return instance
 
+    def is_allowed(self, request):
+        return not self.permission or request.user.has_perm(self.permission)
+
+
 class ActionException:
     def __init__(self, msg=None, form=None):
         if form is not None:
@@ -196,6 +205,7 @@ class ActionException:
             self.msg = e
         else:
             self.msg = u'%s' % msg
+
 
 class AdvancedReport(object):
     slug = None
@@ -738,7 +748,11 @@ class AdvancedReport(object):
 #            return method
         return getattr(self, method, lambda i, f=None: False)
 
+
     def handle_multiple_actions(self, method, selected_object_ids, request=None):
+        '''
+        Deprecated. Don't use anymore!
+        '''
         action = self.find_action(method)
         objects = [o for o in (self.get_item_for_id(item_id) for item_id in selected_object_ids) if o]
         self.enrich_list(objects)
@@ -856,7 +870,7 @@ class AdvancedReport(object):
 
         self.assign_attr(o, 'advreport_request', request)
         self.assign_attr(o, 'advreport_column_values', [v for v in self.get_column_values(o)])
-        self.assign_attr(o, 'advreport_actions', self.get_object_actions(o))
+        self.assign_attr(o, 'advreport_actions', self.get_object_actions(o, request=request))
         self.assign_attr(o, 'advreport_object_id', self.get_item_id(o))
         self.assign_attr(o, 'advreport_class', self.get_item_class(o))
         self.assign_attr(o, 'advreport_extra_information', self.get_extra_information(o) % Resolver({'item': o}))
@@ -930,11 +944,12 @@ class AdvancedReport(object):
             for item in items:
                 setattr(item, related_name, foreign_mapping.get(oi(item), (None,))[0])
 
-    def get_object_actions(self, object):
+    def get_object_actions(self, object, request=None):
         actions = []
 
         for a in self.item_actions:
-            if self.verify_action_group(object, a.group):
+            if self.verify_action_group(object, a.group) and \
+                    (not request or a.is_allowed(request)):
                 instance = a.form_instance(object) if a.form_instance else object
                 if not a.form_via_ajax or a.prefetch_ajax_form:
                     new_action = a.copy_with_instanced_form(prefix=self.get_item_id(object), instance=instance)

@@ -308,6 +308,9 @@ def _item_values(o, advreport):
     }
 
 
+def _is_allowed_multiple_action(request, action):
+    return not action.hidden and not action.form and action.multiple_display and action.is_allowed(request)
+
 @transaction.autocommit
 def api_list(request, slug, ids=None):
     advreport = get_report_or_404(slug)
@@ -331,7 +334,7 @@ def api_list(request, slug, ids=None):
             'filter_values': advreport.filter_values,
             'report_header_visible': advreport.report_header_visible,
             'multiple_actions': advreport.multiple_actions,
-            'multiple_action_list': [a.attrs_dict for a in advreport.item_actions if not a.hidden and not a.form and a.multiple_display]
+            'multiple_action_list': [a.attrs_dict for a in advreport.item_actions if _is_allowed_multiple_action(request, a)]
         }
         return JSONResponse(report)
 
@@ -351,7 +354,8 @@ def api_action(request, slug, method, object_id):
         a = advreport.find_object_action(obj, method)
         if a is None:
             return HttpResponse(_(u'Unsupported action method "%s".' % method), status=404)
-
+        if not a.is_allowed(request):
+            return HttpResponse(_(u'You\'re not allowed to execute "%s".' % method), status=404)
         context = {}
         try:
             if request.method == 'POST' and a.form is not None:

@@ -76,12 +76,14 @@ class AdvancedReportView(BackOfficeView):
             for item in items:
                 try:
                     action = advreport.find_object_action(item, method)
-                    if action:
+                    if action and action.is_allowed(request):
                         result = getattr(advreport, method)(item)
                         if isinstance(result, HttpResponseBase) and result.status_code == 200:
                             messages.warning(request, _(u'This action does not support batch operations.'))
                         else:
                             succeeded[advreport.get_item_id(item)] = action.get_success_message()
+                    elif not action.is_allowed(request):
+                        failed[advreport.get_item_id(item)] = _(u'You are not allowed to execute this action.')
                     else:
                         failed[advreport.get_item_id(item)] = _(u'This action is not applicable to this item.')
                 except ActionException, e:
