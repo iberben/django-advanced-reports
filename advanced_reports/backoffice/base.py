@@ -19,6 +19,12 @@ from advanced_reports.backoffice.search import convert_to_raw_tsquery
 
 from .decorators import staff_member_required
 
+import random
+
+
+def random_token():
+    return u'<!-- random: %d -->' % random.randint(0, 10000000000)
+
 
 def check_permission(request, permission):
     """
@@ -639,7 +645,7 @@ class BackOfficeTab(object):
             'slug': self.slug,
             'title': self.title,
             'template': render_to_string(self.template, {'instance': instance},
-                                         context_instance=RequestContext(request)),
+                                         context_instance=RequestContext(request)) + random_token(),
             'shadow': self.shadow
         }
 
