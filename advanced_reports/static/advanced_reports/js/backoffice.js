@@ -241,7 +241,7 @@ angular.module('BackOfficeApp', ['ngCookies'])
     });
 
     $scope.get_url = function(url_params, extend){
-        var extended = angular.extend(url_params || {}, extend || {});
+        var extended = angular.extend(angular.copy(url_params || {}), extend || {});
         return boReverser.reverse(extended);
     };
 
