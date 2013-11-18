@@ -781,7 +781,7 @@ class BackOfficeModel(object):
             'id': instance.pk,
             'title': self.get_title(instance),
             'model': self.slug,
-            'header_template': self.render_template(request, instance),
+            'header_template': self.render_template(request, instance) + random_token(),
             'tabs': dict((t.slug, t.get_serialized(request, instance)) \
                          for t in self.tabs \
                          if check_permission(request, t.permission)),
@@ -895,7 +895,7 @@ class BackOfficeView(object):
     def serialize(self, content, extra_context=None):
         context = {
             'slug': self.slug,
-            'content': content,
+            'content': content + random_token(),
         }
         if extra_context:
             context.update(extra_context)
