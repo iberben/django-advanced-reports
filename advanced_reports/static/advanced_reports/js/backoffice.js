@@ -1,10 +1,10 @@
-angular.module('BackOfficeApp', ['ngCookies'])
+var app = angular.module('BackOfficeApp', ['ngCookies']);
 
-.run(function ($http, $cookies){
+app.run(function ($http, $cookies){
     $http.defaults.headers.common['X-CSRFToken'] = $cookies['csrftoken'];
-})
+});
 
-.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
+app.config(['$routeProvider', '$locationProvider', function($routeProvider, $locationProvider){
     $routeProvider.
         when('/', {controller: 'EmptyController', templateUrl: '/home.html'}).
         when('/tab/:tab/', {controller: 'EmptyController'}).
@@ -16,9 +16,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
         when('/:model/:id/:tab/:detail/', {templateUrl: '/model.html', reloadOnSearch: false}).
         otherwise({redirectTo: '/'});
     //$locationProvider.html5Mode(true);
-}])
+}]);
 
-.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, boUtils, $timeout){
+app.factory('boApi', ['$http', '$q', 'boUtils', '$timeout', function($http, $q, boUtils, $timeout){
     return {
         requests: 0,
         slow: false,
@@ -113,9 +113,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
             return this.requests > 0 && this.slow;
         }
     };
-}])
+}]);
 
-.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', 'boReverser', function($scope, $http, $location, boApi, $route, boReverser){
+app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$route', 'boReverser', function($scope, $http, $location, boApi, $route, boReverser){
     $scope.params = {};
 
     $scope.path = function(){
@@ -248,9 +248,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
     $scope.isVisibleTab = function(tab){
         return !tab.shadow;
     };
-}])
+}]);
 
-.factory('boReverser', ['$route', 'boUtils', function($route, boUtils){
+app.factory('boReverser', ['$route', 'boUtils', function($route, boUtils){
     return {
         configure: function(hierarchy, prefix){
             this.hierarchy = hierarchy;
@@ -291,12 +291,12 @@ angular.module('BackOfficeApp', ['ngCookies'])
             return url;
         }
     };
-}])
+}]);
 
-.controller('EmptyController', ['$scope', function($scope){}])
+app.controller('EmptyController', ['$scope', function($scope){}]);
 
 // http://stackoverflow.com/questions/17417607/angular-ng-bind-html-unsafe-and-directive-within-it
-.directive('compile', ['$compile', function ($compile){
+app.directive('compile', ['$compile', function ($compile){
     return {
         link: function(scope, element, attrs){
             scope.$watch(function(scope){
@@ -314,9 +314,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
         },
         scope: true
     };
-}])
+}]);
 
-.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', '$parse', function($compile, $q, boApi, boUtils, $timeout, $parse){
+app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', '$parse', function($compile, $q, boApi, boUtils, $timeout, $parse){
     return {
         link: function(scope, element, attrs){
             var slug = attrs.view;
@@ -368,7 +368,7 @@ angular.module('BackOfficeApp', ['ngCookies'])
 
                             if (!data.success && closeModalFirst){
                                 $timeout(function(){
-                                    scope.$parent.$broadcast('boValidationError');
+                                    scope.$parent.$broadcast('boValidationError', closeModalFirst);
                                 }, 100);
                             }else{
                                 if (viewToUpdateOnPost){
@@ -423,11 +423,11 @@ angular.module('BackOfficeApp', ['ngCookies'])
         },
         scope: false
     };
-}])
+}]);
 
-.directive('postToView', function(){
+app.directive('postToView', function(){
     return function(scope, element, attrs){
-        var closeModalFirst = scope.$eval(attrs.closeModalFirst);
+        var closeModalFirst = attrs.closeModalFirst;
 
         element.on('submit', function(e){
             scope.$apply(function(){
@@ -435,9 +435,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
             });
         });
     };
-})
+});
 
-.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
+app.directive('keyupDelay', ['$parse', '$timeout', function($parse, $timeout){
     return function(scope, element, attrs){
         var to = null;
         var fn = $parse(attrs.keyupDelay);
@@ -452,9 +452,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
             });
         });
     };
-}])
+}]);
 
-.factory('boUtils', function(){
+app.factory('boUtils', function(){
     return {
         toQueryString: function(obj){
             var str = [];
@@ -487,34 +487,34 @@ angular.module('BackOfficeApp', ['ngCookies'])
             return count;
         }
     };
-})
+});
 
-.filter('capitalize', function(){
+app.filter('capitalize', function(){
     return function(input){
         if (input.length > 0)
             return input.charAt(0).toUpperCase() + input.slice(1);
         return '';
    };
-})
+});
 
-.filter('uriencode', function(){
+app.filter('uriencode', function(){
     return encodeURIComponent;
-})
+});
 
-.filter('default', function(){
+app.filter('default', function(){
     return function(value, fallback){
         return value || fallback;
     };
-})
+});
 
-.directive('boElement', ['$parse', function($parse){
+app.directive('boElement', ['$parse', function($parse){
     return function(scope, element, attrs){
         var obj = $parse(attrs.boElement);
         obj.assign(scope, element);
     };
-}])
+}]);
 
-.directive('focusOn', function() {
+app.directive('focusOn', function() {
     return function(scope, elem, attr) {
         scope.$on(attr.focusOn, function(e, event_attr) {
             if (!event_attr || attr.focusAttr == '' + event_attr)
@@ -526,9 +526,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
             }
         });
     };
-})
+});
 
-.directive('onFocus', ['$parse', function($parse){
+app.directive('onFocus', ['$parse', function($parse){
     return function(scope, element, attrs){
         var fn = $parse(attrs.onFocus);
         element.on('focus', function(event){
@@ -537,9 +537,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
             });
         });
     };
-}])
+}]);
 
-.factory('idGenerator', function(){
+app.factory('idGenerator', function(){
     return {
         nextId: 0,
         generate: function(){
@@ -547,9 +547,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
             return this.nextId;
         }
     };
-})
+});
 
-.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', function($timeout, $compile, idGenerator){
+app.directive('autoComplete', ['$timeout', '$compile', 'idGenerator', function($timeout, $compile, idGenerator){
     return {
         link: function(scope, element, attrs){
             // Generate a unique ID to connect the datalist to the field.
@@ -594,9 +594,9 @@ angular.module('BackOfficeApp', ['ngCookies'])
         },
         scope: false
     };
-}])
+}]);
 
-.directive('autoCompleteOld', ['$timeout', 'boUtils', function($timeout, boUtils){
+app.directive('autoCompleteOld', ['$timeout', 'boUtils', function($timeout, boUtils){
     return {
         template: '' +
             '<span ng-transclude></span>' +
@@ -673,16 +673,16 @@ angular.module('BackOfficeApp', ['ngCookies'])
         replace: false,
         transclude: true
     };
-}])
+}]);
 
-.directive('linkTo', function(){
+app.directive('linkTo', function(){
    return function(scope, element, attrs){
        var url = scope.$eval(attrs.linkTo);
        element.attr('href', url);
    };
-})
+});
 
-.directive('boModal', function(){
+app.directive('boModal', function(){
     return {
         templateUrl: '/modal.html',
         scope: {
@@ -693,6 +693,7 @@ angular.module('BackOfficeApp', ['ngCookies'])
         transclude: true,
         link: function(scope, element, attrs){
             scope.executeAction = false;
+            scope.boModalName = attrs.boModal;
 
             scope.boModal.closeAndAction = function(){
                 scope.executeAction = true;
@@ -716,14 +717,17 @@ angular.module('BackOfficeApp', ['ngCookies'])
                 scope.fnToExecute = fnToExecute;
                 scope.boModal.modal('hide');
             });
-            scope.$parent.$on('boValidationError', function(){
-                scope.boModal.modal('show');
+            scope.$parent.$on('boValidationError', function(e, modalName){
+                if (scope.boModalName === modalName)
+                {
+                    scope.boModal.modal('show');
+                }
             });
         }
     };
-})
+});
 
-.directive('boParallax', function(){
+app.directive('boParallax', function(){
     return function(scope, element, attrs){
         scope.$watch(function(){
             return element.innerHeight();

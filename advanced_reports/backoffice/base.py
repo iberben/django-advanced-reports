@@ -893,6 +893,9 @@ class BackOfficeView(object):
     permission = None
 
     def serialize(self, content, extra_context=None):
+        if isinstance(content, str):
+            content = content.decode('utf-8')
+
         context = {
             'slug': self.slug,
             'content': content + random_token(),
