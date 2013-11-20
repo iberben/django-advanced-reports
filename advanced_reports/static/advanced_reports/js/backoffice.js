@@ -175,7 +175,13 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
         return visible;
     };
 
-    $scope.search_preview = function(query){
+    $scope.search_preview = function(query, event){
+        if (event.keyCode == 40){ // down
+            $scope.$broadcast('searchResultSelected', '' + 0);
+            event.preventDefault();
+            return;
+        }
+
         if (!query || query.length == 0)
             return;
         boApi.get('search_preview', {q: query}).then(function(data){
@@ -538,6 +544,26 @@ app.directive('onFocus', ['$parse', function($parse){
         });
     };
 }]);
+
+app.directive('arrowSelect', function(){
+    return function(scope, element, attrs){
+        var index = -1;
+        var focusEvent = attrs.arrowSelect;
+        element.on('keydown', function(event){
+            var children = element.children(':not(.disabled)');
+            if (event.keyCode == 40){ // down
+                index = (index + 1) % children.length;
+                scope.$broadcast(focusEvent, '' + index);
+                event.preventDefault();
+            }
+            else if (event.keyCode == 38){ // up
+                index = (index - 1 + children.length) % children.length;
+                scope.$broadcast(focusEvent, '' + index);
+                event.preventDefault();
+            }
+        });
+    };
+});
 
 app.factory('idGenerator', function(){
     return {

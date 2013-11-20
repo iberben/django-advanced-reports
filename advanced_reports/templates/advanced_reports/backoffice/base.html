@@ -65,12 +65,14 @@
                                        class="form-control"
                                        ng-model="search_query"
                                        ng-change="search_show_results_preview()"
-                                       keyup-delay="search_preview(search_query)"
-                                       delay="150">
-                                <ul class="always-visible dropdown-menu" ng-show="is_search_results_preview_visible()">
+                                       keyup-delay="search_preview(search_query, $event)"
+                                       delay="150"
+                                       focus-on="searchResultSelected"
+                                       focus-attr="-1">
+                                <ul class="always-visible dropdown-menu" ng-show="is_search_results_preview_visible()" arrow-select="searchResultSelected">
                                     {% verbatim %}
                                     <li ng-repeat="result in search_results_preview.results">
-                                        <a href="{{ root_url }}{{ get_url(result.route) }}">
+                                        <a href="{{ root_url }}{{ get_url(result.route) }}" focus-on="searchResultSelected" focus-attr="{{ $index }}">
                                             <small>{{ result.verbose_name }}</small> {{ result.title }}
                                         </a>
                                     </li>
