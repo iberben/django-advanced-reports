@@ -11,8 +11,11 @@ angular.module('BackOfficeApp')
     $scope.$watch(function(){
         return $location.search();
     }, function(search){
-        $scope.search = search;
-        $scope.fetch_report();
+        if ($scope.view.params.updateLocation)
+        {
+            $scope.search = search;
+            $scope.fetch_report();
+        }
     }, true);
 
     $scope.fetch_report = function() {
@@ -385,4 +388,6 @@ angular.module('BackOfficeApp')
     $scope.select_mode = function(){
         return $scope.view.params.selectMode == 'true';
     }
+
+    $scope.fetch_report();
 }]);
