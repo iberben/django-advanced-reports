@@ -495,7 +495,7 @@ class BackOfficeBase(object):
         """
         filter_model = request.view_params.get('filter_model')
         q = request.view_params.get('q')
-        return self.search(request, q, page_size=5, filter_on_model_slug=filter_model,
+        return self.search(request, q, page_size=10, filter_on_model_slug=filter_model,
                            include_counts=False)
 
     def api_get_model(self, request):
