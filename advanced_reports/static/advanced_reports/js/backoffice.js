@@ -425,6 +425,7 @@ app.directive('view', ['$compile', '$q', 'boApi', 'boUtils', '$timeout', '$parse
                 boApi.get('view', params).then(compile, showError);
             };
 
+            element.html('<p>Loading...</p>');
             loadView(params);
         },
         scope: false
@@ -561,6 +562,9 @@ app.directive('arrowSelect', function(){
                 scope.$broadcast(focusEvent, '' + index);
                 event.preventDefault();
             }
+        });
+        scope.$on(focusEvent, function(event, newIdx){
+            index = parseInt(newIdx);
         });
     };
 });
@@ -765,8 +769,8 @@ app.directive('boParallax', function(){
             $(window).unbind('scroll').bind('scroll', function(){
                 scrollTop = $(window).scrollTop();
                 
-                if (offsetTop >= scrollTop) {
-                    element.css('height', (orgHeight + Math.abs(scrollTop)) + 'px');
+                if (offsetTop >= scrollTop && scrollTop < 0) {
+                    element.css('height', (orgHeight + -scrollTop) + 'px');
                 }
             });
         });
