@@ -176,7 +176,7 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     };
 
     $scope.search_preview = function(query, event){
-        if (event.keyCode == 40){ // down
+        if (event && event.keyCode == 40){ // down
             $scope.$broadcast('searchResultSelected', '' + 0);
             event.preventDefault();
             return;
