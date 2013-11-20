@@ -4,7 +4,7 @@ from advanced_reports.backoffice.models import SearchIndex
 
 
 class Command(BaseCommand):
-    help = 'Cleans the search index.'
+    help = 'Cleans the search index. Argument: Python path to backoffice instance.'
 
     option_list = BaseCommand.option_list
 
