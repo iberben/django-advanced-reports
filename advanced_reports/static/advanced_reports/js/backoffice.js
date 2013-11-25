@@ -569,6 +569,17 @@ app.directive('arrowSelect', function(){
     };
 });
 
+
+app.directive('idContext', ['idGenerator', function(idGenerator){
+    return {
+        scope: true,
+        link: function(scope, element, attrs){
+            scope.id = idGenerator.generate();
+        }
+    };
+}]);
+
+
 app.factory('idGenerator', function(){
     return {
         nextId: 0,

@@ -193,8 +193,6 @@ class BackOfficeBase(object):
 
         request.view_params = ViewRequestParameters(request)
 
-        #import pdb; pdb.set_trace()
-
         fn = getattr(self, 'api_%s_%s' % (request.method.lower(), method), None)
         if fn is None:
             raise Http404
@@ -513,7 +511,7 @@ class BackOfficeBase(object):
         if not check_permission(request, bo_model.permission):
             return HttpResponse(u'You are not allowed to view this page.', status=403)
         obj = bo_model.model.objects.get(pk=pk)
-        serialized = bo_model.get_serialized(request, obj, children=True, parents=True, siblings=True)
+        serialized = bo_model.get_serialized(request, obj, children=True, parents=True, siblings=True, templates=True)
         return serialized
 
     def api_get_view(self, request):
@@ -776,24 +774,28 @@ class BackOfficeModel(object):
     def get_route(self, instance):
         return {'model': self.slug, 'id': instance.pk}
 
-    def get_serialized(self, request, instance, children=False, parents=False, siblings=False):
+    def get_serialized(self, request, instance, children=False, parents=False, siblings=False, templates=False):
         serialized = {
             'id': instance.pk,
             'title': self.get_title(instance),
             'model': self.slug,
-            'header_template': self.render_template(request, instance) + random_token(),
-            'tabs': dict((t.slug, t.get_serialized(request, instance)) \
-                         for t in self.tabs \
-                         if check_permission(request, t.permission)),
             'route': self.get_route(instance),
             'is_object': True,
             'meta': self.serialize_meta(request)
         }
 
+        if templates:
+            serialized['tabs'] = dict((t.slug, t.get_serialized(request, instance)) \
+                                 for t in self.tabs \
+                                 if check_permission(request, t.permission))
+            serialized['header_template'] = self.render_template(request, instance) + random_token()
+
         if children:
             serialized['children'] = self.get_children(request, instance)
+
         if parents:
             serialized['parents'] = self.get_parents(request, instance)
+
         if self.siblings and siblings:
             parent_bo_model = self.parents[self.siblings]
             parent = self.get_parent_by_model(request, instance, parent_bo_model)
