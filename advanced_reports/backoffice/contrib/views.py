@@ -104,7 +104,7 @@ class AdvancedReportView(BackOfficeView):
         advreport = get_report_for_slug(report_slug)
 
         if global_select == 'true':
-            items = advreport.get_object_list(request)
+            items = advreport.get_object_list(request)[0]
         else:
             items = [advreport.get_item_for_id(pk) for pk in items]
 
