@@ -729,6 +729,7 @@ app.directive('boModal', function(){
         scope: {
             boModal: '=',
             modalTitle: '@',
+            modalStyle: '@',
             action: '&'
         },
         transclude: true,
