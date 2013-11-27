@@ -200,8 +200,10 @@ app.controller('MainController', ['$scope', '$http', '$location', 'boApi', '$rou
     $scope.search = function(query, filter_model){
         var params = filter_model ? {q: query, filter_model: filter_model} : {q: query};
         boApi.get('search', params).then(function(data){
-            $scope.search_results = data;
-
+            if (data.query == $scope.params.query)
+            {
+                $scope.search_results = data;
+            }
         }, function(error){
             $scope.search_results = null;
         });

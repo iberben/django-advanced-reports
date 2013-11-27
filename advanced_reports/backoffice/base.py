@@ -458,7 +458,8 @@ class BackOfficeBase(object):
 
         return {
             'results': self.serialize_search_results(request, indices),
-            'model_counts': model_counts
+            'model_counts': model_counts,
+            'query': query
         }
 
     def reindex_all_models(self):
