@@ -22,6 +22,9 @@ from .decorators import staff_member_required
 import random
 
 
+DB_IS_POSTGRES = 'postgresql' in settings.DATABASES['default'].get('ENGINE', '')
+
+
 def random_token():
     return u'<!-- random: %d -->' % random.randint(0, 10000000000)
 
@@ -446,8 +449,11 @@ class BackOfficeBase(object):
         if query == u'':
             return ()
 
-        ts_query = convert_to_raw_tsquery(query)
-        all_indices = SearchIndex.objects.search(ts_query, raw=True).filter(backoffice_instance=self.name)
+        if not DB_IS_POSTGRES:
+            all_indices = SearchIndex.objects.filter(to_index__icontains=query, backoffice_instance=self.name)
+        else:
+            ts_query = convert_to_raw_tsquery(query)
+            all_indices = SearchIndex.objects.search(ts_query, raw=True).filter(backoffice_instance=self.name)
 
         model_counts = self.count_by_model(request, all_indices) if include_counts else []
 

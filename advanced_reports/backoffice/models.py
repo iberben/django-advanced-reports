@@ -1,7 +1,13 @@
 from django.db import models
+from django.conf import settings
 
-from djorm_pgfulltext.fields import VectorField
-from djorm_pgfulltext.models import SearchManager
+# This is done for compatibility with other databases, mainly for testing.
+if 'postgresql' in settings.DATABASES['default'].get('ENGINE', ''):
+    from djorm_pgfulltext.fields import VectorField
+    from djorm_pgfulltext.models import SearchManager
+else:
+    VectorField = lambda: u''
+    SearchManager = lambda *a, **kw: models.Manager()
 
 
 class SearchIndex(models.Model):
