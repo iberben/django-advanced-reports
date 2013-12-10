@@ -1,0 +1,16 @@
+{% extends "advanced_reports/backoffice/base.html" %}
+
+{% block content %}
+
+<h2>Users</h2>
+
+<div class="container">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h2>Users</h2>
+        </div>
+        <div view="advanced_report" params="{slug: 'users'}"></div>
+    </div>
+</div>
+
+{% endblock %}
