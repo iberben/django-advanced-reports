@@ -116,11 +116,12 @@
             {% verbatim %}
             <div class="form-group" ng-repeat="field in report.filter_fields" ng-show="report.filter_fields">
                 <select class="form-control" ng-model="$parent.filters[field]">
-                  <option ng-repeat="(value, name) in report.filter_values[field]" value="{{value}}">{{name}}</option>
+                    <option disabled value="">{{ report.field_metadata[field].verbose_name }}</option>
+                    <option ng-repeat="(value, name) in report.filter_values[field]" value="{{value}}">{{name}}</option>
                 </select>
             </div>
             {% endverbatim %}
-            <button type="submit" class="btn btn-default" ng-show="show_search()">{% trans "Search" %}</button>
+            <button type="submit" class="btn btn-default" ng-show="show_search()">{% trans "Filter" %}</button>
             <div class="checkbox">
                 <label><a href ng-show="has_applied_filters()" ng-click="remove_filters()">{% trans "show all" %}</a></label>
             </div>

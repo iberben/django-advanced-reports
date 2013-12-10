@@ -332,6 +332,7 @@ def api_list(request, slug, ids=None):
             'search_fields': advreport.search_fields,
             'filter_fields': advreport.filter_fields,
             'filter_values': advreport.filter_values,
+            'field_metadata': advreport.get_field_metadata_dict(),
             'report_header_visible': advreport.report_header_visible,
             'multiple_actions': advreport.multiple_actions,
             'multiple_action_list': [a.attrs_dict for a in advreport.item_actions if _is_allowed_multiple_action(request, a)]

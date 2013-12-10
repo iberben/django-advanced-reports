@@ -419,6 +419,15 @@ class AdvancedReport(object):
         '''
         return lambda s: s
 
+    def filter_FOO(self, qs, value):
+        """
+        Implement this function to specify a filter for the field FOO. This is
+        useful for fields that are not a part of a model, but aggregated.
+
+        :return: a filtered queryset
+        """
+        return qs
+
     def verify_action_group(self, item, group):
         '''
         Implement this function to verify if the given group currently applies to the given item.
@@ -685,9 +694,9 @@ class AdvancedReport(object):
                 def convert_value(k, v):
                     if k[-4:] == '__in':
                         return v.split(',')
-                    if v == u'True':
+                    if v.lower() == u'true':
                         return True
-                    elif v == u'False':
+                    elif v.lower() == u'false':
                         return False
                     else:
                         return v
@@ -697,6 +706,11 @@ class AdvancedReport(object):
                     lookup = dict((k, convert_value(k, v)) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
                     if lookup:
                         qs = qs.filter(**lookup)
+
+                    for k, v in request.GET.items():
+                        filter_fn = getattr(self, 'filter_%s' % k, None)
+                        if filter_fn:
+                            qs = filter_fn(qs, convert_value(k, v))
 
             return qs
         else:
@@ -804,6 +818,10 @@ class AdvancedReport(object):
                 pass
         return None
 
+    def get_field_metadata_dict(self):
+        all_fields = list(self.fields) + list(self.filter_fields)
+        return dict((field, self.get_field_metadata(field)) for field in all_fields)
+
     def get_field_metadata(self, field_name):
         verbose_name = getattr(self, 'get_%s_verbose_name' % field_name, lambda: None)()
         if verbose_name is None:
@@ -823,6 +841,7 @@ class AdvancedReport(object):
                 order_by = sf.strip('-')
 
         return {'name': field_name.split('__')[0],
+                'full_name': field_name,
                 'verbose_name': capfirst(verbose_name),
                 'sortable': sortable,
                 'order_by': order_by,
