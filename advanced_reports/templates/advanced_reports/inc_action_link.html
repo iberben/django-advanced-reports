@@ -1,3 +1,4 @@
+{% load url from future %}
 {% load i18n %}
 <a class="action-link {% if action.form_via_ajax %}form-via-ajax{% endif %} {% if action.css_class %}{{ action.css_class }}{% endif %} {{ extra_class }}"
     {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}

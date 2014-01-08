@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import *
+from django.conf.urls import patterns, url
 from advanced_reports.views import *
 
 urlpatterns = patterns('',

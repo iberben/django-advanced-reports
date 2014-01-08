@@ -1,3 +1,4 @@
+{% load url from future %}
 <form id="form_{{ action.method }}_{{ object.advreport_object_id }}"
         method="post"
         action="{% if action.form_via_ajax %}{% url 'advanced_reports_form' advreport.slug action.method object.advreport_object_id %}{% else %}{% url 'advanced_reports_action' advreport.slug action.method object.advreport_object_id %}{% endif %}"
