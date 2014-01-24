@@ -1,0 +1,102 @@
+{% load i18n %}
+{% verbatim %}
+<script type="text/ng-template" id="/model.html">
+<header class="main-header" bo-parallax>
+    <div class="container">
+        <h1>{{ model.title }} <small>{{ model.meta.verbose_name }}</small></h1>
+        <div compile="model.header_template"></div>
+    </div>
+</header>
+<section class="main-content with-nav-bar">
+    <div class="nav-bar nav-bar-user">
+        <div class="container">
+            <nav class="nav nav-pills">
+                <li ng-class="{active: params.tab == tab.slug || model.tabs[params.tab].shadow == tab.slug}" ng-repeat="tab in model.meta.tabs|filter:isVisibleTab">
+                    <a href="{{ get_url(model.route, {tab: tab.slug}) }}">{{ tab.title }}</a>
+                </li>
+                <!-- Children support -->
+                <li class="dropdown pull-right" ng-repeat="child_type in model.children|filter:{show_in_parent: true}">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        {{ child_type.verbose_name_plural }}
+                        <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li ng-repeat="child in child_type.children"><a href="{{ get_url(child.route) }}">{{ child.title }}</a></li>
+                        {% endverbatim %}
+                        <li ng-show="child_type.children.length == 0" class="disabled"><a>{% trans "Empty" %}</a></li>
+                        {% verbatim %}
+                    </ul>
+                </li>
+                <!-- Sibling support -->
+                <li class="dropdown pull-right" ng-show="model.siblings.length > 0">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                        {{ model.meta.verbose_name_plural }}
+                        <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li ng-class="{active: model.id == sibling.id}" ng-repeat="sibling in model.siblings"><a href="{{ get_url(sibling.route, {tab: params.tab}) }}">{{ sibling.title }}</a></li>
+                    </ul>
+                </li>
+                <!-- Parent support -->
+                <li class="pull-right" ng-show="model.parents.length == 1">
+                    <a href="{{ get_url(model.parents[0].route) }}">&lsaquo;
+                    {% endverbatim %}
+                    {% trans "Back to {{ model.parents[0].title }}" %}</a>
+                    {% verbatim %}
+                </li>
+            </nav>
+        </div>
+    </div>
+</section>
+
+<div class="container">
+    <div compile="model.tabs[params.tab].template"></div>
+</div>
+
+<div class="row" ng-show="false">
+    <div class="col-xs-5 col-md-3 col-lg-2">
+        <div class="panel panel-default" ng-show="false">
+            <div class="panel-heading">
+                <h2 class="panel-title">John Doe</h2>
+                <span>john@doe.com</span>
+            </div>
+
+            <ul class="list-group">
+                <li class="list-group-item">
+                    <a href="">Details</a>
+                </li>
+                <li class="list-group-item">
+                    <a href="">Invoices</a>
+                </li>
+                <li class="list-group-item">
+                    <a href="">Meldingen</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="panel panel-default" ng-repeat="child in model.children" ng-show="false">
+            <div class="panel-heading">
+                <h2 class="panel-title">{{ child.title }}</h2>
+                <span>+48 123 456 789</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xs-7 col-md-9 col-lg-10">
+        <!-- panel -->
+        <!--
+        <div class="panel panel-default">
+            <div class="panel-body">
+                <h2>User Jef Geskens</h2>
+                <ul class="nav nav-pills">
+                    <li ng-class="{active: params.tab == tab.slug || model.tabs[params.tab].shadow == tab.slug}" ng-repeat="tab in model.meta.tabs|filter:isVisibleTab">
+                        <a href="#{{ model.path }}{{ tab.slug }}">{{ tab.title }}</a>
+                    </li>
+                </ul>
+                <div compile="model.tabs[params.tab].template"></div>
+            </div>
+        </div>
+        -->
+        <!-- /panel -->
+    </div>
+</div>
+</script>
+{% endverbatim %}

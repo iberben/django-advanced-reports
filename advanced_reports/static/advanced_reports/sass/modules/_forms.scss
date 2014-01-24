@@ -1,0 +1,200 @@
+/* FORMS
+=====================================*/
+form {
+    .required {
+        color: $brightColor;
+    }
+
+    .label {
+        font-weight: 700;
+        color: $black;
+        /*text-transform: uppercase;*/
+        font-size: 1.077em;
+    }
+
+    &#redirect_form {
+        margin-bottom: 0;
+    }
+    
+    h2{
+        margin-bottom: 0.5em;
+    }
+    
+    .row{
+        margin-bottom: 1.846em;
+    }
+    
+    .help-icon{
+        position: absolute;
+        right: 0;
+        display: block;
+        background: $grayLight;
+        width: 0.615em;
+        height: 0.615em;
+    }
+    
+    .help-tip{
+        position: absolute;
+        top: -2px;
+        margin-left: 8px;
+        display: inline-block;
+        padding: 0.308em 0.385em 0.308em;
+        width: 0.846em;
+        height: 1em;
+        font-size: 0.75em;
+        background: $grayLight;
+        color: $white;
+        text-align: center;
+        @include border-radius(50%);
+        text-decoration: none;
+        font-weight: 700;
+        line-height: 1em;
+    
+        &:hover{
+            background: $brightColor;
+        }
+    }
+
+    input,
+    textarea,
+    select,
+    .submit input{
+        font-size: 1.077em;
+    }
+    
+    .textarea{
+        textarea{
+            border: 1px solid $grayLighter;
+            padding: 8px;
+            width: 100%;
+            font-size: 1.231em;
+            color: $gray;
+            @include border-radius(0);
+            @include box-sizing(border-box);
+            height:100px;
+            resize: vertical;
+        }
+    }
+
+    .select,
+    .text,
+    .password,
+    .date-field,
+    .radio,
+    .single-checkbox,
+    .option-box,
+    .textarea{
+        .label,
+        > label{
+            position: relative;
+            display: block;
+            font-weight: 700;
+            color: $black;
+            /*text-transform: uppercase;*/
+            font-size: 1.077em;
+            margin-bottom: 0.615em;
+            line-height: 1em;
+            position: relative;
+
+            em{
+                margin-left: 4px;
+                color: $brightColor;
+            }
+            
+            a{
+                font-weight: 700;
+            }
+        }
+    }
+    
+    .single-checkbox{
+        .label,
+        > label{
+            text-transform: none;
+            font-weight: normal;
+            
+            a{
+                font-weight: normal;
+            }
+        }
+    }
+
+    .radio{
+        img {
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .option{
+            float: left;
+            width: 50%;
+            margin-top: 0.615em;
+
+            label{
+                margin-left: 8px;
+                font-size: 1.077em;
+            }
+        }
+    }
+    
+    .single-checkbox{
+        margin-bottom: 0.615em;
+        
+        label{
+            font-size: 1em;
+            display: inline;
+            margin-left: 8px;
+        }
+    }
+
+    .select{
+        select{
+            @include appearance(none);
+            background: $white;
+            border: 1px solid $grayLighter;
+            color: $gray;
+            padding: 8px;
+            padding-right: 20px;
+            width: 100%;
+            @include border-radius(0);
+            font-size: 1.231em;
+            @include box-sizing(border-box);
+            background: $white url(../img/select-handle.png) no-repeat 90% center;
+        }
+    }
+
+    .text,
+    .password{
+        input{
+            border: 1px solid $grayLighter;
+            padding: 8px;
+            width: 100%;
+            font-size: 1.231em;
+            color: $gray;
+            @include border-radius(0);
+            @include box-sizing(border-box);
+        }
+    }
+
+    .error {
+        label {
+            color: $brightColor !important;
+        }
+        
+        input{
+            border: 1px solid $brightColor;
+        }
+    }
+    
+    .input.error,
+    .date-field.error{
+        label,
+        > .label{
+            color: $brightColor;
+            
+            em{
+                color: $brightColor;
+            }
+        }
+    }
+}

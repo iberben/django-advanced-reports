@@ -12,11 +12,13 @@ from django.utils.translation import ugettext as _
 from django.db import transaction
 
 from django_ajax.pagination import paginate
+from djprogress import with_progress, progress_error_reporter
 
 from advanced_reports import get_report_or_404
-from advanced_reports.defaults import ActionException
+from advanced_reports.backoffice.api_utils import JSONResponse
+from advanced_reports.decorators import csv_delegation
+from advanced_reports.defaults import ActionException, Resolver
 
-from django.utils import simplejson
 
 def _get_redirect(advreport, next=None, querystring=None):
     if next:
@@ -28,6 +30,7 @@ def _get_redirect(advreport, next=None, querystring=None):
         suffix = u'?%s' % querystring
     return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}) + suffix)
 
+@csv_delegation
 @transaction.autocommit
 def list(request, slug, ids=None, internal_mode=False, report_header_visible=True):
     advreport = get_report_or_404(slug)
@@ -77,19 +80,29 @@ def list(request, slug, ids=None, internal_mode=False, report_header_visible=Tru
 
         # CSV?
         if 'csv' in request.GET:
+            object_count = len(object_list)
             from cStringIO import StringIO
-            csv = StringIO()
+            #csv = StringIO()
             header = u'%s\n' % u';'.join(c['verbose_name'] for c in advreport.column_headers)
-            lines = (u'%s\n' % u';'.join((c['html'] for c in o.advreport_column_values)) for o in object_list[:])
+            lines = (u'%s\n' % u';'.join((c['html'] for c in o.advreport_column_values)) \
+                     for o in with_progress(object_list.iterator() \
+                                                if hasattr(object_list, 'iterator') \
+                                                else object_list[:],
+                                            name='CSV export of %s' % advreport.slug,
+                                            count=object_count))
             lines = (line.replace(u'&nbsp;', u' ') for line in lines)
             lines = (line.replace(u'&euro;', u'€') for line in lines)
             lines = (line.replace(u'<br/>', u' ') for line in lines)
             lines = (strip_entities(line) for line in lines)
             lines = (strip_tags(line).encode('utf-8') for line in lines)
-            csv.write(header)
-            csv.writelines(lines)
-            response = HttpResponse(csv.getvalue(), 'text/csv')
+            #csv.write(header)
+            #csv.writelines(lines)
+            response = HttpResponse('', 'text/csv')
             response['Content-Disposition'] = 'attachment; filename="%s.csv"' % advreport.slug
+            response.write(header)
+            with progress_error_reporter():
+                for line in lines:
+                    response.write(line)
             return response
 
         # Paginate
@@ -251,14 +264,14 @@ def ajax_form(request, slug, method, object_id, param=None):
                 advreport.enrich_object(object, request=request)
                 context.update({'success': a.get_success_message(), 'object': object, 'action': a})
                 response = render_to_string(advreport.item_template, context, context_instance=RequestContext(request))
-                return r or HttpResponse(simplejson.dumps({
+                return r or JSONResponse({
                     'status': 'SUCCESS',
                     'content': response
-                }), mimetype='application/javascript')
+                })
             else:
                 context.update({'response_method': method, 'response_form': form})
                 if a.form_template:
-                    context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': form}))})
+                    context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': form, 'item': object}))})
 
             context.update({'object': object, 'action': a})
             return render_to_response('advanced_reports/ajax_form.html', context, context_instance=RequestContext(request))
@@ -269,7 +282,7 @@ def ajax_form(request, slug, method, object_id, param=None):
 
             context.update({'response_method': method, 'response_form': a.form})
             if a.form_template:
-                context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': a.form}))})
+                context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': a.form, 'item': object}))})
             
             return render_to_response(
                 'advanced_reports/ajax_form.html',
@@ -287,18 +300,15 @@ def ajax_form(request, slug, method, object_id, param=None):
     return inner(request, slug, method, object_id)
 
 
-from django.utils.translation import ugettext_lazy
-_proxy_type = type(ugettext_lazy(''))
-def _json_object_encoder(obj):
-    if isinstance(obj, _proxy_type):
-        return u'%s' % obj
-    else:
-        return None
-
-def _action_dict(action):
-    d = action.attrs_dict
+def _action_dict(o, action):
+    d = dict(action.attrs_dict)
     if action.form:
-        d['form'] = action.form_template or action.form.as_table()
+        form_instance = action.form
+        d['form'] = action.form_template and render_to_string(action.form_template, {'form': form_instance, 'item': o}) or unicode(form_instance)
+    if action.confirm:
+        context = {'item': o}
+        context.update(o.__dict__)
+        d['confirm'] = action.confirm % Resolver(context)
     return d
 
 
@@ -306,10 +316,13 @@ def _item_values(o, advreport):
     return {
         'values': o.advreport_column_values,
         'extra_information': o.advreport_extra_information.replace('data-method="', 'ng-bind-html-unsafe="lazydiv__%s__' % advreport.get_item_id(o)),
-        'actions': [_action_dict(a) for a in o.advreport_actions],
+        'actions': [_action_dict(o, a) for a in o.advreport_actions],
         'item_id': advreport.get_item_id(o)
     }
 
+
+def _is_allowed_multiple_action(request, action):
+    return not action.hidden and not action.form and action.multiple_display and action.is_allowed(request)
 
 @transaction.autocommit
 def api_list(request, slug, ids=None):
@@ -317,7 +330,7 @@ def api_list(request, slug, ids=None):
     advreport.set_request(request)
 
     def inner(request, slug, ids):
-        object_list, extra_context = advreport.get_object_list(request)
+        object_list, extra_context = advreport.get_object_list(request, ids=ids)
 
         paginated = paginate(request, object_list, num_per_page=advreport.items_per_page, use_get_parameters=True)
 
@@ -328,9 +341,16 @@ def api_list(request, slug, ids=None):
             'items_per_page': advreport.items_per_page,
             'item_count': len(object_list),
             'searchable_columns': advreport.searchable_columns,
-            'search_fields': advreport.search_fields
+            'show_action_bar': advreport.search_fields or advreport.filter_fields,
+            'search_fields': advreport.search_fields,
+            'filter_fields': advreport.filter_fields,
+            'filter_values': advreport.filter_values,
+            'field_metadata': advreport.get_field_metadata_dict(),
+            'report_header_visible': advreport.report_header_visible,
+            'multiple_actions': advreport.multiple_actions,
+            'multiple_action_list': [a.attrs_dict for a in advreport.item_actions if _is_allowed_multiple_action(request, a)]
         }
-        return HttpResponse(simplejson.dumps(report, indent=2, default=_json_object_encoder))
+        return JSONResponse(report)
 
     if advreport.decorate_views:
         inner = advreport.get_decorator()(inner)
@@ -343,39 +363,47 @@ def api_action(request, slug, method, object_id):
     advreport.set_request(request)
 
     def inner(request, slug, method, object_id):
-        object = advreport.get_item_for_id(object_id)
-        advreport.enrich_object(object, request=request)
-        a = advreport.find_object_action(object, method)
+        obj = advreport.get_item_for_id(object_id)
+        advreport.enrich_object(obj, request=request)
+        a = advreport.find_object_action(obj, method)
         if a is None:
             return HttpResponse(_(u'Unsupported action method "%s".' % method), status=404)
-
+        if not a.is_allowed(request):
+            return HttpResponse(_(u'You\'re not allowed to execute "%s".' % method), status=404)
         context = {}
         try:
             if request.method == 'POST' and a.form is not None:
                 if issubclass(a.form, forms.ModelForm):
-                    form = a.form(request.POST, request.FILES, instance=a.get_form_instance(object), prefix=object_id)
+                    form = a.form(request.POST, request.FILES, instance=a.get_form_instance(obj), prefix=object_id)
                 else:
                     form = a.form(request.POST, request.FILES, prefix=object_id)
 
                 if form.is_valid():
-                    advreport.get_action_callable(a.method)(object, form)
-                    object = advreport.get_item_for_id(object_id)
+                    advreport.get_action_callable(a.method)(obj, form)
+                    obj = advreport.get_item_for_id(object_id)
                     context.update({'success': a.get_success_message()})
                 else:
-                    context.update({'response_method': method, 'response_form': form.as_table()})
+                    context.update({'response_method': method, 'response_form': unicode(form)})
                     if a.form_template:
-                        context.update({'response_form_template': mark_safe(render_to_string(a.form_template, {'form': form}))})
-
-                advreport.enrich_object(object, request=request)
-                context.update({'item': _item_values(object, advreport)})
-                return HttpResponse(simplejson.dumps(context, indent=2, default=_json_object_encoder))
+                        context.update({'response_form': render_to_string(a.form_template, {'form': form, 'item': obj})})
+                if obj:
+                    advreport.enrich_object(obj, request=request)
+                    context.update({'item': _item_values(obj, advreport)})
+                else:
+                    context.update({'item': None, 'removed_item_id': object_id})
+                return JSONResponse(context)
 
             elif a.form is None:
-                advreport.get_action_callable(a.method)(object)
-                object = advreport.get_item_for_id(object_id)
-                advreport.enrich_object(object, request=request)
-                context = {'item': _item_values(object, advreport), 'success': a.get_success_message()}
-                return HttpResponse(simplejson.dumps(context, indent=2, default=_json_object_encoder))
+                response = advreport.get_action_callable(a.method)(obj)
+                if response:
+                    return response
+                obj = advreport.get_item_for_id(object_id)
+                if obj:
+                    advreport.enrich_object(obj, request=request)
+                    context = {'item': _item_values(obj, advreport), 'success': a.get_success_message()}
+                else:
+                    context = {'item': None, 'success': a.get_success_message(), 'removed_item_id': object_id}
+                return JSONResponse(context)
 
         except ActionException, e:
             return HttpResponse(e.msg, status=404)

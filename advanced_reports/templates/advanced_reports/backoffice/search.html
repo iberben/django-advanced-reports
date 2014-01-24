@@ -1,0 +1,61 @@
+{% load i18n %}
+
+<script type="text/ng-template" id="/search.html">
+
+<div class="page">
+    <header class="main-header" bo-parallax>
+        <div class="container">
+            <h1>{% trans "Search results for '{{ params.query }}'" %}</h1>
+        </div>
+    </header>
+
+    <div class="container main-content">
+    <!-- page -->
+    <div class="row" ng-init="search(params.query, params.model)">
+        <div class="col-xs-5 col-md-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h2 class="panel-title">{% trans "Refine search" %}</h2>
+                </div>
+
+                <ul class="list-group">
+                    <li class="list-group-item" ng-class="{active: !params.model}">
+                        <a ng-show="params.model" href="{% verbatim %}#/search/{{ params.query|uriencode }}{% endverbatim %}">{% trans "Show all" %}</a>
+                        <span ng-hide="params.model">{% trans "Show all" %}</span>
+                    </li>
+                    {% verbatim %}
+                    <li class="list-group-item" ng-repeat="model_count in search_results.model_counts" ng-class="{active: params.model == model_count.meta.slug}">
+                        <a ng-hide="params.model == model_count.meta.slug" href="#/search/{{ params.query|uriencode }}/{{ model_count.meta.slug|uriencode }}/">{{ model_count.meta.verbose_name_plural|capitalize }}</a>
+                        <span ng-show="params.model == model_count.meta.slug">{{ model_count.meta.verbose_name_plural|capitalize }}</span>
+                        <span class="badge pull-right">{{ model_count.count }}</span>
+                    </li>
+                    {% endverbatim %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-xs-7 col-md-9">
+            <!-- panel -->
+            {% verbatim %}
+            <div class="panel panel-default" ng-repeat="result in search_results.results">
+
+                <div class="panel-heading">
+                    <h2><a href="{{ root_url }}{{ get_url(result.route) }}">{{ result.title }}</a></h2>
+                    <span>{{ result.meta.verbose_name }}</span>
+                </div>
+
+                <div class="panel-body">
+                    <div class="btn-group">
+                        <a ng-repeat="tab in result.meta.tabs|filter:isVisibleTab" href="{{ root_url }}{{ get_url(result.route, {tab: tab.slug}) }}" class="btn btn-default" >{{ tab.title }}</a>
+                    </div>
+                </div>
+            </div>
+            {% endverbatim %}
+            <!-- /panel -->
+        </div>
+    </div>
+    </div>
+    <!-- /page -->
+</div>
+</script>
+

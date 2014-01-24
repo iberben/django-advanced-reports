@@ -1,6 +1,7 @@
+{% load url from future %}
 <form id="form_{{ action.method }}_{{ object.advreport_object_id }}"
         method="post"
-        action="{% if action.form_via_ajax %}{% url advanced_reports_form advreport.slug action.method object.advreport_object_id %}{% else %}{% url advanced_reports_action advreport.slug action.method object.advreport_object_id %}{% endif %}"
+        action="{% if action.form_via_ajax %}{% url 'advanced_reports_form' advreport.slug action.method object.advreport_object_id %}{% else %}{% url 'advanced_reports_action' advreport.slug action.method object.advreport_object_id %}{% endif %}"
         class="action-form {% if action.collapse_form %}collapse-form{% endif %}"
         {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}
         {% if action.next_on_success %}data-next="true"{% endif %}
@@ -12,9 +13,9 @@
     {% endif %}
 
     {% ifequal action.method response_method %}
-        {% if response_form_template %}{{ response_form_template }}{% else %}<table>{{ response_form.as_table }}</table>{% endif %}
+        {% if response_form_template %}{{ response_form_template }}{% else %}<table>{{ response_form }}</table>{% endif %}
     {% else %}
-        {% if action.response_form_template %}{{ action.response_form_template }}{% else %}<table>{{ action.form.as_table }}</table>{% endif %}
+        {% if action.response_form_template %}{{ action.response_form_template }}{% else %}<table>{{ action.form }}</table>{% endif %}
     {% endifequal %}
     <p>
         <input type="hidden" name="object_id" value="{{ object.advreport_object_id }}" />

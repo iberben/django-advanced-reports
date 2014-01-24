@@ -1,0 +1,13 @@
+<div ng-init="numbers={x: 1, y: 2}; result={sum: 3}" class="well">
+    <input ng-model="numbers.x" ng-change="result=view.action('calculation', {data: numbers}, false)"><br>
+    <input ng-model="numbers.y" ng-change="result=view.action('calculation', {data: numbers}, false)"><br>
+    Sum: <span ng-bind="result.sum"></span>
+</div>
+
+<form post-to-view role="form" class="well">
+    {% include "advanced_reports/backoffice/contrib/advanced-reports/bootstrap-form.html" %}
+    <div class="form-controls">
+        <input class="btn btn-primary" type="submit" value="Save">
+        <input class="btn btn-default" type="button" value="Refresh page" ng-click="fetchModel(true)">
+    </div>
+</form>

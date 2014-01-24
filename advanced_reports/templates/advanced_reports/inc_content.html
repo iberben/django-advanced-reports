@@ -1,10 +1,11 @@
+{% load url from future %}
 {% load i18n pagination %}
 
 <div class="advreport" 
         id="advreport_{{ advreport.slug }}" 
         data-slug="{{ advreport.slug }}" 
         data-animation="{{ advreport.animation }}"
-        data-link="{% url advanced_reports_list advreport.slug %}">
+        data-link="{% url 'advanced_reports_list' advreport.slug %}">
 {% if advreport.report_header_visible %}
     {% include "advanced_reports/inc_header.html" %}
 {% endif %}

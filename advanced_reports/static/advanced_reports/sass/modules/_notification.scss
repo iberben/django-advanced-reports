@@ -1,0 +1,83 @@
+/* STICKY NOTIFICATION
+=====================================*/
+.sticky-notification,
+.notification{
+    padding: 18px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 700;
+    font-size: 12px;
+    line-height: 1.2em;
+    @include filter-gradient($grayDarker, $grayDark);
+    @include background-image(linear-gradient($grayDarker, $grayDark));
+
+    p {
+        font-weight: 700;
+    }
+    
+    img{
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+    
+    a{
+        color: rgba(255, 255, 255, 0.75);
+        font-weight: 700;
+    }
+
+    &.success{
+        color: $white;
+        @include filter-gradient(#589231, #79bf42);
+        @include background-image(linear-gradient(#589231, #79bf42));
+    }
+
+    &.error{
+        color: $white;
+        @include filter-gradient(#b76712, #f5891f);
+        @include background-image(linear-gradient(#b76712, #f5891f));
+    }
+
+    &.ladies{
+        color: $white;
+        @include filter-gradient(#b11738, #eb274d);
+        @include background-image(linear-gradient(#b11738, #eb274d));
+    }
+    
+    &.warning{
+        color: $white;
+        @include filter-gradient(#1c5798, #287fb8);
+        @include background-image(linear-gradient(#1c5798, #287fb8));
+    }
+} 
+
+.ie .sticky-notification,
+.ie .notification{
+    color: $white;
+}
+
+.notification{
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    z-index: 2000;
+}
+
+@media only screen 
+and (max-width : 996px) {
+    .sticky-notification,
+    .notification{
+        .container{
+            width: 100%;
+        }
+    }
+}
+
+@media only screen 
+and (max-width : 600px) {
+    .sticky-notification,
+    .notification{
+        padding: 8px;
+    }
+}

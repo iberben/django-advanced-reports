@@ -1,0 +1,39 @@
+@charset "UTF-8";
+@import "compass/css3";
+
+/**
+ * Core
+ *
+ * @author	Kristof Houben <kristof.houben@mobilevikings.com>
+ */
+ 
+/* CORE
+=====================================*/
+@import "core/reset.scss";
+@import "core/helpers.scss";
+@import "core/mixins.scss";
+@import "core/variables.scss";
+
+/* LIBS
+=====================================*/
+@import "libs/bootstrap.scss";
+/*@import "libs/bootstrap-theme.scss";*/
+@import "libs/bootstrap-callouts.scss";
+
+/* MODULES
+=====================================*/
+@import "modules/backoffice.scss";
+/*@import "modules/forms.scss";*/
+@import "modules/navigation.scss";
+@import "modules/signin.scss";
+@import "modules/notification.scss";
+
+/* DEFAULT
+=====================================*/
+@import "default.scss";
+
+/* ANGULAR CLOAK
+=====================================*/
+[ng\:cloak], [ng-cloak], .ng-cloak {
+  display: none !important;
+}

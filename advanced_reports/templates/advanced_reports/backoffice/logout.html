@@ -1,0 +1,23 @@
+{% extends "advanced_reports/backoffice/base.html" %}
+{% load i18n %}
+
+{% block content-override %}
+<!-- page -->
+<div class="page">
+    <header class="main-header" bo-parallax>
+        <div class="container">
+            <h1>{% trans "See you next time" %}</h1>
+        </div>
+    </header>
+    <div class="container">
+
+        <h2>{% trans "Signed out" %}</h2>
+        <p class="introduction">
+            {% blocktrans %}Successfully signed out.{% endblocktrans %}
+        </p>
+
+        <a href="{% url 'backoffice:home' %}">{% blocktrans %}Click here to sign in again.{% endblocktrans %}</a>
+    </div>
+</div>
+<!-- /page -->
+{% endblock %}

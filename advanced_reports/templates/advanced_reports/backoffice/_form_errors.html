@@ -1,0 +1,11 @@
+{% load i18n %}
+
+{% if form.errors %}
+<div class="bs-callout bs-callout-danger">
+    {% if form.non_field_errors %}
+        {{ form.non_field_errors }}
+    {% else %}
+        {% trans "Woops, there are some errors!" %}
+    {% endif %}
+</div>
+{% endif %}

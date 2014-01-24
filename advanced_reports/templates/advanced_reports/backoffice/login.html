@@ -1,0 +1,44 @@
+{% extends "advanced_reports/backoffice/base.html" %}
+{% load i18n widget_tweaks %}
+
+
+{% block content-override %}
+<!-- page -->
+<div class="page">
+    <header class="main-header" bo-parallax>
+        <div class="container">
+            <h1>{% trans "Sign in" %}</h1>
+        </div>
+    </header>
+
+    <form class="form-signin form-horizontal" role="form"
+            action="{{ request.path }}" method="post" id="login-form">
+
+        {% csrf_token %}
+
+        <div class="container">
+            <div class="row group">
+
+                <div class="col-lg-6 col-s-12">
+                    
+                    <h2>{% trans "Please sign in" %}</h2>
+
+                    <p class="introduction">
+                        {% blocktrans %}To get the full experience to our awesome helpdesk, please sign in!{% endblocktrans %}
+                    </p>
+
+                    {% include "advanced_reports/backoffice/contrib/advanced-reports/bootstrap-form.html" %}
+
+                    <input type="hidden" name="next" value="{{ next }}" />
+
+                    <div class="col-lg-9 pull-right form-controls">
+                        <button class="btn btn-primary" type="submit">{% trans "Sign in" %}</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<!-- /page -->
+{% endblock %}

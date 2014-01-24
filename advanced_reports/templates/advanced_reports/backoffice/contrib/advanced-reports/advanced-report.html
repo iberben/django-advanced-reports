@@ -1,0 +1,240 @@
+{% load i18n %}
+
+<script type="text/ng-template" id="/pagination.html">
+    <ul class="pagination" ng-show="page_count > 1">
+        <li ng-class="{disabled: search.page <= 1}"><a href ng-click="change_page(1)">&laquo;</a></li>
+        <li ng-class="{disabled: search.page <= 1}"><a href ng-click="change_page(search.page-1)">&lt;</a></li>
+        <li><a href>{% trans "Page {{ search.page }} of {{ page_count }}" %}</a></li>
+        <li ng-class="{disabled: search.page >= page_count}"><a href ng-click="change_page(search.page+1)">&gt;</a></li>
+        <li ng-class="{disabled: search.page >= page_count}"><a href ng-click="change_page(page_count)">&raquo;</a></li>
+    </ul>
+</script>
+
+<div ng-controller="AdvancedReportCtrl">
+    <div class="alert alert-success alert-dismissable" ng-show="success">
+        <button type="button" class="close" ng-click="success=null" aria-hidden="true">&times;</button>
+        {% verbatim %}
+        {{ success }}
+        {% endverbatim %}
+    </div>
+
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="action_form_popup">
+        <div class="modal-dialog-extra-padding modal-dialog">
+            <div class="modal-content">
+                <form bo-element="action_form_form">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" ng-bind="form.verbose_name"></h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-horizontal" role="form" ng-bind-html-unsafe="form.form"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button ng-disabled="isLoading()" type="button" class="btn btn-default" ng-click="action_form_popup.modal('hide')">{% trans "Cancel" %}</button>
+                        <input ng-disabled="isLoading()" type="submit" class="btn btn-primary" ng-click="submit_form(form)" value="{% templatetag openvariable %}form.submit||'{% trans "Submit" %}'{% templatetag closevariable %}">
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="action_confirm_popup">
+        <div class="modal-dialog-extra-padding modal-dialog">
+            <div class="modal-content">
+                <form>
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">{% trans "Are you sure?" %}</h4>
+                    </div>
+                    <div class="modal-body" ng-bind="action_to_confirm.confirm"></div>
+                    <div class="modal-footer">
+                        <button ng-disabled="isLoading()" type="button" class="btn btn-default" ng-click="action_confirm_popup.modal('hide')">{% trans "Cancel" %}</button>
+                        <input ng-disabled="isLoading()" type="submit" class="btn btn-primary" ng-click="action_to_confirm.execute()" value="{% verbatim %}{{ action_to_confirm.verbose_name }}{% endverbatim %}">
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="multiple_action_confirm_popup">
+        <div class="modal-dialog-extra-padding modal-dialog">
+            <div class="modal-content">
+                <form>
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" ng-bind="multiple_action_to_confirm.verbose_name"></h4>
+                    </div>
+                    <div class="modal-body">
+                        {% trans "Are you sure you want to do this on multiple items?" %}
+                    </div>
+                    <div class="modal-footer">
+                        <button ng-disabled="isLoading()" type="button" class="btn btn-default" ng-click="multiple_action_confirm_popup.modal('hide')">{% trans "Cancel" %}</button>
+                        <input ng-disabled="isLoading()" type="submit" class="btn btn-primary" ng-click="multiple_action_to_confirm.execute()" value="{% verbatim %}{{ multiple_action_to_confirm.verbose_name }}{% endverbatim %}">
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="error_popup">
+        <div class="modal-dialog-extra-padding modal-dialog">
+            <div class="modal-content alert-danger">
+                <form>
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title">{% trans "Error" %}</h4>
+                    </div>
+                    <div class="modal-body" ng-bind="error_message"></div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-danger" ng-click="error_popup.modal('hide')">{% trans "Close" %}</button>
+                    </div>
+                </form>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div class="modal fade" tabindex="-1" role="dialog" bo-element="detail_popup">
+        <div class="modal-dialog-extra-padding modal-dialog" style="width: auto;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title" ng-bind="detail_action.verbose_name"></h4>
+                </div>
+                <div class="modal-body" compile="detail_action_content"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" ng-click="detail_popup.modal('hide')">{% trans "Close" %}</button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <div ng-show="show_header()" class="action-bar clearfix">
+        <form class="form-inline col-lg-8 col-md-7 col-sm-6" role="form" ng-submit="apply_filters()">
+            <div class="form-group" ng-show="report.search_fields">
+                <input type="text" class="form-control" ng-model="filters.q" title="{% templatetag openvariable %}report.searchable_columns{% templatetag closevariable %}">
+            </div>
+            {% verbatim %}
+            <div class="form-group" ng-repeat="field in report.filter_fields" ng-show="report.filter_fields">
+                <select class="form-control" ng-model="$parent.filters[field]">
+                    <option disabled value="">{{ report.field_metadata[field].verbose_name }}</option>
+                    <option ng-repeat="(value, name) in report.filter_values[field]" value="{{value}}">{{name}}</option>
+                </select>
+            </div>
+            {% endverbatim %}
+            <button type="submit" class="btn btn-default" ng-show="show_search()">{% trans "Filter" %}</button>
+            <div class="checkbox">
+                <label><a href ng-show="has_applied_filters()" ng-click="remove_filters()">{% trans "show all" %}</a></label>
+            </div>
+        </form>
+
+        <form ng-submit="execute_multiple_action()" class="form-inline col-lg-4 col-md-5 col-sm-6 align-right" role="form" ng-show="show_action_select()">
+            <div class="form-group">
+                <select ng-model="multiple_action" class="form-control">
+                    <option value="" disabled>{% trans "With selected:" %}</option>
+                    {% verbatim %}
+                    <option ng-repeat="action in report.multiple_action_list" value="{{ action.method }}">{{ action.verbose_name }}</option>
+                    {% endverbatim %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-success">{% trans "Execute" %}</button>
+        </form>
+    </div>
+
+    <div ng-include="'/pagination.html'"></div>
+
+    <div class="tablecontainer" ng-show="report && !single_action">
+        <table class="data table table-striped">
+            <thead>
+                <tr ng-show="report.all_selected && report.item_count > report.items_per_page" ng-class="{warning: !report.all_selected_global, success: report.all_selected_global}">
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}">
+                        {% endverbatim %}
+                        {% trans "Only {{ selected_count() }} selected. Select all {{ report.item_count }}?" %}
+                        <a href ng-hide="report.all_selected_global" ng-click="report.all_selected_global=true">{% trans "Yes" %}</a>
+                        <strong ng-show="report.all_selected_global">{% trans "Yes" %}</strong>
+                        <a href ng-show="report.all_selected_global" ng-click="report.all_selected_global=false;report.all_selected=false;selected={}">{% trans "Clear selection" %}</a>
+                        {% verbatim %}
+                    </td>
+                    {% endverbatim %}
+                </tr>
+                <tr>
+                    {% verbatim %}
+                    <th ng-style="{width: {true: '24px', false: '0'}[report.multiple_actions]}">
+                        <input type="checkbox" ng-model="report.all_selected" ng-click="update_selected()" ng-show="report.multiple_actions && !select_mode()">
+                    </th>
+                    {% endverbatim %}
+                    <th ng-repeat="column in report.header" ng-style="column.style">
+                        <span ng-bind="column.verbose_name" ng-show="!column.sortable"></span>
+                        <a href ng-bind="column.verbose_name" ng-show="column.sortable" ng-click="change_order(column.order_by)"></a>
+                        <span ng-show="report.extra.order_field==column.name" ng-bind="{true:'&darr;', false:'&uarr;'}[report.extra.ascending]"></span>
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+
+            <tbody ng-repeat="item in report.items">
+                <tr ng-click="toggle_expand(item)" ng-class="{success: multiple_succeeded[item.item_id], danger: multiple_failed[item.item_id]}">
+                    <td>
+                        <input type="checkbox" ng-model="selected[item.item_id]" ng-click="update_all_selected();$event.stopPropagation()" ng-show="report.multiple_actions && !select_mode()">
+                        <a ng-show="select_mode()" href ng-click="view.selected_item=item;trigger_success_attr({method: 'select'})">{% trans "select" %}</a>
+                    </td>
+                    <td ng-repeat="value in item.values" compile="value.html" ng-style="value.style" ng-class="value.class"></td>
+                    <td ng-show="has_expanded_content(item)">
+                        <a ng-show="item.expanded && !select_mode()" href>{% trans "hide details" %}</a>
+                        <a ng-hide="item.expanded || select_mode()" href>{% trans "show details" %}</a>
+                    </td>
+                </tr>
+                <tr ng-show="multiple_succeeded[item.item_id] && item.expanded" class="success">
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}" ng-bind="multiple_succeeded[item.item_id]"></td>
+                    {% endverbatim %}
+                </tr>
+                <tr ng-show="multiple_failed[item.item_id] && item.expanded" class="danger">
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}" ng-bind="multiple_failed[item.item_id]"></td>
+                    {% endverbatim %}
+                </tr>
+
+                <tr ng-show="item.expanded">
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}">
+                        <div class="btn-group">
+                            <a class="btn {{ action.css_class|default:'btn-default' }}" link-to="get_action_link(item, action)" ng-click="execute_action(item, action)" ng-repeat="action in item.actions|filter:is_button_action">{{ action.verbose_name }}</a>
+                        </div>
+                        <div ng-repeat="action in item.actions|filter:is_inline_form_action">
+                            <form bo-element="action_form_element" ng-submit="execute_inline_form_action(item, action, action_form_element)">
+                                <div class="form-inline" role="form" compile="action.form"></div>
+                            </form>
+                        </div>
+                        <div compile="item.extra_information" class="extra_info"></div>
+                    </td>
+                    {% endverbatim %}
+                </tr>
+            </tbody>
+
+            <tbody ng-show="report.items.length==0">
+                <tr>
+                    {% verbatim %}
+                    <td colspan="{{ report.header.length + 2 }}">
+                    {% endverbatim %}
+                        <small>{% blocktrans with advreport.verbose_name_plural as items_name %}No {{ items_name }} to show...{% endblocktrans %}</small>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div ng-include="'/pagination.html'"></div>
+
+    <div class="btn-group" ng-show="single_action">
+        {% verbatim %}
+        <a
+         class="btn {{ action.css_class|default:'btn-default' }}"
+         link-to="get_action_link(report.items[0], action)"
+         ng-click="execute_action(report.items[0], action)"
+         ng-repeat="action in report.items[0].actions|filter:is_single_action"
+         ng-bind="action.verbose_name"></a>
+        {% endverbatim %}
+    </div>
+</div>

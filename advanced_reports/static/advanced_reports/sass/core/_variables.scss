@@ -1,0 +1,43 @@
+/**
+ * Variables
+ *
+ * @author	Kristof Houben <kristof.houben@mobilevikings.com>
+ */
+ 
+/* FONTS
+=====================================*/
+$font: 					Helvetica, arial, sans-serif;
+$baseFont: 				13px;
+$baseLine: 				1.5em;
+
+/* GRAYS
+=====================================*/
+$black:                 #000;
+$grayDarker:            #222;
+$grayDark:              #333;
+$gray:                  #666;
+$grayLight:             #999;
+$grayLighter:           #ccc;
+$white:                 #fff;
+
+/* COLORS
+=====================================*/
+$bg: 					$white;
+$bgColor:               #f0eadf;
+$bgContent:             $bgColor;
+
+$baseColor: 			$grayDark;
+
+$linkColor:             #0b4f95;
+/*$linkColor:             #4bb8d1;*/
+$linkHoverColor:        lighten($linkColor, 10%);
+
+$highlightColor:		#666;
+$brightColor:           #428bca;
+$errorColor:            #cb0c0c;
+
+$buttonTop:             #da0c0c;
+$buttonLow:             #960808;
+
+$buttonTopHover:        #ea2e2e;
+$buttonLowHover:        #ba1616;

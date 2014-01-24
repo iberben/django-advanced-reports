@@ -1,0 +1,175 @@
+{% load staticfiles i18n %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <!--<link rel="shortcut icon" href="../../assets/ico/favicon.png">-->
+
+        <title>{% block title %}{{ backoffice.title }}{% endblock %}</title>
+
+        <!-- Bootstrap core CSS -->
+        <link href="{{ STATIC_URL }}advanced_reports/css/core.css" rel="stylesheet" />
+
+        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="{{ STATIC_URL }}advanced_reports/js/html5shiv.js"></script>
+            <script src="{{ STATIC_URL }}advanced_reports/js/respond.min.js"></script>
+        <![endif]-->
+
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.8/angular-cookies.js"></script>
+        <script src="{{ STATIC_URL }}advanced_reports/js/backoffice.js"></script>
+        <script src="{{ STATIC_URL }}advanced_reports/js/advreport-angular.js"></script>
+
+        {% block extra-head %}{% endblock %}
+    </head>
+
+    <body ng-click="search_reset_results_preview()" ng-app="BackOfficeApp" ng-controller="MainController" ng-init="setup('{% url 'backoffice:api_home' %}', '{% url 'backoffice:home' %}')">
+        {% include "advanced_reports/backoffice/home.html" %}
+        {% include "advanced_reports/backoffice/model.html" %}
+        {% include "advanced_reports/backoffice/tab.html" %}
+        {% include "advanced_reports/backoffice/search.html" %}
+        {% include "advanced_reports/backoffice/modal.html" %}
+
+        <div class="overlay-loading" ng-show2="isLoadingSlow()" ng-show="false">
+            <div>
+                {% trans "Loading... One moment..." %}
+            </div>
+        </div>
+
+        <div id="notification"></div>
+        
+            <div class="navbar navbar-inverse navbar-fixed-top">
+                <div class="container">
+                    <div class="navbar-header">
+                        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                            <span class="icon-bar"></span>
+                        </button>
+                        <a class="navbar-brand" href="{% url 'backoffice:home' %}">{% block head-title %}{{ backoffice.title }}{% endblock %}</a>
+                    </div>
+                    
+                    {% if request.user.is_authenticated %}
+                    <div class="navbar-collapse collapse">
+                        <form class="navbar-form navbar-left" ng-submit="goto_search()">
+                            <div class="form-group dropdown">
+                                <input type="text"
+                                       placeholder="Search"
+                                       class="form-control"
+                                       ng-model="search_query"
+                                       ng-change="search_show_results_preview()"
+                                       keyup-delay="search_preview(search_query, $event)"
+                                       delay="150"
+                                       focus-on="searchResultSelected"
+                                       focus-attr="-1">
+                                <ul class="always-visible dropdown-menu" ng-show="is_search_results_preview_visible()" arrow-select="searchResultSelected">
+                                    {% verbatim %}
+                                    <li ng-repeat="result in search_results_preview.results">
+                                        <a href="{{ root_url }}{{ get_url(result.route) }}" focus-on="searchResultSelected" focus-attr="{{ $index }}">
+                                            <small>{{ result.verbose_name }}</small> {{ result.title }}
+                                        </a>
+                                    </li>
+                                    {% endverbatim %}
+                                    <li ng-show="!search_results_preview" class="disabled">
+                                        <a><img src="{{ STATIC_URL }}advanced_reports/img/modybox/loading.gif"></a>
+                                    </li>
+                                    <li ng-show="search_results_preview.results.length == 0" class="disabled">
+                                        <a>{% trans "No results found" %}</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </form>
+
+                        <ul class="nav navbar-nav">
+                            {% block navbar %}
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Operations <b class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    <li><a href="#">Action</a></li>
+                                    <li><a href="#">Another action</a></li>
+                                    <li><a href="#">Something else here</a></li>
+                                    <li><a href="#">Separated link</a></li>
+                                    <li><a href="#">One more separated link</a></li>
+                                </ul>
+                            </li>
+                            {% endblock %}
+                        </ul>
+
+                        <p class="navbar-text navbar-left">
+                            <img ng-show="isLoading()" src="{{ STATIC_URL }}advanced_reports/img/modybox/loading.gif">
+                        </p>
+
+
+                        <form class="navbar-form navbar-right">
+                            <a href="{% url 'backoffice:logout' %}" class="btn btn-danger">{% trans "Sign out" %}</a>
+                        </form>
+                        <p class="navbar-text navbar-right">
+                            {% blocktrans with request.user.first_name as first_name %}Hi, <strong>{{ first_name }}</strong>{% endblocktrans %}
+                        </p>
+                    </div><!--/.navbar-collapse -->
+                    {% endif %}
+                </div><!-- /.container -->
+            </div>
+
+        {% block content-override %}
+        <!-- Switch between Django-rendered and AngularJS-rendered content -->
+        <div class="page" ng-view ng-show="useView()"></div>
+        <div class="page" ng-hide="useView()">
+            {% block header-title-wrapper %}{% endblock %}
+            <section class="content" role="main">
+                {% block content %}
+                <div class="container">
+                    {% block content-inner %}{% endblock %}
+                </div>
+                {% endblock %}
+            </section>
+        </div>
+        {% endblock %}
+
+        <footer>
+            <div class="container">
+                {% block footer %}Nothing else to show...{% endblock %}
+            </div>
+            <div class="container">
+                &copy; VikingCo | All rights reserved
+            </div>
+        </footer>
+
+        <!-- Bootstrap core JavaScript
+        ================================================== -->
+        <!-- Placed at the end of the document so the pages load faster -->
+        <script src="{{ STATIC_URL }}advanced_reports/js/bootstrap.js"></script>
+        <script src="{{ STATIC_URL }}advanced_reports/js/core.js"></script>
+        <script src="{{ STATIC_URL }}advanced_reports/js/modules/notification.js"></script>
+        <script src="{{ STATIC_URL }}admin/js/admin/RelatedObjectLookups.js"></script>
+
+        <script>
+            frontend.notification.init();
+        </script>
+
+        {% if messages %}
+        <script>
+            $(function(){
+                {% for msg in messages %}
+                    {% if forloop.last %}
+                var params = {
+                    message: "{{ msg|safe }}",
+                    type: "{{ msg.tags }}",
+                    isAutoHide: {% if msg.tags == 'error' or msg.tags == 'warning' %}false{% else %}true{% endif %}
+                };
+                    {% endif %}
+                {% endfor %}
+
+                frontend.notification.show(params);
+            });
+        </script>
+        {% endif %}
+    </body>
+</html>

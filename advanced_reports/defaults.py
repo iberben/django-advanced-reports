@@ -6,6 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
+from django.db.models.query import QuerySet
 from django.http import Http404
 from django.template.defaultfilters import capfirst
 from django.template.loader import render_to_string
@@ -65,7 +66,13 @@ class action(object):
 
     form_via_ajax = False
     '''
-    Optional. If True, the form will be loaded via mbox.
+    Optional. If True, the form will be shown in a popup.
+    '''
+
+    prefetch_ajax_form = True
+    '''
+    Optional. If False, the form will not be loaded together with the item, but later. Only applies when
+    form_via_ajax is True.
     '''
 
     link_via_ajax = False
@@ -111,7 +118,7 @@ class action(object):
     hidden = False
     '''
     Optional. If True, your action will not be displayed on the report. Use this when you want to move your action link
-    to another place. Use the css class "action-link" and do a {% url advanced_reports_action "my_slug" "my_action_method", "my item id" %}.
+    to another place. Use the css class "action-link" and do a {% url 'advanced_reports_action' my_slug my_action_method, my item id %}.
     Also use this when defining a view action for your lazy divs.
     '''
 
@@ -135,6 +142,12 @@ class action(object):
     If the form of the action has a file upload, set it to true. enctype='multipart/form-data' will be added to the form.
     '''
 
+    permission = None
+    '''
+    Optional. The permission required for this action.
+    '''
+
+
     def __init__(self, **kwargs):
         '''
         Each kwarg maps to a property above. For documentation, refer to the individual property documentation strings.
@@ -156,12 +169,14 @@ class action(object):
             #if self.form_template:
             new_action.form_template = self.form_template # mark_safe(render_to_string(self.form_template, {'form': new_action.form}))
             if self.form_template:
-                new_action.response_form_template = mark_safe(render_to_string(self.form_template, {'form': new_action.form}))
+                new_action.response_form_template = mark_safe(render_to_string(self.form_template, {'form': new_action.form, 'item': instance}))
 
         if instance:
-            if new_action.confirm: new_action.confirm = new_action.confirm % Resolver({'item': instance})
-            if new_action.success: new_action.success = new_action.success % Resolver({'item': instance})
-            if new_action.verbose_name: new_action.verbose_name = new_action.verbose_name % Resolver({'item': instance})
+            context = {'item': instance}
+            context.update(instance.__dict__)
+            if new_action.confirm: new_action.confirm = new_action.confirm % Resolver(context)
+            if new_action.success: new_action.success = new_action.success % Resolver(context)
+            if new_action.verbose_name: new_action.verbose_name = new_action.verbose_name % Resolver(context)
 
         return new_action
 
@@ -176,6 +191,10 @@ class action(object):
             return self.form_instance(instance, *args, **kwargs) if callable(self.form_instance) else form_instance
         return instance
 
+    def is_allowed(self, request):
+        return not self.permission or request.user.has_perm(self.permission)
+
+
 class ActionException:
     def __init__(self, msg=None, form=None):
         if form is not None:
@@ -186,6 +205,7 @@ class ActionException:
             self.msg = e
         else:
             self.msg = u'%s' % msg
+
 
 class AdvancedReport(object):
     slug = None
@@ -220,6 +240,16 @@ class AdvancedReport(object):
     search_fields = ()
     '''
     Optional. A tuple of fields that can be searched.
+    '''
+
+    filter_fields = ()
+    '''
+    Optional. A tuple of fields that can be filtered.
+    '''
+
+    filter_values = {}
+    '''
+    Optional. A mapping of filter fields to their list of values.
     '''
 
     item_actions = ()
@@ -389,6 +419,15 @@ class AdvancedReport(object):
         '''
         return lambda s: s
 
+    def filter_FOO(self, qs, value):
+        """
+        Implement this function to specify a filter for the field FOO. This is
+        useful for fields that are not a part of a model, but aggregated.
+
+        :return: a filtered queryset
+        """
+        return qs
+
     def verify_action_group(self, item, group):
         '''
         Implement this function to verify if the given group currently applies to the given item.
@@ -405,11 +444,11 @@ class AdvancedReport(object):
         '''
         self.request = request
 
-    '''
-    The following two functions work both in tandem for naming and finding items.
-    It is recommended to override get_item_for_id as the default implementation may be a little
-    bit inefficient.
-    '''
+    #
+    # The following two functions work both in tandem for naming and finding items.
+    # It is recommended to override get_item_for_id as the default implementation may be a little
+    # bit inefficient.
+    #
 
     def get_item_id(self, item):
         '''
@@ -422,11 +461,13 @@ class AdvancedReport(object):
         '''
         Advanced Reports also expects each item to be found by its unique ID. By default it does
         a lookup of the primary key of a model.
+
+        Returns None if the item does not exist.
         '''
         try:
             return self._queryset(request=None).get(pk=item_id)
         except ObjectDoesNotExist, e:
-            raise Http404(u'%s' % e)
+            return None
 
     def get_decorator(self):
         '''
@@ -498,6 +539,17 @@ class AdvancedReport(object):
         '''
         return u''
 
+    def auto_complete(self, request, partial, params):
+        """
+        Implement this to support auto completion of certain fields.
+
+        :param request: the HTTPRequest asking for the completion
+        :param partial: the partial string that must be completed
+        :param params: optional parameters
+        :return: a list of possible completions. Keep this list short, all data returned will be displayed.
+        """
+        return []
+
     def enrich_list(self, items):
         '''
         Implement this to attach some extra information to each item of the given items list.
@@ -546,7 +598,7 @@ class AdvancedReport(object):
         '''
         return {}
 
-    def get_filtered_items(self, queryset, params):
+    def get_filtered_items(self, queryset, params, request=None):
         filter_query = None
         date_range_query = None
         fake_fields = []
@@ -628,12 +680,12 @@ class AdvancedReport(object):
                     filter_query = Q(pk__in=fake_found)
 
             if filter_query:
-                return EnrichedQueryset(queryset.filter(filter_query), self)
+                return EnrichedQueryset(queryset.filter(filter_query), self, request=request)
             else:
                 # When no filter parameter is found then we don't apply the filter_query
-                return EnrichedQueryset(queryset, self)
+                return EnrichedQueryset(queryset, self, request=request)
         else:
-            return EnrichedQueryset(fake_found, self)
+            return EnrichedQueryset(fake_found, self, request=request)
 
     def _queryset(self, request):
         if hasattr(self, 'queryset_request'):
@@ -642,20 +694,24 @@ class AdvancedReport(object):
                 def convert_value(k, v):
                     if k[-4:] == '__in':
                         return v.split(',')
-                    if v == u'True':
+                    if v.lower() == u'true':
                         return True
-                    elif v == u'False':
+                    elif v.lower() == u'false':
                         return False
                     else:
                         return v
 
-                try:
+                if self.models:
                     fieldnames = [f.name for f in self.models[0]._meta.fields]
                     lookup = dict((k, convert_value(k, v)) for k, v in request.GET.items() if k.split('__')[0] in fieldnames)
                     if lookup:
                         qs = qs.filter(**lookup)
-                except:
-                    return self.models[0].objects.none()
+
+                    for k, v in request.GET.items():
+                        filter_fn = getattr(self, 'filter_%s' % k, None)
+                        if filter_fn:
+                            qs = filter_fn(qs, convert_value(k, v))
+
             return qs
         else:
             return self.queryset()
@@ -688,7 +744,7 @@ class AdvancedReport(object):
         # Filter
         if ids is not None:
             queryset = queryset.filter(pk__in=ids)
-        object_list = self.get_filtered_items(queryset, request.GET)
+        object_list = self.get_filtered_items(queryset, request.GET, request=request)
 
         return object_list, context
 
@@ -706,9 +762,13 @@ class AdvancedReport(object):
 #            return method
         return getattr(self, method, lambda i, f=None: False)
 
+
     def handle_multiple_actions(self, method, selected_object_ids, request=None):
+        '''
+        Deprecated. Don't use anymore!
+        '''
         action = self.find_action(method)
-        objects = [self.get_item_for_id(item_id) for item_id in selected_object_ids]
+        objects = [o for o in (self.get_item_for_id(item_id) for item_id in selected_object_ids) if o]
         self.enrich_list(objects)
         for o in objects:
             self.enrich_object(o, list=False, request=request)
@@ -758,6 +818,10 @@ class AdvancedReport(object):
                 pass
         return None
 
+    def get_field_metadata_dict(self):
+        all_fields = list(self.fields) + list(self.filter_fields)
+        return dict((field, self.get_field_metadata(field)) for field in all_fields)
+
     def get_field_metadata(self, field_name):
         verbose_name = getattr(self, 'get_%s_verbose_name' % field_name, lambda: None)()
         if verbose_name is None:
@@ -777,6 +841,7 @@ class AdvancedReport(object):
                 order_by = sf.strip('-')
 
         return {'name': field_name.split('__')[0],
+                'full_name': field_name,
                 'verbose_name': capfirst(verbose_name),
                 'sortable': sortable,
                 'order_by': order_by,
@@ -816,15 +881,19 @@ class AdvancedReport(object):
         If supplied, the request will be attached to the item so that you can use this
         in your actions.
         '''
+        if not o:
+            return
+
         if list:
             self.enrich_list([o])
 
+        self.assign_attr(o, 'advreport_request', request)
         self.assign_attr(o, 'advreport_column_values', [v for v in self.get_column_values(o)])
-        self.assign_attr(o, 'advreport_actions', self.get_object_actions(o))
+        self.assign_attr(o, 'advreport_actions', self.get_object_actions(o, request=request))
         self.assign_attr(o, 'advreport_object_id', self.get_item_id(o))
         self.assign_attr(o, 'advreport_class', self.get_item_class(o))
         self.assign_attr(o, 'advreport_extra_information', self.get_extra_information(o) % Resolver({'item': o}))
-        self.assign_attr(o, 'advreport_request', request)
+
 
     def enrich_generic_relation(self, items, our_model, foreign_model, attr_name, fallback):
         '''
@@ -894,13 +963,15 @@ class AdvancedReport(object):
             for item in items:
                 setattr(item, related_name, foreign_mapping.get(oi(item), (None,))[0])
 
-    def get_object_actions(self, object):
+    def get_object_actions(self, object, request=None):
         actions = []
 
         for a in self.item_actions:
-            if self.verify_action_group(object, a.group):
-                if not a.form_via_ajax:
-                    new_action = a.copy_with_instanced_form(prefix=self.get_item_id(object), instance=object)
+            if self.verify_action_group(object, a.group) and \
+                    (not request or a.is_allowed(request)):
+                instance = a.form_instance(object) if a.form_instance else object
+                if not a.form_via_ajax or a.prefetch_ajax_form:
+                    new_action = a.copy_with_instanced_form(prefix=self.get_item_id(object), instance=instance)
                 else:
                     # Put off fetching the instanced Form until the actual Ajax
                     # call for performance.
@@ -948,9 +1019,10 @@ class AdvancedReport(object):
         return lambda h: u'<a href="%(l)s">%(h)s</a>' % {'l': reverse(urlname, kwargs=kwargs), 'h': h}
 
 class EnrichedQueryset(object):
-    def __init__(self, queryset, advreport):
+    def __init__(self, queryset, advreport, request=None):
         self.queryset = queryset
         self.advreport = advreport
+        self.request = request
 
     def __getitem__(self, k):
         if isinstance(k, slice):
@@ -962,9 +1034,18 @@ class EnrichedQueryset(object):
         return self.queryset.__iter__()
 
     def __len__(self):
-        if type(self.queryset) in (list, tuple):
-            return len(self.queryset)
-        return self.queryset.count()
+        if isinstance(self.queryset, QuerySet):
+            return self.queryset.count()
+        return len(self.queryset)
+
+    def iterator(self):
+        if isinstance(self.queryset, QuerySet):
+            it = self.queryset.iterator()
+        else:
+            it = self.queryset
+        for i in it:
+            self._enrich(i)
+            yield i
 
     def _enrich_list(self, l):
         # We run enrich_list on all items in one pass.
@@ -972,12 +1053,12 @@ class EnrichedQueryset(object):
 
         for o in l:
             # We pass list=False to prevent running enrich_list from enrich_object.
-            self.advreport.enrich_object(o, list=False)
+            self.advreport.enrich_object(o, list=False, request=self.request)
 
         return l
 
     def _enrich(self, o):
-        self.advreport.enrich_object(o)
+        self.advreport.enrich_object(o, self.request)
         return o
 
 class Resolver(object):

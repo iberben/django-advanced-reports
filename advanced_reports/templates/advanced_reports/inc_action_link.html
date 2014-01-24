@@ -1,8 +1,9 @@
+{% load url from future %}
 {% load i18n %}
 <a class="action-link {% if action.form_via_ajax %}form-via-ajax{% endif %} {% if action.css_class %}{{ action.css_class }}{% endif %} {{ extra_class }}"
     {% if action.confirm %}data-confirm="{{ action.confirm }}"{% endif %}
     {% if action.next_on_success %}data-next="true"{% endif %}
     {% if action.link_via_ajax %}data-ajax="true"{% endif %}
     {% if action.submit %}data-submit="{{ action.submit }}"{% endif %}
-    href="{% if action.form_via_ajax %}{% url advanced_reports_form advreport.slug action.method object.advreport_object_id %}{% else %}{% url advanced_reports_action advreport.slug action.method object.advreport_object_id %}{% endif %}"
+    href="{% if action.form_via_ajax %}{% url 'advanced_reports_form' advreport.slug action.method object.advreport_object_id %}{% else %}{% url 'advanced_reports_action' advreport.slug action.method object.advreport_object_id %}{% endif %}"
     >{{ action.verbose_name }}<img class="loader" src="{{ STATIC_URL }}advanced_reports/img/modybox/loading.gif" alt=""/></a>
