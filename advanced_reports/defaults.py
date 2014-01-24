@@ -1047,6 +1047,15 @@ class EnrichedQueryset(object):
             self._enrich(i)
             yield i
 
+    def iterator(self):
+        if isinstance(self.queryset, QuerySet):
+            it = self.queryset.iterator()
+        else:
+            it = self.queryset
+        for i in it:
+            self._enrich(i)
+            yield i
+
     def _enrich_list(self, l):
         # We run enrich_list on all items in one pass.
         self.advreport.enrich_list(l)
