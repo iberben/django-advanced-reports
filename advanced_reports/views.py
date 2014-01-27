@@ -30,7 +30,7 @@ def _get_redirect(advreport, next=None, querystring=None):
         suffix = u'?%s' % querystring
     return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}) + suffix)
 
-@csv_delegation
+#@csv_delegation
 @transaction.autocommit
 def list(request, slug, ids=None, internal_mode=False, report_header_visible=True):
     advreport = get_report_or_404(slug)
