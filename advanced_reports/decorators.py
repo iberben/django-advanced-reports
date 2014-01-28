@@ -9,14 +9,15 @@ except:
     now = datetime.datetime.now
 
 
-def csv_delegation(view_func):
+def conditional_delegation(condition_func):
     """
-    Detect if we want a CSV report. If we do, handle it via Django Delegation
+    Delegate a view depending on a certain condition.
     """
-
-    @wraps(view_func)
-    def delegated_view(request, *args, **kwargs):
-        if isinstance(request, SimpleHTTPRequest) or not 'csv' in request.GET:
+    def decorator(view_func):
+        @wraps(view_func)
+        def delegated_view(request, *args, **kwargs):
+            if not isinstance(request, SimpleHTTPRequest) and condition_func(request):
+                return delegate(view_func)(request, *args, **kwargs)
             return view_func(request, *args, **kwargs)
-        return delegate(view_func)(request, *args, **kwargs)
-    return delegated_view
+        return delegated_view
+    return decorator

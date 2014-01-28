@@ -16,7 +16,7 @@ from djprogress import with_progress, progress_error_reporter
 
 from advanced_reports import get_report_or_404
 from advanced_reports.backoffice.api_utils import JSONResponse
-from advanced_reports.decorators import csv_delegation
+from advanced_reports.decorators import conditional_delegation
 from advanced_reports.defaults import ActionException, Resolver
 
 
@@ -30,7 +30,7 @@ def _get_redirect(advreport, next=None, querystring=None):
         suffix = u'?%s' % querystring
     return redirect(reverse('advanced_reports_list', kwargs={'slug': advreport.slug}) + suffix)
 
-#@csv_delegation
+@conditional_delegation(lambda request: 'delegate' in request.GET)
 @transaction.autocommit
 def list(request, slug, ids=None, internal_mode=False, report_header_visible=True):
     advreport = get_report_or_404(slug)
