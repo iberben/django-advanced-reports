@@ -300,11 +300,15 @@ def ajax_form(request, slug, method, object_id, param=None):
     return inner(request, slug, method, object_id)
 
 
-def _action_dict(o, action):
+def _action_dict(request, o, action):
     d = dict(action.attrs_dict)
     if action.form:
         form_instance = action.form
-        d['form'] = action.form_template and render_to_string(action.form_template, {'form': form_instance, 'item': o}) or unicode(form_instance)
+        d['form'] = action.form_template \
+                        and render_to_string(action.form_template,
+                                             {'form': form_instance, 'item': o},
+                                             context_instance=RequestContext(request)) \
+            or unicode(form_instance)
     if action.confirm:
         context = {'item': o}
         context.update(o.__dict__)
@@ -312,11 +316,11 @@ def _action_dict(o, action):
     return d
 
 
-def _item_values(o, advreport):
+def _item_values(request, o, advreport):
     return {
         'values': o.advreport_column_values,
         'extra_information': o.advreport_extra_information.replace('data-method="', 'ng-bind-html-unsafe="lazydiv__%s__' % advreport.get_item_id(o)),
-        'actions': [_action_dict(o, a) for a in o.advreport_actions],
+        'actions': [_action_dict(request, o, a) for a in o.advreport_actions],
         'item_id': advreport.get_item_id(o)
     }
 
@@ -337,7 +341,7 @@ def api_list(request, slug, ids=None):
         report = {
             'header': advreport.column_headers,
             'extra': extra_context,
-            'items': [_item_values(o, advreport) for o in paginated.object_list[:]],
+            'items': [_item_values(request, o, advreport) for o in paginated.object_list[:]],
             'items_per_page': advreport.items_per_page,
             'item_count': len(object_list),
             'searchable_columns': advreport.searchable_columns,
