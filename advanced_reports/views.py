@@ -392,7 +392,7 @@ def api_action(request, slug, method, object_id):
                         context.update({'response_form': render_to_string(a.form_template, {'form': form, 'item': obj})})
                 if obj:
                     advreport.enrich_object(obj, request=request)
-                    context.update({'item': _item_values(obj, advreport)})
+                    context.update({'item': _item_values(request, obj, advreport)})
                 else:
                     context.update({'item': None, 'removed_item_id': object_id})
                 return JSONResponse(context)
@@ -404,7 +404,7 @@ def api_action(request, slug, method, object_id):
                 obj = advreport.get_item_for_id(object_id)
                 if obj:
                     advreport.enrich_object(obj, request=request)
-                    context = {'item': _item_values(obj, advreport), 'success': a.get_success_message()}
+                    context = {'item': _item_values(request, obj, advreport), 'success': a.get_success_message()}
                 else:
                     context = {'item': None, 'success': a.get_success_message(), 'removed_item_id': object_id}
                 return JSONResponse(context)
